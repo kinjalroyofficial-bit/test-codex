@@ -5,7 +5,8 @@ cd /home/react-app
 
 echo "===== DEPLOY START =====" >> deploy.log
 
-git pull origin main >> deploy.log 2>&1
+git fetch origin main >> deploy.log 2>&1
+git reset --hard origin/main >> deploy.log 2>&1
 
 npm install >> deploy.log 2>&1
 npm run build >> deploy.log 2>&1
