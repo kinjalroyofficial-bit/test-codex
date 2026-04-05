@@ -2,6 +2,26 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Git remote bootstrap (for fresh tasks/environments)
+
+To avoid manually re-entering the repository URL every time a new environment starts:
+
+1. Keep the canonical Git remote in `.repo-remote` (first line only).
+2. Run:
+
+```bash
+bash scripts/setup-git-remote.sh
+```
+
+Optional: if HTTPS auth is needed in a fresh environment, set a token for this session before running the script:
+
+```bash
+export GIT_REMOTE_TOKEN=your_token_here
+bash scripts/setup-git-remote.sh
+```
+
+The script safely adds/updates `origin` and prints the resulting remote configuration.
+
 ## Available Scripts
 
 In the project directory, you can run:
