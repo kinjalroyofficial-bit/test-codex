@@ -15,6 +15,7 @@ systemctl restart nginx >> deploy.log 2>&1
 
 echo "===== DEPLOY END =====" >> deploy.log
 
+
 BOT_TOKEN="8529655539:AAGOIbipfyUuVmA_nQKOu-EpLFHO7pQv-mY"
 CHAT_ID="8629852323"
 
