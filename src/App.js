@@ -13,11 +13,11 @@ function App() {
     <div
       style={{
         minHeight: "100vh",
-        padding: "24px",
+        padding: "12px 24px 24px",
         boxSizing: "border-box",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
       }}
     >
       <div
@@ -37,7 +37,7 @@ function App() {
             letterSpacing: "0.01em",
           }}
         >
-          PulsePoint: Daily Tracking for Personal Usage
+          TextFlow: Daily Input Formatter
         </h1>
         <form
           onSubmit={handleSubmit}
