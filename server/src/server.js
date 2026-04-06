@@ -15,6 +15,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+app.set('trust proxy', 1);
 app.use(express.json());
 
 app.use(
