@@ -547,7 +547,8 @@ body.theme-light {
 .theme-slider {
   position: absolute;
   inset: 0;
-  background-color: #000;
+  background: linear-gradient(180deg, #131a2b 0%, #0d1320 100%);
+  border: 1px solid #334155;
   border-radius: 20px;
   transition: 0.4s;
   overflow: hidden;
