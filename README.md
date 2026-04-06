@@ -100,3 +100,7 @@ A lightweight Node API was added under `server/` with PostgreSQL migrations for:
 - verification/reset tokens
 
 See `server/README.md` for setup and endpoints.
+
+## Production deployment note
+
+`deploy.sh` now builds the React app and also restarts the Node API process (systemd/pm2/nohup fallback), then restarts nginx. This is required so `/api/*` auth endpoints are live after each deployment.
