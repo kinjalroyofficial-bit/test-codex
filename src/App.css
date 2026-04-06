@@ -157,6 +157,15 @@ body.theme-light {
   cursor: pointer;
 }
 
+.task-toolbar {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .task-form label {
   display: flex;
   flex-direction: column;
@@ -223,7 +232,8 @@ body.theme-light {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 0;
+  justify-content: flex-end;
 }
 
 .controls-row label {
@@ -615,6 +625,10 @@ body.theme-light {
 
   .task-form {
     grid-template-columns: 1fr;
+  }
+
+  .task-toolbar {
+    justify-content: stretch;
   }
 
   .auth-user-box {

@@ -460,36 +460,36 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           </div>
         </div>
 
-        <div className="task-form-actions">
+        <div className="task-toolbar">
+          <div className="controls-row">
+            <label>
+              Status
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+              </select>
+            </label>
+
+            <label>
+              Sort by
+              <select
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value)}
+              >
+                <option value="created">Created time</option>
+                <option value="priority">Priority (later)</option>
+                <option value="alphabetical">Alphabetical</option>
+              </select>
+            </label>
+          </div>
+
           <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
             Create new task
           </button>
-        </div>
-
-        <div className="controls-row">
-          <label>
-            Status
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-            </select>
-          </label>
-
-          <label>
-            Sort by
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
-            >
-              <option value="created">Created time</option>
-              <option value="priority">Priority (later)</option>
-              <option value="alphabetical">Alphabetical</option>
-            </select>
-          </label>
         </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
       </header>
