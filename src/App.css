@@ -227,6 +227,7 @@ body {
 }
 
 .task-card {
+  position: relative;
   background: #ffffff;
   border-radius: 12px;
   padding: 16px;
@@ -235,6 +236,7 @@ body {
   flex-direction: column;
   gap: 10px;
   min-height: 230px;
+  padding-bottom: 60px;
 }
 
 .card-header {
@@ -278,6 +280,60 @@ body {
   justify-content: space-between;
   gap: 8px;
   margin-top: auto;
+}
+
+
+.inline-edit-form {
+  display: grid;
+  gap: 8px;
+}
+
+.inline-edit-form label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.inline-edit-form input {
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+}
+
+.inline-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.inline-edit-actions button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inline-edit-actions button:first-child {
+  background: #1d4ed8;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
+.card-edit-btn {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
 }
 
 /* From Uiverse.io by csemszepp */
