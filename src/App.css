@@ -458,12 +458,14 @@ body.theme-light {
 
 .task-modal {
   position: relative;
-  width: min(600px, 100%);
+  width: 100%;
+  max-width: 600px;
   background: #fff;
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   margin: auto 0;
+  overflow-x: clip;
 }
 
 .task-modal h3 {
@@ -476,6 +478,7 @@ body.theme-light {
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
+  min-width: 0;
 }
 
 .task-form-section.section-basic,
@@ -492,6 +495,7 @@ body.theme-light {
   gap: 8px;
   background: transparent;
   box-shadow: none;
+  min-width: 0;
 }
 
 .task-form-section + .task-form-section {
@@ -535,6 +539,7 @@ body.theme-light {
   font-size: 0.84rem;
   font-family: inherit;
   resize: vertical;
+  max-width: 100%;
 }
 
 .category-chip-picker {
