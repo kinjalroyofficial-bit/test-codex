@@ -236,7 +236,6 @@ body {
   flex-direction: column;
   gap: 10px;
   min-height: 230px;
-  padding-bottom: 60px;
 }
 
 .card-header {
@@ -276,7 +275,7 @@ body {
 
 .status-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
   margin-top: auto;
@@ -328,12 +327,10 @@ body {
 }
 
 .card-edit-btn {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
   padding: 8px 12px;
   font-size: 0.82rem;
   cursor: pointer;
+  margin-left: auto;
 }
 
 /* From Uiverse.io by csemszepp */

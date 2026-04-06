@@ -415,17 +415,17 @@ function BoardScreen({ user, onLogout }) {
                     <div className="button" />
                   </label>
                 </div>
-              </div>
 
-              {!isEditingCard ? (
-                <button
-                  type="button"
-                  className="edit-btn card-edit-btn"
-                  onClick={() => startCardEdit(card)}
-                >
-                  Edit task
-                </button>
-              ) : null}
+                {!isEditingCard ? (
+                  <button
+                    type="button"
+                    className="edit-btn card-edit-btn"
+                    onClick={() => startCardEdit(card)}
+                  >
+                    Edit task
+                  </button>
+                ) : null}
+              </div>
             </article>
           );
         })}
