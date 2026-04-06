@@ -53,30 +53,53 @@ function authRequired(req, res, next) {
 
 async function ensureUserByEmail(email, fullName = null) {
   const loweredEmail = email.toLowerCase();
-  const existing = await pool.query('SELECT id, email, full_name FROM users WHERE email = $1', [
-    loweredEmail,
-  ]);
+  let existing;
+  try {
+    existing = await pool.query('SELECT id, email, full_name FROM users WHERE email = $1', [
+      loweredEmail,
+    ]);
+  } catch (error) {
+    if (error.code !== '42703') throw error;
+    existing = await pool.query('SELECT id, email, NULL::text AS full_name FROM users WHERE email = $1', [
+      loweredEmail,
+    ]);
+  }
   if (existing.rows[0]) {
     if (fullName && !existing.rows[0].full_name) {
-      const updated = await pool.query(
-        `UPDATE users
-         SET full_name = $1, updated_at = NOW()
-         WHERE id = $2
-         RETURNING id, email, full_name`,
-        [fullName.trim(), existing.rows[0].id]
-      );
-      return updated.rows[0];
+      try {
+        const updated = await pool.query(
+          `UPDATE users
+           SET full_name = $1, updated_at = NOW()
+           WHERE id = $2
+           RETURNING id, email, full_name`,
+          [fullName.trim(), existing.rows[0].id]
+        );
+        return updated.rows[0];
+      } catch (error) {
+        if (error.code !== '42703') throw error;
+      }
     }
 
     return existing.rows[0];
   }
 
-  const inserted = await pool.query(
-    `INSERT INTO users (email, email_verified, full_name)
-     VALUES ($1, true, $2)
-     RETURNING id, email, full_name`,
-    [loweredEmail, fullName ? fullName.trim() : null]
-  );
+  let inserted;
+  try {
+    inserted = await pool.query(
+      `INSERT INTO users (email, email_verified, full_name)
+       VALUES ($1, true, $2)
+       RETURNING id, email, full_name`,
+      [loweredEmail, fullName ? fullName.trim() : null]
+    );
+  } catch (error) {
+    if (error.code !== '42703') throw error;
+    inserted = await pool.query(
+      `INSERT INTO users (email, email_verified)
+       VALUES ($1, true)
+       RETURNING id, email, NULL::text AS full_name`,
+      [loweredEmail]
+    );
+  }
 
   return inserted.rows[0];
 }
@@ -163,12 +186,23 @@ app.post('/api/auth/register', loginLimiter, async (req, res) => {
   try {
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const result = await pool.query(
-      `INSERT INTO users (full_name, email, password_hash)
-       VALUES ($1, $2, $3)
-       RETURNING id, full_name, email, email_verified, created_at`,
-      [name.trim(), email.toLowerCase(), passwordHash]
-    );
+    let result;
+    try {
+      result = await pool.query(
+        `INSERT INTO users (full_name, email, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id, full_name, email, email_verified, created_at`,
+        [name.trim(), email.toLowerCase(), passwordHash]
+      );
+    } catch (error) {
+      if (error.code !== '42703') throw error;
+      result = await pool.query(
+        `INSERT INTO users (email, password_hash)
+         VALUES ($1, $2)
+         RETURNING id, NULL::text AS full_name, email, email_verified, created_at`,
+        [email.toLowerCase(), passwordHash]
+      );
+    }
 
     req.session.userId = result.rows[0].id;
 
@@ -193,10 +227,19 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      'SELECT id, full_name, email, password_hash FROM users WHERE email = $1',
-      [email.toLowerCase()]
-    );
+    let result;
+    try {
+      result = await pool.query(
+        'SELECT id, full_name, email, password_hash FROM users WHERE email = $1',
+        [email.toLowerCase()]
+      );
+    } catch (error) {
+      if (error.code !== '42703') throw error;
+      result = await pool.query(
+        'SELECT id, NULL::text AS full_name, email, password_hash FROM users WHERE email = $1',
+        [email.toLowerCase()]
+      );
+    }
 
     const user = result.rows[0];
     if (!user || !user.password_hash) {
@@ -269,10 +312,19 @@ app.post('/api/auth/logout', authRequired, (req, res) => {
 });
 
 app.get('/api/auth/me', authRequired, async (req, res) => {
-  const result = await pool.query(
-    'SELECT id, full_name, email, email_verified FROM users WHERE id = $1',
-    [req.session.userId]
-  );
+  let result;
+  try {
+    result = await pool.query(
+      'SELECT id, full_name, email, email_verified FROM users WHERE id = $1',
+      [req.session.userId]
+    );
+  } catch (error) {
+    if (error.code !== '42703') throw error;
+    result = await pool.query(
+      'SELECT id, NULL::text AS full_name, email, email_verified FROM users WHERE id = $1',
+      [req.session.userId]
+    );
+  }
 
   return res.json({ user: result.rows[0] || null });
 });
