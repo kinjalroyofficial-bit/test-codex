@@ -377,9 +377,9 @@ body.theme-light {
 }
 
 .task-category-tag {
-  font-size: 0.7rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
   background: #d1fae5;
   color: #065f46;
@@ -450,6 +450,8 @@ body.theme-light {
 
 .task-modal {
   width: min(460px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   background: #fff;
   border-radius: 14px;
   padding: 16px;
@@ -499,10 +501,55 @@ body.theme-light {
   background: #f8fafc;
   color: #334155;
   border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 0.76rem;
+  padding: 3px 7px;
+  font-size: 0.7rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+.task-mood-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.task-mood-fieldset legend {
+  padding: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.mood-discrete-slider {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mood-option {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+}
+
+.mood-option.is-selected {
+  border-color: #4f46e5;
+  background: #e0e7ff;
+  color: #312e81;
+}
+
+.task-attributes-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
 }
 
 .category-chip.is-selected {
@@ -520,7 +567,7 @@ body.theme-light {
   border: 1px solid #cbd5e1;
   background: #fff;
   border-radius: 8px;
-  padding: 5px 10px;
+  padding: 6px 10px;
   cursor: pointer;
 }
 
@@ -1093,7 +1140,8 @@ body:not(.theme-light) .task-modal {
 }
 
 body:not(.theme-light) .task-modal h3,
-body:not(.theme-light) .task-modal-form label {
+body:not(.theme-light) .task-modal-form label,
+body:not(.theme-light) .task-mood-fieldset legend {
   color: #f3f4f6;
 }
 
@@ -1131,6 +1179,18 @@ body:not(.theme-light) .outcome-option.is-selected {
   border-color: #818cf8;
 }
 
+body:not(.theme-light) .mood-option {
+  background: #1e293b;
+  color: #f3f4f6;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .mood-option.is-selected {
+  background: #312e81;
+  color: #eef2ff;
+  border-color: #818cf8;
+}
+
 body:not(.theme-light) .theme-slider {
   background: linear-gradient(180deg, #1f2937 0%, #0f172a 100%);
   border: 1px solid #64748b;
@@ -1142,6 +1202,14 @@ body:not(.theme-light) .theme-slider {
   }
 
   .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mood-discrete-slider {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .task-attributes-row {
     grid-template-columns: 1fr;
   }
 }

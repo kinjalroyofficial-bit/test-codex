@@ -764,51 +764,61 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   placeholder="Add custom category (comma separated)"
                 />
               </label>
-              <label>
-                Mood
-                <select
-                  value={taskMoodInput}
-                  onChange={(event) => setTaskMoodInput(event.target.value)}
-                >
+              <fieldset className="task-mood-fieldset">
+                <legend>Mood</legend>
+                <div className="mood-discrete-slider" role="radiogroup" aria-label="Mood">
                   {MOOD_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Intent
-                <select
-                  value={taskIntentInput}
-                  onChange={(event) => setTaskIntentInput(event.target.value)}
-                >
-                  {INTENT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Outcome
-                <div className="outcome-options">
-                  {OUTCOME_OPTIONS.map((option) => (
                     <button
                       key={option.value}
                       type="button"
+                      role="radio"
+                      aria-checked={taskMoodInput === option.value}
                       className={
-                        taskOutcomeInput === option.value
-                          ? "outcome-option is-selected"
-                          : "outcome-option"
+                        taskMoodInput === option.value
+                          ? "mood-option is-selected"
+                          : "mood-option"
                       }
-                      onClick={() => setTaskOutcomeInput(option.value)}
+                      onClick={() => setTaskMoodInput(option.value)}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
-              </label>
+              </fieldset>
+              <div className="task-attributes-row">
+                <label>
+                  Intent
+                  <select
+                    value={taskIntentInput}
+                    onChange={(event) => setTaskIntentInput(event.target.value)}
+                  >
+                    {INTENT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Outcome
+                  <div className="outcome-options">
+                    {OUTCOME_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={
+                          taskOutcomeInput === option.value
+                            ? "outcome-option is-selected"
+                            : "outcome-option"
+                        }
+                        onClick={() => setTaskOutcomeInput(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </label>
+              </div>
               <label>
                 Scheduled
                 <input
