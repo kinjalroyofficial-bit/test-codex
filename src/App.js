@@ -175,7 +175,9 @@ function BoardScreen({ user, onLogout }) {
   const [sortBy, setSortBy] = useState("created");
   const [titleInput, setTitleInput] = useState("");
   const [descriptionInput, setDescriptionInput] = useState("");
-  const [editingId, setEditingId] = useState(null);
+  const [editingCardId, setEditingCardId] = useState(null);
+  const [editTitleInput, setEditTitleInput] = useState("");
+  const [editDescriptionInput, setEditDescriptionInput] = useState("");
 
   const toggleStatus = (cardId) => {
     setCards((currentCards) =>
@@ -188,17 +190,43 @@ function BoardScreen({ user, onLogout }) {
   const handleDelete = (cardId) => {
     setCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
 
-    if (editingId === cardId) {
-      setEditingId(null);
-      setTitleInput("");
-      setDescriptionInput("");
+    if (editingCardId === cardId) {
+      setEditingCardId(null);
+      setEditTitleInput("");
+      setEditDescriptionInput("");
     }
   };
 
-  const handleEdit = (card) => {
-    setEditingId(card.id);
-    setTitleInput(card.title);
-    setDescriptionInput(card.description || "");
+  const startCardEdit = (card) => {
+    setEditingCardId(card.id);
+    setEditTitleInput(card.title);
+    setEditDescriptionInput(card.description || "");
+  };
+
+  const cancelCardEdit = () => {
+    setEditingCardId(null);
+    setEditTitleInput("");
+    setEditDescriptionInput("");
+  };
+
+  const saveCardEdit = (cardId) => {
+    const trimmedTitle = editTitleInput.trim();
+
+    if (!trimmedTitle) return;
+
+    setCards((currentCards) =>
+      currentCards.map((card) =>
+        card.id === cardId
+          ? {
+              ...card,
+              title: trimmedTitle,
+              description: editDescriptionInput.trim(),
+            }
+          : card
+      )
+    );
+
+    cancelCardEdit();
   };
 
   const handleSubmit = (event) => {
@@ -209,28 +237,17 @@ function BoardScreen({ user, onLogout }) {
 
     if (!trimmedTitle) return;
 
-    if (editingId) {
-      setCards((currentCards) =>
-        currentCards.map((card) =>
-          card.id === editingId
-            ? { ...card, title: trimmedTitle, description: trimmedDescription }
-            : card
-        )
-      );
-    } else {
-      setCards((currentCards) => [
-        {
-          id: Date.now(),
-          createdAt: Date.now(),
-          title: trimmedTitle,
-          description: trimmedDescription,
-          done: false,
-        },
-        ...currentCards,
-      ]);
-    }
+    setCards((currentCards) => [
+      {
+        id: Date.now(),
+        createdAt: Date.now(),
+        title: trimmedTitle,
+        description: trimmedDescription,
+        done: false,
+      },
+      ...currentCards,
+    ]);
 
-    setEditingId(null);
     setTitleInput("");
     setDescriptionInput("");
   };
@@ -295,7 +312,7 @@ function BoardScreen({ user, onLogout }) {
               placeholder="Optional description"
             />
           </label>
-          <button type="submit">{editingId ? "Update task" : "Add task"}</button>
+          <button type="submit">Add task</button>
         </form>
 
         <div className="controls-row">
@@ -326,50 +343,84 @@ function BoardScreen({ user, onLogout }) {
       </header>
 
       <section className="cards-grid" aria-label="Task cards">
-        {visibleCards.map((card) => (
-          <article className="task-card" key={card.id}>
-            <div className="card-header">
-              <h2>{card.title}</h2>
-              <button
-                type="button"
-                className="delete-cross"
-                aria-label={`Delete ${card.title}`}
-                onClick={() => handleDelete(card.id)}
-              >
-                ×
-              </button>
-            </div>
+        {visibleCards.map((card) => {
+          const isEditingCard = editingCardId === card.id;
 
-            <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
-              {card.done ? "Done" : "Not Done"}
-            </span>
-
-            <p>{card.description}</p>
-
-            <div className="status-row">
-              <div className="container">
-                <label className="switch" aria-label={`Toggle ${card.title} status`}>
-                  <input
-                    className="togglesw"
-                    type="checkbox"
-                    checked={card.done}
-                    onChange={() => toggleStatus(card.id)}
-                  />
-                  <div className="indicator left" />
-                  <div className="indicator right" />
-                  <div className="button" />
-                </label>
+          return (
+            <article className="task-card" key={card.id}>
+              <div className="card-header">
+                <h2>{card.title}</h2>
+                <button
+                  type="button"
+                  className="delete-cross"
+                  aria-label={`Delete ${card.title}`}
+                  onClick={() => handleDelete(card.id)}
+                >
+                  ×
+                </button>
               </div>
+
+              <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
+                {card.done ? "Done" : "Not Done"}
+              </span>
+
+              {isEditingCard ? (
+                <div className="inline-edit-form" aria-label={`Edit ${card.title}`}>
+                  <label>
+                    Title
+                    <input
+                      type="text"
+                      value={editTitleInput}
+                      onChange={(event) => setEditTitleInput(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Details
+                    <input
+                      type="text"
+                      value={editDescriptionInput}
+                      onChange={(event) => setEditDescriptionInput(event.target.value)}
+                    />
+                  </label>
+                  <div className="inline-edit-actions">
+                    <button type="button" onClick={() => saveCardEdit(card.id)}>
+                      Save
+                    </button>
+                    <button type="button" onClick={cancelCardEdit}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p>{card.description}</p>
+              )}
+
+              <div className="status-row">
+                <div className="container">
+                  <label className="switch" aria-label={`Toggle ${card.title} status`}>
+                    <input
+                      className="togglesw"
+                      type="checkbox"
+                      checked={card.done}
+                      onChange={() => toggleStatus(card.id)}
+                    />
+                    <div className="indicator left" />
+                    <div className="indicator right" />
+                    <div className="button" />
+                  </label>
+                </div>
+              </div>
+
               <button
                 type="button"
-                className="edit-btn"
-                onClick={() => handleEdit(card)}
+                className="edit-btn card-edit-btn"
+                onClick={() => startCardEdit(card)}
               >
                 Edit task
               </button>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </section>
     </main>
   );
