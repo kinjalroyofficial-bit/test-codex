@@ -1,3 +1,7 @@
+require('dotenv').config({ path: __dirname + '/../.env' });
+
+console.log("DEBUG DB URL:", process.env.DATABASE_URL);
+
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
