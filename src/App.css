@@ -247,50 +247,33 @@ body.theme-light {
 }
 
 .filter-pill-label {
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #fff;
 }
 
 .filter-pill select {
-  min-width: 110px;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 128px;
   border: 0 !important;
   outline: none;
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
   color: #fff;
-  padding: 2px 20px 2px 0;
-  font-size: 0.86rem;
+  padding: 2px 16px 2px 0;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.1 1.02l-4.25 4.5a.75.75 0 01-1.1 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right center;
-  background-size: 14px;
+  background-size: 11px;
 }
 
 .filter-pill select:focus {
   outline: none;
-}
-
-.controls-row label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.controls-row select {
-  min-width: 170px;
-  border: 1px solid #94a3b8;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f172a;
-  padding: 8px 10px;
-  font-size: 0.9rem;
 }
 
 .cards-grid {
@@ -989,7 +972,6 @@ body:not(.theme-light) .task-age {
 }
 
 body:not(.theme-light) .task-form input,
-body:not(.theme-light) .controls-row select,
 body:not(.theme-light) .inline-edit-form input,
 body:not(.theme-light) .auth-form input,
 body:not(.theme-light) .task-modal-form input,
