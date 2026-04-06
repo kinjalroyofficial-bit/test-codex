@@ -385,6 +385,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryInput("");
   };
 
+  const moodSliderIndex = Math.max(
+    0,
+    MOOD_OPTIONS.findIndex((option) => option.value === taskMoodInput)
+  );
+
   const toggleCategorySelection = (categoryId) => {
     setSelectedCategoryIds((currentIds) =>
       currentIds.includes(categoryId)
@@ -764,51 +769,72 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   placeholder="Add custom category (comma separated)"
                 />
               </label>
-              <label>
-                Mood
-                <select
-                  value={taskMoodInput}
-                  onChange={(event) => setTaskMoodInput(event.target.value)}
-                >
+              <div className="mood-control">
+                <span className="field-label">Mood</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={MOOD_OPTIONS.length - 1}
+                  step={1}
+                  value={moodSliderIndex}
+                  onChange={(event) =>
+                    setTaskMoodInput(
+                      MOOD_OPTIONS[Number(event.target.value)]?.value || "neutral"
+                    )
+                  }
+                  aria-label="Mood slider"
+                />
+                <div className="mood-slider-labels">
                   {MOOD_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Intent
-                <select
-                  value={taskIntentInput}
-                  onChange={(event) => setTaskIntentInput(event.target.value)}
-                >
-                  {INTENT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Outcome
-                <div className="outcome-options">
-                  {OUTCOME_OPTIONS.map((option) => (
                     <button
                       key={option.value}
                       type="button"
                       className={
-                        taskOutcomeInput === option.value
-                          ? "outcome-option is-selected"
-                          : "outcome-option"
+                        option.value === taskMoodInput
+                          ? "mood-slider-label is-selected"
+                          : "mood-slider-label"
                       }
-                      onClick={() => setTaskOutcomeInput(option.value)}
+                      onClick={() => setTaskMoodInput(option.value)}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
-              </label>
+              </div>
+              <div className="intent-outcome-row">
+                <label>
+                  Intent
+                  <select
+                    value={taskIntentInput}
+                    onChange={(event) => setTaskIntentInput(event.target.value)}
+                  >
+                    {INTENT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Outcome
+                  <div className="outcome-options">
+                    {OUTCOME_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={
+                          taskOutcomeInput === option.value
+                            ? "outcome-option is-selected"
+                            : "outcome-option"
+                        }
+                        onClick={() => setTaskOutcomeInput(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </label>
+              </div>
               <label>
                 Scheduled
                 <input
