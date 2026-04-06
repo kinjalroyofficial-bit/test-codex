@@ -89,3 +89,14 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 test deploy
+
+## Backend API (Node + PostgreSQL)
+
+A lightweight Node API was added under `server/` with PostgreSQL migrations for:
+
+- users (email/password hash)
+- social identity links (Google)
+- tasks
+- verification/reset tokens
+
+See `server/README.md` for setup and endpoints.
