@@ -442,18 +442,27 @@ body.theme-light {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
-  display: grid;
-  place-items: center;
-  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 30;
 }
 
+.task-modal-overlay::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .task-modal {
-  width: min(460px, 100%);
+  width: min(980px, 100%);
   background: #fff;
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  margin: auto 0;
 }
 
 .task-modal h3 {
@@ -464,7 +473,14 @@ body.theme-light {
 .task-modal-form {
   margin-top: 8px;
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.task-form-section.section-basic,
+.task-form-section.section-mood,
+.task-modal-actions {
+  grid-column: 1 / -1;
 }
 
 .task-form-section {
@@ -652,6 +668,7 @@ body.theme-light {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  margin-top: 2px;
 }
 
 .task-modal-actions button {
@@ -1291,6 +1308,18 @@ body:not(.theme-light) .theme-slider {
   }
 
   .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-modal-overlay {
+    padding: 10px;
+  }
+
+  .task-modal {
+    width: 100%;
+  }
+
+  .task-modal-form {
     grid-template-columns: 1fr;
   }
 

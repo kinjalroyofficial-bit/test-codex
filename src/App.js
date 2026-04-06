@@ -200,6 +200,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (!isTaskModalOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isTaskModalOpen]);
+
   const formatTimeAgo = (timestamp) => {
     const diffMs = now - (timestamp || now);
     const minute = 60 * 1000;
@@ -764,7 +773,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           <div className="task-modal">
             <h3>{taskModalMode === "create" ? "Create task" : "Edit task"}</h3>
             <form onSubmit={handleTaskModalSubmit} className="task-modal-form">
-              <section className="task-form-section">
+              <section className="task-form-section section-basic">
                 <h4>Basic Details</h4>
                 <label>
                   Task title
@@ -851,7 +860,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   </label>
                 </div>
               </section>
-              <section className="task-form-section">
+              <section className="task-form-section section-mood">
                 <h4>Mood During Activity</h4>
                 <fieldset className="task-mood-fieldset">
                   <legend>Mood</legend>
