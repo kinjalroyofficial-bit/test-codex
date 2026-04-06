@@ -29,6 +29,44 @@ body {
   color: #4a5568;
 }
 
+.task-form {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.task-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.task-form input {
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px;
+  font-size: 0.9rem;
+}
+
+.task-form button,
+.edit-btn {
+  border: 0;
+  border-radius: 10px;
+  background: #4f46e5;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .controls-row {
   display: flex;
   flex-wrap: wrap;
@@ -71,12 +109,34 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 190px;
+  min-height: 230px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .task-card h2 {
   margin: 0;
   font-size: 1.1rem;
+}
+
+.delete-cross {
+  border: 0;
+  background: #e11d48;
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .task-card p {
@@ -90,7 +150,7 @@ body {
 .status-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 8px;
   margin-top: auto;
 }
@@ -102,7 +162,7 @@ body {
   justify-content: center;
   --hue: 220deg;
   --width: 15rem;
-  transform: scale(0.34);
+  transform: scale(0.28);
   transform-origin: left bottom;
   --accent-hue: 22deg;
   --duration: 0.6s;
@@ -122,7 +182,6 @@ body {
   width: var(--width);
   height: calc(var(--width) / 2.5);
   border-radius: var(--width);
-  transform: scaleX(-1);
   box-shadow: inset 10px 10px 10px hsl(var(--hue) 20% 80%),
     inset -10px -10px 10px hsl(var(--hue) 20% 93%);
 }
@@ -236,39 +295,37 @@ body {
 .status-text {
   font-size: 0.9rem;
   font-weight: 700;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
 }
 
 .status-text.is-done {
   color: #047857;
+  background: #a7f3d0;
 }
 
 .status-text.not-done {
-  color: #b91c1c;
+  color: #334155;
+  background: #cbd5e1;
 }
 
-@media (max-width: 1100px) {
-  .cards-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   .cards-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .task-form {
+    grid-template-columns: 1fr;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .app {
     padding: 20px 14px 24px;
   }
 
   .cards-grid {
     grid-template-columns: 1fr;
-  }
-
-  .status-row {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }

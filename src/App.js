@@ -43,6 +43,9 @@ function App() {
   const [cards, setCards] = useState(mockCards);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
+  const [titleInput, setTitleInput] = useState("");
+  const [descriptionInput, setDescriptionInput] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
   const toggleStatus = (cardId) => {
     setCards((currentCards) =>
@@ -50,6 +53,56 @@ function App() {
         card.id === cardId ? { ...card, done: !card.done } : card
       )
     );
+  };
+
+  const handleDelete = (cardId) => {
+    setCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
+
+    if (editingId === cardId) {
+      setEditingId(null);
+      setTitleInput("");
+      setDescriptionInput("");
+    }
+  };
+
+  const handleEdit = (card) => {
+    setEditingId(card.id);
+    setTitleInput(card.title);
+    setDescriptionInput(card.description || "");
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const trimmedTitle = titleInput.trim();
+    const trimmedDescription = descriptionInput.trim();
+
+    if (!trimmedTitle) return;
+
+    if (editingId) {
+      setCards((currentCards) =>
+        currentCards.map((card) =>
+          card.id === editingId
+            ? { ...card, title: trimmedTitle, description: trimmedDescription }
+            : card
+        )
+      );
+    } else {
+      setCards((currentCards) => [
+        {
+          id: Date.now(),
+          createdAt: Date.now(),
+          title: trimmedTitle,
+          description: trimmedDescription,
+          done: false,
+        },
+        ...currentCards,
+      ]);
+    }
+
+    setEditingId(null);
+    setTitleInput("");
+    setDescriptionInput("");
   };
 
   const visibleCards = useMemo(() => {
@@ -82,6 +135,29 @@ function App() {
         <h1>Project Progress Board</h1>
         <p>Track the latest updates with quick Done/Not Done toggles.</p>
 
+        <form className="task-form" onSubmit={handleSubmit}>
+          <label>
+            Task name
+            <input
+              type="text"
+              value={titleInput}
+              onChange={(event) => setTitleInput(event.target.value)}
+              placeholder="Enter task title"
+              required
+            />
+          </label>
+          <label>
+            Task details
+            <input
+              type="text"
+              value={descriptionInput}
+              onChange={(event) => setDescriptionInput(event.target.value)}
+              placeholder="Optional description"
+            />
+          </label>
+          <button type="submit">{editingId ? "Update task" : "Add task"}</button>
+        </form>
+
         <div className="controls-row">
           <label>
             Status
@@ -112,7 +188,22 @@ function App() {
       <section className="cards-grid" aria-label="Task cards">
         {visibleCards.map((card) => (
           <article className="task-card" key={card.id}>
-            <h2>{card.title}</h2>
+            <div className="card-header">
+              <h2>{card.title}</h2>
+              <button
+                type="button"
+                className="delete-cross"
+                aria-label={`Delete ${card.title}`}
+                onClick={() => handleDelete(card.id)}
+              >
+                ×
+              </button>
+            </div>
+
+            <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
+              {card.done ? "Done" : "Not Done"}
+            </span>
+
             <p>{card.description}</p>
 
             <div className="status-row">
@@ -129,9 +220,13 @@ function App() {
                   <div className="button" />
                 </label>
               </div>
-              <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
-                {card.done ? "Done" : "Not Done"}
-              </span>
+              <button
+                type="button"
+                className="edit-btn"
+                onClick={() => handleEdit(card)}
+              >
+                Edit
+              </button>
             </div>
           </article>
         ))}
