@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 const mockCards = [
@@ -39,7 +39,108 @@ const mockCards = [
   },
 ];
 
-function App() {
+function LoginScreen({ onAuthSuccess }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const submitLabel = mode === "login" ? "Sign in" : "Create account";
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(
+        mode === "login" ? "/api/auth/login" : "/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Authentication failed");
+      }
+
+      onAuthSuccess(data.user);
+    } catch (submitError) {
+      setError(submitError.message || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="auth-page">
+      <section className="auth-card" aria-label="Login form">
+        <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+        <p>Sign in to access the Project Progress Board.</p>
+
+        <div className="auth-toggle" role="tablist" aria-label="Login switch">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "login"}
+            className={mode === "login" ? "is-active" : ""}
+            onClick={() => setMode("login")}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "register"}
+            className={mode === "register" ? "is-active" : ""}
+            onClick={() => setMode("register")}
+          >
+            Sign up
+          </button>
+        </div>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label>
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              required
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter password"
+              minLength={6}
+              required
+            />
+          </label>
+
+          {error ? <p className="auth-error">{error}</p> : null}
+
+          <button type="submit" className="auth-submit" disabled={isSubmitting}>
+            {isSubmitting ? "Please wait..." : submitLabel}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
+
+function BoardScreen({ user, onLogout }) {
   const [cards, setCards] = useState(mockCards);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
@@ -132,8 +233,18 @@ function App() {
   return (
     <main className="app">
       <header className="app__header">
-        <h1>Project Progress Board</h1>
-        <p>Track the latest updates with quick Done/Not Done toggles.</p>
+        <div className="app__topbar">
+          <div>
+            <h1>Project Progress Board</h1>
+            <p>Track the latest updates with quick Done/Not Done toggles.</p>
+          </div>
+          <div className="auth-user-box">
+            <span>{user?.email || "Signed in"}</span>
+            <button type="button" onClick={onLogout}>
+              Logout
+            </button>
+          </div>
+        </div>
 
         <form className="task-form" onSubmit={handleSubmit}>
           <label>
@@ -233,6 +344,63 @@ function App() {
       </section>
     </main>
   );
+}
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const loadSession = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          setUser(null);
+          return;
+        }
+
+        const data = await response.json();
+        setUser(data.user || null);
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    loadSession();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      setUser(null);
+    }
+  };
+
+  if (isCheckingAuth) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <h1>Checking session...</h1>
+          <p>Please wait.</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen onAuthSuccess={setUser} />;
+  }
+
+  return <BoardScreen user={user} onLogout={handleLogout} />;
 }
 
 export default App;

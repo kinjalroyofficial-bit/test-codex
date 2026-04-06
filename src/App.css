@@ -9,6 +9,97 @@ body {
   color: #1a2332;
 }
 
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 20px 35px rgba(20, 35, 60, 0.12);
+}
+
+.auth-card h1 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.auth-card p {
+  margin: 10px 0 0;
+  color: #475569;
+}
+
+.auth-toggle {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.auth-toggle button {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-toggle button.is-active {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.auth-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 6px;
+  color: #1e293b;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.auth-form input {
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
+.auth-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.auth-submit {
+  border: 0;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 11px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-submit:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
 .app {
   min-height: 100vh;
   padding: 28px 20px 32px;
@@ -17,6 +108,14 @@ body {
 .app__header {
   margin: 0 auto 22px;
   max-width: 1200px;
+}
+
+.app__topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .app__header h1 {
@@ -64,6 +163,32 @@ body {
   padding: 10px 14px;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.auth-user-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.auth-user-box span {
+  font-size: 0.88rem;
+  color: #334155;
+  max-width: 220px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.auth-user-box button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 6px 10px;
   cursor: pointer;
 }
 
@@ -317,6 +442,11 @@ body {
 
   .task-form {
     grid-template-columns: 1fr;
+  }
+
+  .auth-user-box {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

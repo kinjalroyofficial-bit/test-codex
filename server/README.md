@@ -53,3 +53,14 @@ npm run api
 - Login endpoints are rate-limited to 10 requests / 15 minutes.
 - Token endpoints currently return token in JSON for local development convenience.
   In production, send these via email/SMS and never expose raw tokens in responses.
+
+## Frontend integration
+
+The React app now calls backend auth endpoints at `/api/...` and expects the API server on port `4000` in local development.
+
+Run in two terminals:
+
+```bash
+npm run api
+npm start
+```
