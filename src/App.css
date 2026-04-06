@@ -574,101 +574,34 @@ body.theme-light {
   color: #334155;
 }
 
-.mood-discrete-slider {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding: 2px 20px 0;
-  touch-action: none;
-}
-
-.mood-discrete-slider::before {
-  content: "";
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  top: 13px;
-  height: 2px;
-  border-radius: 999px;
-  background: #f472b6;
-  opacity: 0.45;
-}
-
-.mood-active-blob {
-  position: absolute;
-  top: -1px;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #ec4899;
-  box-shadow: 0 0 0 3px #f9a8d4;
+.mood-simple-slider {
   display: grid;
-  place-items: center;
-  transition: left 220ms ease-in-out;
-  z-index: 2;
-  pointer-events: none;
+  gap: 10px;
 }
 
-.mood-active-blob {
-  pointer-events: auto;
-  cursor: grab;
-}
-
-.mood-active-blob:active {
-  cursor: grabbing;
-}
-
-.mood-active-emoji {
-  font-size: 0.9rem;
-  line-height: 1;
-}
-
-.mood-option {
-  position: relative;
-  z-index: 3;
-  border: 0;
-  background: transparent;
-  border-radius: 999px;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: inline-grid;
-  place-items: center;
+.mood-simple-slider input[type="range"] {
+  width: 100%;
+  accent-color: #ec4899;
   cursor: pointer;
 }
 
-.mood-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #f472b6;
+.mood-simple-labels {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.mood-label {
-  position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
+.mood-simple-label {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
   font-size: 0.64rem;
-  color: #334155;
+  color: #64748b;
 }
 
-.mood-option.is-selected {
-  width: 24px;
-  height: 24px;
-}
-
-.mood-option.is-selected .mood-dot {
-  opacity: 0;
-}
-
-.mood-option.is-selected .mood-label {
-  top: 30px;
-  font-size: 0.65rem;
+.mood-simple-label.is-selected {
+  color: #be185d;
   font-weight: 700;
 }
 
@@ -1409,21 +1342,12 @@ body:not(.theme-light) .outcome-option.is-selected {
   border-color: #818cf8;
 }
 
-body:not(.theme-light) .mood-option {
-  background: transparent;
-}
-
-body:not(.theme-light) .mood-active-blob {
-  background: #ec4899;
-  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.35);
-}
-
-body:not(.theme-light) .mood-dot {
-  background: #f472b6;
-}
-
-body:not(.theme-light) .mood-label {
+body:not(.theme-light) .mood-simple-label {
   color: #e5e7eb;
+}
+
+body:not(.theme-light) .mood-simple-label.is-selected {
+  color: #f9a8d4;
 }
 
 body:not(.theme-light) .theme-slider {

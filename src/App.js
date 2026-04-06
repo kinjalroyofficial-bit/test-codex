@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
@@ -196,8 +196,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [customCategoryNames, setCustomCategoryNames] = useState([]);
   const [isCustomCategoryModalOpen, setIsCustomCategoryModalOpen] = useState(false);
   const [customCategoryNameInput, setCustomCategoryNameInput] = useState("");
-  const moodSliderRef = useRef(null);
-  const isMoodDraggingRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -457,30 +455,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       });
       return [...nextMap.values()].sort((a, b) => a.name.localeCompare(b.name));
     });
-  };
-
-  const updateMoodFromClientX = (clientX) => {
-    const sliderRect = moodSliderRef.current?.getBoundingClientRect();
-    if (!sliderRect) return;
-    const relative = (clientX - sliderRect.left) / sliderRect.width;
-    const clamped = Math.max(0, Math.min(1, relative));
-    const nextIndex = Math.round(clamped * (MOOD_OPTIONS.length - 1));
-    setTaskMoodInput(MOOD_OPTIONS[nextIndex].value);
-  };
-
-  const handleMoodDragStart = (event) => {
-    isMoodDraggingRef.current = true;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    updateMoodFromClientX(event.clientX);
-  };
-
-  const handleMoodDragMove = (event) => {
-    if (!isMoodDraggingRef.current) return;
-    updateMoodFromClientX(event.clientX);
-  };
-
-  const handleMoodDragEnd = () => {
-    isMoodDraggingRef.current = false;
   };
 
   const handleTaskModalSubmit = async (event) => {
@@ -932,47 +906,34 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <h4>Mood During Activity</h4>
                 <fieldset className="task-mood-fieldset">
                   <legend>Mood</legend>
-                  <div
-                    className="mood-discrete-slider"
-                    role="radiogroup"
-                    aria-label="Mood"
-                    ref={moodSliderRef}
-                    onPointerDown={(event) => updateMoodFromClientX(event.clientX)}
-                    onPointerMove={handleMoodDragMove}
-                    onPointerUp={handleMoodDragEnd}
-                    onPointerCancel={handleMoodDragEnd}
-                    onPointerLeave={handleMoodDragEnd}
-                  >
-                    <span
-                      className="mood-active-blob"
-                      style={{
-                        left: `${(selectedMoodIndex * 100) / (MOOD_OPTIONS.length - 1)}%`,
+                  <div className="mood-simple-slider">
+                    <input
+                      type="range"
+                      min="0"
+                      max={MOOD_OPTIONS.length - 1}
+                      step="1"
+                      value={selectedMoodIndex}
+                      onChange={(event) => {
+                        const moodIndex = Number(event.target.value);
+                        setTaskMoodInput(MOOD_OPTIONS[moodIndex]?.value || "neutral");
                       }}
-                      aria-hidden="true"
-                      onPointerDown={handleMoodDragStart}
-                    >
-                      <span className="mood-active-emoji">
-                        {MOOD_OPTIONS[selectedMoodIndex]?.icon || "😐"}
-                      </span>
-                    </span>
-                    {MOOD_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={taskMoodInput === option.value}
-                        aria-label={option.label}
-                        className={
-                          taskMoodInput === option.value
-                            ? "mood-option is-selected"
-                            : "mood-option"
-                        }
-                        onClick={() => setTaskMoodInput(option.value)}
-                      >
-                        <span className="mood-dot" aria-hidden="true" />
-                        <span className="mood-label">{option.label}</span>
-                      </button>
-                    ))}
+                      aria-label="Mood"
+                    />
+                    <div className="mood-simple-labels" aria-hidden="true">
+                      {MOOD_OPTIONS.map((option) => (
+                        <span
+                          key={option.value}
+                          className={
+                            taskMoodInput === option.value
+                              ? "mood-simple-label is-selected"
+                              : "mood-simple-label"
+                          }
+                        >
+                          <span>{option.icon}</span>
+                          <span>{option.label}</span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </fieldset>
               </section>
