@@ -123,6 +123,36 @@ async function syncTaskCategories(taskId, categoryIds, userId) {
   }
 }
 
+async function ensureCustomCategoryIds(userId, customCategories) {
+  const ids = [];
+  const cleanedNames = [...new Set((customCategories || []).map((name) => `${name}`.trim()))]
+    .filter(Boolean);
+
+  for (const name of cleanedNames) {
+    const existing = await pool.query(
+      `SELECT id FROM categories
+       WHERE user_id = $1 AND LOWER(name) = LOWER($2)
+       LIMIT 1`,
+      [userId, name]
+    );
+
+    if (existing.rows[0]) {
+      ids.push(existing.rows[0].id);
+      continue;
+    }
+
+    const inserted = await pool.query(
+      `INSERT INTO categories (user_id, name)
+       VALUES ($1, $2)
+       RETURNING id`,
+      [userId, name]
+    );
+    ids.push(inserted.rows[0].id);
+  }
+
+  return ids;
+}
+
 app.post('/api/auth/register', loginLimiter, async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -412,6 +442,7 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     scheduledFor = null,
     scheduled_for: scheduledForSnake = null,
     categoryIds = [],
+    customCategories = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
 
@@ -436,7 +467,12 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     ]
   );
   const createdTask = result.rows[0];
-  await syncTaskCategories(createdTask.id, categoryIds, req.session.userId);
+  const customCategoryIds = await ensureCustomCategoryIds(
+    req.session.userId,
+    customCategories
+  );
+  const mergedCategoryIds = [...new Set([...(categoryIds || []), ...customCategoryIds])];
+  await syncTaskCategories(createdTask.id, mergedCategoryIds, req.session.userId);
   const categoriesByTaskId = await getCategoriesByTaskIds([createdTask.id], req.session.userId);
 
   return res.status(201).json({
@@ -457,6 +493,7 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
     scheduledFor,
     scheduled_for: scheduledForSnake,
     categoryIds,
+    customCategories = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
 
@@ -492,7 +529,12 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
   }
 
   if (Array.isArray(categoryIds)) {
-    await syncTaskCategories(taskId, categoryIds, req.session.userId);
+    const customCategoryIds = await ensureCustomCategoryIds(
+      req.session.userId,
+      customCategories
+    );
+    const mergedCategoryIds = [...new Set([...(categoryIds || []), ...customCategoryIds])];
+    await syncTaskCategories(taskId, mergedCategoryIds, req.session.userId);
   }
 
   const categoriesByTaskId = await getCategoriesByTaskIds([taskId], req.session.userId);

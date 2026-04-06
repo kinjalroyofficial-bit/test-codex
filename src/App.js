@@ -393,6 +393,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     );
   };
 
+  const mergeAvailableCategories = (categories) => {
+    setAvailableCategories((currentCategories) => {
+      const nextMap = new Map(currentCategories.map((item) => [item.id, item]));
+      (categories || []).forEach((category) => {
+        if (category?.id) {
+          nextMap.set(category.id, category);
+        }
+      });
+      return [...nextMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+    });
+  };
+
   const handleTaskModalSubmit = async (event) => {
     event.preventDefault();
     const trimmedTitle = taskTitleInput.trim();
@@ -406,38 +418,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setBoardError("");
 
     try {
-      let mergedCategoryIds = [...selectedCategoryIds];
       const customNames = customCategoryInput
         .split(",")
         .map((name) => name.trim())
         .filter(Boolean);
-
-      for (const customName of customNames) {
-        const categoryResponse = await fetch(buildApiUrl("/api/categories"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ name: customName }),
-        });
-        const categoryData = await parseApiResponse(categoryResponse);
-
-        if (!categoryResponse.ok) {
-          throw new Error(categoryData?.error || "Failed to create custom category");
-        }
-
-        const category = categoryData?.category;
-        if (category?.id) {
-          mergedCategoryIds = [...new Set([...mergedCategoryIds, category.id])];
-          setAvailableCategories((currentCategories) => {
-            if (currentCategories.some((item) => item.id === category.id)) {
-              return currentCategories;
-            }
-            return [...currentCategories, category].sort((a, b) =>
-              a.name.localeCompare(b.name)
-            );
-          });
-        }
-      }
 
       if (taskModalMode === "create") {
         const response = await fetch(buildApiUrl("/api/tasks"), {
@@ -451,7 +435,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             mood: taskMoodInput,
             intent: taskIntentInput,
             outcome: taskOutcomeInput,
-            categoryIds: mergedCategoryIds,
+            categoryIds: selectedCategoryIds,
+            customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
           }),
@@ -463,6 +448,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         }
 
         const createdTask = data?.task;
+        mergeAvailableCategories(createdTask?.categories || []);
         const nextCard = {
           id: createdTask?.id || Date.now(),
           createdAt: createdTask?.created_at
@@ -490,7 +476,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             mood: taskMoodInput,
             intent: taskIntentInput,
             outcome: taskOutcomeInput,
-            categoryIds: mergedCategoryIds,
+            categoryIds: selectedCategoryIds,
+            customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
           }),
@@ -502,6 +489,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         }
 
         const updatedTask = data?.task;
+        mergeAvailableCategories(updatedTask?.categories || []);
         setCards((currentCards) =>
           currentCards.map((card) =>
             card.id === activeTaskId
