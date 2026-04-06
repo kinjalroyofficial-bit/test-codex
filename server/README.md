@@ -58,6 +58,14 @@ npm run api
 
 The React app now calls backend auth endpoints at `/api/...` and expects the API server on port `4000` in local development.
 
+If your frontend and API are hosted on different origins in production, set:
+
+```bash
+REACT_APP_API_BASE_URL=https://your-api-domain.example.com
+```
+
+Then rebuild and redeploy the frontend so auth requests resolve to the correct backend origin instead of the static site host.
+
 Run in two terminals:
 
 ```bash

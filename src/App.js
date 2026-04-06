@@ -1,6 +1,35 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
+const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+
+const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
+
+async function parseApiResponse(response) {
+  const rawBody = await response.text();
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!rawBody) {
+    return null;
+  }
+
+  if (contentType.includes("application/json")) {
+    return JSON.parse(rawBody);
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch (error) {
+    if (!response.ok) {
+      throw new Error(
+        `Request failed with status ${response.status}. API returned non-JSON content.`
+      );
+    }
+
+    throw new Error("API returned non-JSON content");
+  }
+}
+
 const mockCards = [
   {
     id: 1,
@@ -55,7 +84,7 @@ function LoginScreen({ onAuthSuccess }) {
 
     try {
       const response = await fetch(
-        mode === "login" ? "/api/auth/login" : "/api/auth/register",
+        buildApiUrl(mode === "login" ? "/api/auth/login" : "/api/auth/register"),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -64,10 +93,10 @@ function LoginScreen({ onAuthSuccess }) {
         }
       );
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Authentication failed");
+        throw new Error(data?.error || "Authentication failed");
       }
 
       onAuthSuccess(data.user);
@@ -353,7 +382,7 @@ function App() {
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch(buildApiUrl("/api/auth/me"), {
           credentials: "include",
         });
 
@@ -362,7 +391,7 @@ function App() {
           return;
         }
 
-        const data = await response.json();
+        const data = await parseApiResponse(response);
         setUser(data.user || null);
       } catch (error) {
         setUser(null);
@@ -376,7 +405,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
+      await fetch(buildApiUrl("/api/auth/logout"), {
         method: "POST",
         credentials: "include",
       });
