@@ -32,6 +32,7 @@ async function parseApiResponse(response) {
 
 function LoginScreen({ onAuthSuccess }) {
   const [mode, setMode] = useState("login");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,7 +52,11 @@ function LoginScreen({ onAuthSuccess }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({
+            name: mode === "register" ? name : undefined,
+            email,
+            password,
+          }),
         }
       );
 
@@ -97,6 +102,19 @@ function LoginScreen({ onAuthSuccess }) {
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
+          {mode === "register" ? (
+            <label>
+              Name
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Your full name"
+                required
+              />
+            </label>
+          ) : null}
+
           <label>
             Email
             <input
@@ -391,7 +409,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       <header className="app__header">
         <div className="app__topbar">
           <div>
-            <h1>Personal Task Tracker</h1>
+            <h1>Welcome {user?.full_name || "back"}.</h1>
             <p>Track the latest updates with quick Done/Not Done toggles.</p>
           </div>
           <div className="user-panel">
