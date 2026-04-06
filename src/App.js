@@ -5,6 +5,30 @@ const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "
 
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
 
+const MOOD_OPTIONS = [
+  { value: "energetic", label: "Energetic" },
+  { value: "happy", label: "Happy" },
+  { value: "neutral", label: "Neutral" },
+  { value: "tired", label: "Tired" },
+  { value: "stressed", label: "Stressed" },
+  { value: "depressed", label: "Depressed" },
+];
+
+const INTENT_OPTIONS = [
+  { value: "productive", label: "Productive" },
+  { value: "maintenance", label: "Maintenance" },
+  { value: "leisure", label: "Leisure" },
+  { value: "escapism", label: "Escapism" },
+  { value: "compulsive", label: "Compulsive" },
+  { value: "harmful", label: "Harmful" },
+];
+
+const OUTCOME_OPTIONS = [
+  { value: "positive", label: "👍" },
+  { value: "neutral", label: "😐" },
+  { value: "negative", label: "👎" },
+];
+
 async function parseApiResponse(response) {
   const rawBody = await response.text();
   const contentType = response.headers.get("content-type") || "";
@@ -162,6 +186,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [taskTitleInput, setTaskTitleInput] = useState("");
   const [taskDescriptionInput, setTaskDescriptionInput] = useState("");
   const [taskScheduledInput, setTaskScheduledInput] = useState("");
+  const [taskMoodInput, setTaskMoodInput] = useState("neutral");
+  const [taskIntentInput, setTaskIntentInput] = useState("productive");
+  const [taskOutcomeInput, setTaskOutcomeInput] = useState("neutral");
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [customCategoryInput, setCustomCategoryInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -213,6 +243,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: task.title,
           description: task.description || "",
           scheduledFor: task.scheduled_for || null,
+          mood: task.mood || "neutral",
+          intent: task.intent || "productive",
+          outcome: task.outcome || "neutral",
+          categories: task.categories || [],
           done: task.status === "done",
         }));
 
@@ -225,6 +259,23 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     };
 
     loadTasks();
+  }, [user?.id]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch(buildApiUrl("/api/categories"), {
+          credentials: "include",
+        });
+        const data = await parseApiResponse(response);
+        if (!response.ok) return;
+        setAvailableCategories(data?.categories || []);
+      } catch (error) {
+        setAvailableCategories([]);
+      }
+    };
+
+    loadCategories();
   }, [user?.id]);
 
   const toggleStatus = async (cardId) => {
@@ -256,6 +307,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 title: updatedTask?.title || card.title,
                 description: updatedTask?.description || "",
                 scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
+                mood: updatedTask?.mood || card.mood || "neutral",
+                intent: updatedTask?.intent || card.intent || "productive",
+                outcome: updatedTask?.outcome || card.outcome || "neutral",
+                categories: updatedTask?.categories || card.categories || [],
                 done: (updatedTask?.status || "todo") === "done",
               }
             : card
@@ -293,6 +348,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTitleInput("");
     setTaskDescriptionInput("");
     setTaskScheduledInput("");
+    setTaskMoodInput("neutral");
+    setTaskIntentInput("productive");
+    setTaskOutcomeInput("neutral");
+    setSelectedCategoryIds([]);
+    setCustomCategoryInput("");
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -303,6 +363,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTitleInput(card.title);
     setTaskDescriptionInput(card.description || "");
     setTaskScheduledInput(toDateTimeInputValue(card.scheduledFor));
+    setTaskMoodInput(card.mood || "neutral");
+    setTaskIntentInput(card.intent || "productive");
+    setTaskOutcomeInput(card.outcome || "neutral");
+    setSelectedCategoryIds((card.categories || []).map((category) => category.id));
+    setCustomCategoryInput("");
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -313,6 +378,19 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTitleInput("");
     setTaskDescriptionInput("");
     setTaskScheduledInput("");
+    setTaskMoodInput("neutral");
+    setTaskIntentInput("productive");
+    setTaskOutcomeInput("neutral");
+    setSelectedCategoryIds([]);
+    setCustomCategoryInput("");
+  };
+
+  const toggleCategorySelection = (categoryId) => {
+    setSelectedCategoryIds((currentIds) =>
+      currentIds.includes(categoryId)
+        ? currentIds.filter((id) => id !== categoryId)
+        : [...currentIds, categoryId]
+    );
   };
 
   const handleTaskModalSubmit = async (event) => {
@@ -328,6 +406,39 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setBoardError("");
 
     try {
+      let mergedCategoryIds = [...selectedCategoryIds];
+      const customNames = customCategoryInput
+        .split(",")
+        .map((name) => name.trim())
+        .filter(Boolean);
+
+      for (const customName of customNames) {
+        const categoryResponse = await fetch(buildApiUrl("/api/categories"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ name: customName }),
+        });
+        const categoryData = await parseApiResponse(categoryResponse);
+
+        if (!categoryResponse.ok) {
+          throw new Error(categoryData?.error || "Failed to create custom category");
+        }
+
+        const category = categoryData?.category;
+        if (category?.id) {
+          mergedCategoryIds = [...new Set([...mergedCategoryIds, category.id])];
+          setAvailableCategories((currentCategories) => {
+            if (currentCategories.some((item) => item.id === category.id)) {
+              return currentCategories;
+            }
+            return [...currentCategories, category].sort((a, b) =>
+              a.name.localeCompare(b.name)
+            );
+          });
+        }
+      }
+
       if (taskModalMode === "create") {
         const response = await fetch(buildApiUrl("/api/tasks"), {
           method: "POST",
@@ -337,6 +448,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: trimmedTitle,
             description: trimmedDescription || null,
             status: "todo",
+            mood: taskMoodInput,
+            intent: taskIntentInput,
+            outcome: taskOutcomeInput,
+            categoryIds: mergedCategoryIds,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
           }),
@@ -356,6 +471,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: createdTask?.title || trimmedTitle,
           description: createdTask?.description || "",
           scheduledFor: createdTask?.scheduled_for || scheduledForValue,
+          mood: createdTask?.mood || taskMoodInput,
+          intent: createdTask?.intent || taskIntentInput,
+          outcome: createdTask?.outcome || taskOutcomeInput,
+          categories: createdTask?.categories || [],
           done: (createdTask?.status || "todo") === "done",
         };
 
@@ -368,6 +487,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           body: JSON.stringify({
             title: trimmedTitle,
             description: trimmedDescription,
+            mood: taskMoodInput,
+            intent: taskIntentInput,
+            outcome: taskOutcomeInput,
+            categoryIds: mergedCategoryIds,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
           }),
@@ -387,6 +510,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   title: updatedTask?.title || trimmedTitle,
                   description: updatedTask?.description || "",
                   scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
+                  mood: updatedTask?.mood || taskMoodInput,
+                  intent: updatedTask?.intent || taskIntentInput,
+                  outcome: updatedTask?.outcome || taskOutcomeInput,
+                  categories: updatedTask?.categories || card.categories || [],
                   done: (updatedTask?.status || "todo") === "done",
                 }
               : card
@@ -552,6 +679,20 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </div>
 
               <p className="task-description">{card.description}</p>
+              {card.categories?.length ? (
+                <div className="task-category-tags">
+                  {card.categories.map((category) => (
+                    <span className="task-category-tag" key={`${card.id}-${category.id}`}>
+                      {category.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              <p className="task-attributes">
+                Mood: <strong>{card.mood || "neutral"}</strong> · Intent:{" "}
+                <strong>{card.intent || "productive"}</strong> · Outcome:{" "}
+                <strong>{card.outcome || "neutral"}</strong>
+              </p>
               {card.scheduledFor ? (
                 <p className="task-schedule">
                   Scheduled: <strong>{formatScheduledDate(card.scheduledFor)}</strong>
@@ -609,6 +750,76 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   placeholder="Optional description"
                   rows={3}
                 />
+              </label>
+              <label>
+                Categories
+                <div className="category-chip-picker">
+                  {availableCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className={
+                        selectedCategoryIds.includes(category.id)
+                          ? "category-chip is-selected"
+                          : "category-chip"
+                      }
+                      onClick={() => toggleCategorySelection(category.id)}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={customCategoryInput}
+                  onChange={(event) => setCustomCategoryInput(event.target.value)}
+                  placeholder="Add custom category (comma separated)"
+                />
+              </label>
+              <label>
+                Mood
+                <select
+                  value={taskMoodInput}
+                  onChange={(event) => setTaskMoodInput(event.target.value)}
+                >
+                  {MOOD_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Intent
+                <select
+                  value={taskIntentInput}
+                  onChange={(event) => setTaskIntentInput(event.target.value)}
+                >
+                  {INTENT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Outcome
+                <div className="outcome-options">
+                  {OUTCOME_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={
+                        taskOutcomeInput === option.value
+                          ? "outcome-option is-selected"
+                          : "outcome-option"
+                      }
+                      onClick={() => setTaskOutcomeInput(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </label>
               <label>
                 Scheduled

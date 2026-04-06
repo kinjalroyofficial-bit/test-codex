@@ -365,6 +365,26 @@ body.theme-light {
   color: #64748b;
 }
 
+.task-attributes {
+  font-size: 0.72rem;
+  color: #475569;
+}
+
+.task-category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.task-category-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #065f46;
+}
+
 .status-row {
   display: flex;
   align-items: flex-end;
@@ -456,7 +476,8 @@ body.theme-light {
 }
 
 .task-modal-form input,
-.task-modal-form textarea {
+.task-modal-form textarea,
+.task-modal-form select {
   border: 1px solid #94a3b8;
   border-radius: 8px;
   background: #fff;
@@ -465,6 +486,47 @@ body.theme-light {
   font-size: 0.9rem;
   font-family: inherit;
   resize: vertical;
+}
+
+.category-chip-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.category-chip {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.category-chip.is-selected {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.outcome-options {
+  display: flex;
+  gap: 8px;
+}
+
+.outcome-option {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.outcome-option.is-selected {
+  border-color: #4f46e5;
+  background: #e0e7ff;
 }
 
 .task-modal-actions {
@@ -988,11 +1050,21 @@ body:not(.theme-light) .task-age {
   color: #94a3b8;
 }
 
+body:not(.theme-light) .task-category-tag {
+  background: #14532d;
+  color: #dcfce7;
+}
+
+body:not(.theme-light) .task-attributes {
+  color: #cbd5e1;
+}
+
 body:not(.theme-light) .task-form input,
 body:not(.theme-light) .inline-edit-form input,
 body:not(.theme-light) .auth-form input,
 body:not(.theme-light) .task-modal-form input,
-body:not(.theme-light) .task-modal-form textarea {
+body:not(.theme-light) .task-modal-form textarea,
+body:not(.theme-light) .task-modal-form select {
   background: #111827;
   color: #f3f4f6;
   border-color: #64748b;
@@ -1035,6 +1107,28 @@ body:not(.theme-light) .task-modal-actions button[type="submit"] {
   background: #4f46e5;
   color: #fff;
   border-color: #4f46e5;
+}
+
+body:not(.theme-light) .category-chip {
+  background: #1e293b;
+  color: #f3f4f6;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .category-chip.is-selected {
+  background: #1e3a8a;
+  border-color: #60a5fa;
+  color: #dbeafe;
+}
+
+body:not(.theme-light) .outcome-option {
+  background: #1e293b;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .outcome-option.is-selected {
+  background: #312e81;
+  border-color: #818cf8;
 }
 
 body:not(.theme-light) .theme-slider {

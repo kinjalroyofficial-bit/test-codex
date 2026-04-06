@@ -81,6 +81,48 @@ async function ensureUserByEmail(email, fullName = null) {
   return inserted.rows[0];
 }
 
+async function getCategoriesByTaskIds(taskIds, userId) {
+  if (!taskIds.length) return {};
+
+  const result = await pool.query(
+    `SELECT tc.task_id, c.id, c.name
+     FROM task_categories tc
+     JOIN categories c ON c.id = tc.category_id
+     WHERE tc.task_id = ANY($1::uuid[])
+       AND (c.user_id IS NULL OR c.user_id = $2)
+     ORDER BY c.name ASC`,
+    [taskIds, userId]
+  );
+
+  return result.rows.reduce((acc, row) => {
+    if (!acc[row.task_id]) acc[row.task_id] = [];
+    acc[row.task_id].push({ id: row.id, name: row.name });
+    return acc;
+  }, {});
+}
+
+async function syncTaskCategories(taskId, categoryIds, userId) {
+  await pool.query('DELETE FROM task_categories WHERE task_id = $1', [taskId]);
+
+  if (!categoryIds?.length) return;
+
+  const validCategories = await pool.query(
+    `SELECT id FROM categories
+     WHERE id = ANY($1::uuid[])
+       AND (user_id IS NULL OR user_id = $2)`,
+    [categoryIds, userId]
+  );
+
+  for (const row of validCategories.rows) {
+    await pool.query(
+      `INSERT INTO task_categories (task_id, category_id)
+       VALUES ($1, $2)
+       ON CONFLICT (task_id, category_id) DO NOTHING`,
+      [taskId, row.id]
+    );
+  }
+}
+
 app.post('/api/auth/register', loginLimiter, async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -299,16 +341,63 @@ app.post('/api/auth/password-reset/confirm', async (req, res) => {
   return res.json({ message: 'Password updated' });
 });
 
+app.get('/api/categories', authRequired, async (req, res) => {
+  const result = await pool.query(
+    `SELECT id, name
+     FROM categories
+     WHERE user_id IS NULL OR user_id = $1
+     ORDER BY name ASC`,
+    [req.session.userId]
+  );
+
+  return res.json({ categories: result.rows });
+});
+
+app.post('/api/categories', authRequired, async (req, res) => {
+  const rawName = req.body?.name || '';
+  const name = rawName.trim();
+  if (!name) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const existing = await pool.query(
+    `SELECT id, name
+     FROM categories
+     WHERE user_id = $1 AND LOWER(name) = LOWER($2)
+     LIMIT 1`,
+    [req.session.userId, name]
+  );
+
+  if (existing.rows[0]) {
+    return res.status(200).json({ category: existing.rows[0] });
+  }
+
+  const result = await pool.query(
+    `INSERT INTO categories (user_id, name)
+     VALUES ($1, $2)
+     RETURNING id, name`,
+    [req.session.userId, name]
+  );
+
+  return res.status(201).json({ category: result.rows[0] });
+});
+
 app.get('/api/tasks', authRequired, async (req, res) => {
   const result = await pool.query(
-    `SELECT id, title, description, status, due_date, scheduled_for, created_at, updated_at
+    `SELECT id, title, description, status, mood, intent, outcome, due_date, scheduled_for, created_at, updated_at
      FROM tasks
      WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY created_at DESC`,
     [req.session.userId]
   );
+  const taskIds = result.rows.map((row) => row.id);
+  const categoriesByTaskId = await getCategoriesByTaskIds(taskIds, req.session.userId);
+  const tasks = result.rows.map((task) => ({
+    ...task,
+    categories: categoriesByTaskId[task.id] || [],
+  }));
 
-  return res.json({ tasks: result.rows });
+  return res.json({ tasks });
 });
 
 app.post('/api/tasks', authRequired, async (req, res) => {
@@ -316,9 +405,13 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     title,
     description = null,
     status = 'todo',
+    mood = null,
+    intent = null,
+    outcome = null,
     dueDate = null,
     scheduledFor = null,
     scheduled_for: scheduledForSnake = null,
+    categoryIds = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
 
@@ -327,19 +420,44 @@ app.post('/api/tasks', authRequired, async (req, res) => {
   }
 
   const result = await pool.query(
-    `INSERT INTO tasks (user_id, title, description, status, due_date, scheduled_for)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, title, description, status, due_date, scheduled_for, created_at, updated_at`,
-    [req.session.userId, title, description, status, dueDate, normalizedScheduledFor]
+    `INSERT INTO tasks (user_id, title, description, status, mood, intent, outcome, due_date, scheduled_for)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for, created_at, updated_at`,
+    [
+      req.session.userId,
+      title,
+      description,
+      status,
+      mood,
+      intent,
+      outcome,
+      dueDate,
+      normalizedScheduledFor,
+    ]
   );
+  const createdTask = result.rows[0];
+  await syncTaskCategories(createdTask.id, categoryIds, req.session.userId);
+  const categoriesByTaskId = await getCategoriesByTaskIds([createdTask.id], req.session.userId);
 
-  return res.status(201).json({ task: result.rows[0] });
+  return res.status(201).json({
+    task: { ...createdTask, categories: categoriesByTaskId[createdTask.id] || [] },
+  });
 });
 
 app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
   const { taskId } = req.params;
-  const { title, description, status, dueDate, scheduledFor, scheduled_for: scheduledForSnake } =
-    req.body;
+  const {
+    title,
+    description,
+    status,
+    mood,
+    intent,
+    outcome,
+    dueDate,
+    scheduledFor,
+    scheduled_for: scheduledForSnake,
+    categoryIds,
+  } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
 
   const result = await pool.query(
@@ -347,19 +465,43 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
      SET title = COALESCE($1, title),
          description = COALESCE($2, description),
          status = COALESCE($3, status),
-         due_date = COALESCE($4, due_date),
-         scheduled_for = COALESCE($5, scheduled_for),
+         mood = COALESCE($4, mood),
+         intent = COALESCE($5, intent),
+         outcome = COALESCE($6, outcome),
+         due_date = COALESCE($7, due_date),
+         scheduled_for = COALESCE($8, scheduled_for),
          updated_at = NOW()
-     WHERE id = $6 AND user_id = $7 AND deleted_at IS NULL
-     RETURNING id, title, description, status, due_date, scheduled_for, created_at, updated_at`,
-    [title, description, status, dueDate, normalizedScheduledFor, taskId, req.session.userId]
+     WHERE id = $9 AND user_id = $10 AND deleted_at IS NULL
+     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for, created_at, updated_at`,
+    [
+      title,
+      description,
+      status,
+      mood,
+      intent,
+      outcome,
+      dueDate,
+      normalizedScheduledFor,
+      taskId,
+      req.session.userId,
+    ]
   );
 
   if (!result.rows[0]) {
     return res.status(404).json({ error: 'Task not found' });
   }
 
-  return res.json({ task: result.rows[0] });
+  if (Array.isArray(categoryIds)) {
+    await syncTaskCategories(taskId, categoryIds, req.session.userId);
+  }
+
+  const categoriesByTaskId = await getCategoriesByTaskIds([taskId], req.session.userId);
+  return res.json({
+    task: {
+      ...result.rows[0],
+      categories: categoriesByTaskId[taskId] || [],
+    },
+  });
 });
 
 app.delete('/api/tasks/:taskId', authRequired, async (req, res) => {
