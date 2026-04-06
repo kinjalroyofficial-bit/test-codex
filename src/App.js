@@ -978,7 +978,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </section>
               <section className="task-form-section">
                 <h4>Completion</h4>
-                <div className="task-attributes-row">
+                <div className="task-attributes-row task-attributes-row-stack">
                   <label>
                     Time taken to complete (minutes)
                     <input

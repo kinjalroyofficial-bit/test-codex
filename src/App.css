@@ -649,7 +649,7 @@ body.theme-light {
 
 .mood-label {
   position: absolute;
-  top: 24px;
+  top: 30px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -667,7 +667,7 @@ body.theme-light {
 }
 
 .mood-option.is-selected .mood-label {
-  top: 24px;
+  top: 30px;
   font-size: 0.65rem;
   font-weight: 700;
 }
