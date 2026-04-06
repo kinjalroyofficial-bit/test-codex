@@ -193,7 +193,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [taskTimeTakenInput, setTaskTimeTakenInput] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
-  const [customCategoryInput, setCustomCategoryInput] = useState("");
+  const [customCategoryNames, setCustomCategoryNames] = useState([]);
+  const [isCustomCategoryModalOpen, setIsCustomCategoryModalOpen] = useState(false);
+  const [customCategoryNameInput, setCustomCategoryNameInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -371,7 +373,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskEstimatedDurationInput("");
     setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
-    setCustomCategoryInput("");
+    setCustomCategoryNames([]);
+    setIsCustomCategoryModalOpen(false);
+    setCustomCategoryNameInput("");
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -390,7 +394,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     );
     setTaskTimeTakenInput(card.timeTakenMinutes ? String(card.timeTakenMinutes) : "");
     setSelectedCategoryIds((card.categories || []).map((category) => category.id));
-    setCustomCategoryInput("");
+    setCustomCategoryNames([]);
+    setIsCustomCategoryModalOpen(false);
+    setCustomCategoryNameInput("");
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -407,7 +413,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskEstimatedDurationInput("");
     setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
-    setCustomCategoryInput("");
+    setCustomCategoryNames([]);
+    setIsCustomCategoryModalOpen(false);
+    setCustomCategoryNameInput("");
   };
 
   const toggleCategorySelection = (categoryId) => {
@@ -416,6 +424,25 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         ? currentIds.filter((id) => id !== categoryId)
         : [...currentIds, categoryId]
     );
+  };
+
+  const openCustomCategoryModal = () => {
+    setCustomCategoryNameInput("");
+    setIsCustomCategoryModalOpen(true);
+  };
+
+  const submitCustomCategory = () => {
+    const normalizedName = customCategoryNameInput.trim();
+    if (!normalizedName) return;
+    setCustomCategoryNames((current) =>
+      current.includes(normalizedName) ? current : [...current, normalizedName]
+    );
+    setCustomCategoryNameInput("");
+    setIsCustomCategoryModalOpen(false);
+  };
+
+  const removeCustomCategory = (name) => {
+    setCustomCategoryNames((current) => current.filter((item) => item !== name));
   };
 
   const mergeAvailableCategories = (categories) => {
@@ -447,10 +474,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setBoardError("");
 
     try {
-      const customNames = customCategoryInput
-        .split(",")
-        .map((name) => name.trim())
-        .filter(Boolean);
+      const customNames = customCategoryNames.map((name) => name.trim()).filter(Boolean);
 
       if (taskModalMode === "create") {
         const response = await fetch(buildApiUrl("/api/tasks"), {
@@ -815,12 +839,26 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       </button>
                     ))}
                   </div>
-                  <input
-                    type="text"
-                    value={customCategoryInput}
-                    onChange={(event) => setCustomCategoryInput(event.target.value)}
-                    placeholder="Add custom category (comma separated)"
-                  />
+                  <div className="category-chip-picker">
+                    {customCategoryNames.map((name) => (
+                      <button
+                        key={`custom-${name}`}
+                        type="button"
+                        className="category-chip is-selected"
+                        onClick={() => removeCustomCategory(name)}
+                        title="Tap to remove custom category"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="category-chip category-chip-custom"
+                      onClick={openCustomCategoryModal}
+                    >
+                      + Custom
+                    </button>
+                  </div>
                 </label>
                 <label>
                   Intent
@@ -931,6 +969,27 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <button type="submit">Submit</button>
               </div>
             </form>
+            {isCustomCategoryModalOpen ? (
+              <div className="inline-modal-backdrop" role="dialog" aria-modal="true">
+                <div className="inline-modal">
+                  <h5>Add custom category</h5>
+                  <input
+                    type="text"
+                    value={customCategoryNameInput}
+                    onChange={(event) => setCustomCategoryNameInput(event.target.value)}
+                    placeholder="Category name"
+                  />
+                  <div className="inline-modal-actions">
+                    <button type="button" onClick={() => setIsCustomCategoryModalOpen(false)}>
+                      Cancel
+                    </button>
+                    <button type="button" onClick={submitCustomCategory}>
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
