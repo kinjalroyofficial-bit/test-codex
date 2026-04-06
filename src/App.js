@@ -111,7 +111,7 @@ function LoginScreen({ onAuthSuccess }) {
     <main className="auth-page">
       <section className="auth-card" aria-label="Login form">
         <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
-        <p>Sign in to access the Project Progress Board.</p>
+        <p>Sign in to access the Personal task manager.</p>
 
         <div className="auth-toggle" role="tablist" aria-label="Login switch">
           <button
