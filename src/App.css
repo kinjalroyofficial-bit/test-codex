@@ -580,8 +580,9 @@ body.theme-light {
 }
 
 .mood-simple-slider input[type="range"] {
-  width: 100%;
-  accent-color: #ec4899;
+  width: 94%;
+  margin-left: 11px;
+  accent-color: #4874ec;
   cursor: pointer;
 }
 
