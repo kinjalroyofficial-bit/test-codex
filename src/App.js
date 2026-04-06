@@ -30,18 +30,13 @@ const OUTCOME_OPTIONS = [
 ];
 
 const CATEGORY_COLORS = {
-  health: "#22c55e",
-  fitness: "#10b981",
-  work: "#3b82f6",
-  learning: "#6366f1",
-  study: "#6366f1",
-  personal: "#a855f7",
-  family: "#f59e0b",
-  finance: "#eab308",
-  chores: "#14b8a6",
-  social: "#ec4899",
-  leisure: "#8b5cf6",
-  travel: "#06b6d4",
+  entertainment: "#2563eb",
+  "financial enrichment": "#16a34a",
+  "mental enrichment": "#dc2626",
+  operational: "#6b7280",
+  "self developement": "#a16207",
+  "social enrichment": "#db2777",
+  wellness: "#06b6d4",
   custom: "#64748b",
 };
 
@@ -94,6 +89,12 @@ const blendCategoryColors = (colors) => {
     g: sum.g / colors.length,
     b: sum.b / colors.length,
   });
+};
+
+const getReadableTextColor = (backgroundHex) => {
+  const { r, g, b } = hexToRgb(backgroundHex);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 155 ? "#111827" : "#ffffff";
 };
 
 async function parseApiResponse(response) {
@@ -877,7 +878,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   ? "category-filter-chip is-active"
                   : "category-filter-chip"
               }
-              style={{ borderColor: category.color }}
+              style={{
+                borderColor: category.color,
+                backgroundColor: category.color,
+                color: getReadableTextColor(category.color),
+              }}
               onClick={() => setCategoryFilter(category.id)}
             >
               <span>{category.name}</span>
@@ -946,15 +951,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   Scheduled: <strong>{formatScheduledDate(card.scheduledFor)}</strong>
                 </p>
               ) : null}
-              {card.estimatedDurationMinutes ? (
-                <p className="task-schedule">
-                  Estimated duration: <strong>{card.estimatedDurationMinutes} min</strong>
-                </p>
-              ) : null}
-              {card.timeTakenMinutes ? (
-                <p className="task-schedule">
-                  Completion time: <strong>{card.timeTakenMinutes} min</strong>
-                </p>
+              {card.estimatedDurationMinutes || card.timeTakenMinutes ? (
+                <div className="task-metrics-row">
+                  <div className="task-metric-box">
+                    <span>Est. duration</span>
+                    <strong>{card.estimatedDurationMinutes ? `${card.estimatedDurationMinutes} min` : "—"}</strong>
+                  </div>
+                  <div className="task-metric-box">
+                    <span>Completion</span>
+                    <strong>{card.timeTakenMinutes ? `${card.timeTakenMinutes} min` : "—"}</strong>
+                  </div>
+                </div>
               ) : null}
 
               <div className="status-row">

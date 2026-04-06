@@ -314,7 +314,7 @@ body.theme-light {
 }
 
 .task-card.is-dragging {
-  opacity: 0.65;
+  opacity: 0.82;
   transform: scale(0.99);
 }
 
@@ -368,6 +368,33 @@ body.theme-light {
 .task-schedule {
   font-size: 0.74rem;
   color: #64748b;
+}
+
+.task-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.task-metric-box {
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 8px;
+  padding: 5px 6px;
+  display: grid;
+  gap: 2px;
+}
+
+.task-metric-box span {
+  font-size: 0.62rem;
+  color: #334155;
+  line-height: 1.15;
+}
+
+.task-metric-box strong {
+  font-size: 0.66rem;
+  color: #0f172a;
+  line-height: 1.1;
 }
 
 .task-attributes {
@@ -925,16 +952,17 @@ body.theme-light {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: capitalize;
+  color: inherit;
 }
 
 .category-filter-chip small {
   font-size: 0.64rem;
   opacity: 0.88;
+  color: inherit;
 }
 
 .category-filter-chip.is-active {
-  background: #1e293b;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.35) inset;
 }
 
 .status-text.is-done {
