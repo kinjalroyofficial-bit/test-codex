@@ -358,3 +358,54 @@ Find out more about deployment here:
   https://cra.link/deployment
 
 ===== DEPLOY END =====
+
+up to date, audited 1380 packages in 13s
+
+286 packages are looking for funding
+  run `npm fund` for details
+
+26 vulnerabilities (9 low, 3 moderate, 14 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> react-app@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  65.05 kB  build/static/js/main.23de4a5f.js
+  4 kB      build/static/css/main.0f4fad30.css
+  1.77 kB   build/static/js/453.893d7983.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+[2026-04-06T20:08:21Z] Attempting API restart
+[PM2] Applying action reloadProcessId on app [react-app-api](ids: [ 0 ])
+[PM2] [react-app-api](0) ✓
+┌────┬──────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name             │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼──────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ react-app-api    │ default     │ N/A     │ fork    │ 434480   │ 0s     │ 1    │ online    │ 0%       │ 12.4mb   │ root     │ disabled │
+└────┴──────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[2026-04-06T20:08:22Z] API restarted via PM2 ecosystem
+===== DEPLOY END =====
