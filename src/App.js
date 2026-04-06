@@ -461,6 +461,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         </div>
 
         <div className="task-toolbar">
+          <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
+            Create new task
+          </button>
+
           <div className="controls-row">
             <label>
               Status
@@ -486,10 +490,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </select>
             </label>
           </div>
-
-          <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
-            Create new task
-          </button>
         </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
       </header>
