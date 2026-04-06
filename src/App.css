@@ -276,6 +276,16 @@ body.theme-light {
   outline: none;
 }
 
+.filter-pill select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.filter-pill select option:checked {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .cards-grid {
   max-width: 1200px;
   margin: 0 auto;
