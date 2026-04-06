@@ -30,44 +30,6 @@ async function parseApiResponse(response) {
   }
 }
 
-const mockCards = [
-  {
-    id: 1,
-    createdAt: 1712500000000,
-    title: "Landing Page",
-    description: "Finalize hero section and supporting content blocks.",
-    done: false,
-  },
-  {
-    id: 2,
-    createdAt: 1712503600000,
-    title: "Authentication",
-    description: "Add sign-in and sign-up flow with validation.",
-    done: true,
-  },
-  {
-    id: 3,
-    createdAt: 1712507200000,
-    title: "User Dashboard",
-    description: "Design analytics cards and activity timeline widgets.",
-    done: false,
-  },
-  {
-    id: 4,
-    createdAt: 1712510800000,
-    title: "Notifications",
-    description: "Connect push and in-app notifications with preferences.",
-    done: false,
-  },
-  {
-    id: 5,
-    createdAt: 1712514400000,
-    title: "Deployment",
-    description: "Prepare CI/CD pipeline and production environment checks.",
-    done: true,
-  },
-];
-
 function LoginScreen({ onAuthSuccess }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -170,23 +132,105 @@ function LoginScreen({ onAuthSuccess }) {
 }
 
 function BoardScreen({ user, onLogout }) {
-  const [cards, setCards] = useState(mockCards);
+  const [cards, setCards] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
   const [titleInput, setTitleInput] = useState("");
   const [descriptionInput, setDescriptionInput] = useState("");
   const [editingDraft, setEditingDraft] = useState(null);
+  const [boardError, setBoardError] = useState("");
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
-  const toggleStatus = (cardId) => {
-    setCards((currentCards) =>
-      currentCards.map((card) =>
-        card.id === cardId ? { ...card, done: !card.done } : card
-      )
-    );
+  useEffect(() => {
+    const loadTasks = async () => {
+      setBoardError("");
+      setIsLoadingTasks(true);
+
+      try {
+        const response = await fetch(buildApiUrl("/api/tasks"), {
+          credentials: "include",
+        });
+        const data = await parseApiResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to load tasks");
+        }
+
+        const nextCards = (data?.tasks || []).map((task) => ({
+          id: task.id,
+          createdAt: task.created_at ? new Date(task.created_at).getTime() : Date.now(),
+          title: task.title,
+          description: task.description || "",
+          done: task.status === "done",
+        }));
+
+        setCards(nextCards);
+      } catch (error) {
+        setBoardError(error.message || "Failed to load tasks");
+      } finally {
+        setIsLoadingTasks(false);
+      }
+    };
+
+    loadTasks();
+  }, [user?.id]);
+
+  const toggleStatus = async (cardId) => {
+    const currentCard = cards.find((card) => card.id === cardId);
+    if (!currentCard) return;
+
+    const nextDone = !currentCard.done;
+    setBoardError("");
+
+    try {
+      const response = await fetch(buildApiUrl(`/api/tasks/${cardId}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: nextDone ? "done" : "todo" }),
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to update task");
+      }
+
+      const updatedTask = data?.task;
+      setCards((currentCards) =>
+        currentCards.map((card) =>
+          card.id === cardId
+            ? {
+                ...card,
+                title: updatedTask?.title || card.title,
+                description: updatedTask?.description || "",
+                done: (updatedTask?.status || "todo") === "done",
+              }
+            : card
+        )
+      );
+    } catch (error) {
+      setBoardError(error.message || "Failed to update task");
+    }
   };
 
-  const handleDelete = (cardId) => {
-    setCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
+  const handleDelete = async (cardId) => {
+    setBoardError("");
+
+    try {
+      const response = await fetch(buildApiUrl(`/api/tasks/${cardId}`), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to delete task");
+      }
+
+      setCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
+    } catch (error) {
+      setBoardError(error.message || "Failed to delete task");
+    }
 
     if (editingDraft?.id === cardId) {
       setEditingDraft(null);
@@ -211,29 +255,50 @@ function BoardScreen({ user, onLogout }) {
     );
   };
 
-  const saveCardEdit = (cardId) => {
+  const saveCardEdit = async (cardId) => {
     if (!editingDraft || editingDraft.id !== cardId) return;
 
     const trimmedTitle = editingDraft.title.trim();
+    const trimmedDescription = editingDraft.description.trim();
 
     if (!trimmedTitle) return;
 
-    setCards((currentCards) =>
-      currentCards.map((card) =>
-        card.id === cardId
-          ? {
-              ...card,
-              title: trimmedTitle,
-              description: editingDraft.description.trim(),
-            }
-          : card
-      )
-    );
+    setBoardError("");
 
-    cancelCardEdit();
+    try {
+      const response = await fetch(buildApiUrl(`/api/tasks/${cardId}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ title: trimmedTitle, description: trimmedDescription }),
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to save task");
+      }
+
+      const updatedTask = data?.task;
+      setCards((currentCards) =>
+        currentCards.map((card) =>
+          card.id === cardId
+            ? {
+                ...card,
+                title: updatedTask?.title || trimmedTitle,
+                description: updatedTask?.description || "",
+                done: (updatedTask?.status || "todo") === "done",
+              }
+            : card
+        )
+      );
+
+      cancelCardEdit();
+    } catch (error) {
+      setBoardError(error.message || "Failed to save task");
+    }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const trimmedTitle = titleInput.trim();
@@ -241,19 +306,42 @@ function BoardScreen({ user, onLogout }) {
 
     if (!trimmedTitle) return;
 
-    setCards((currentCards) => [
-      {
-        id: Date.now(),
-        createdAt: Date.now(),
-        title: trimmedTitle,
-        description: trimmedDescription,
-        done: false,
-      },
-      ...currentCards,
-    ]);
+    setBoardError("");
 
-    setTitleInput("");
-    setDescriptionInput("");
+    try {
+      const response = await fetch(buildApiUrl("/api/tasks"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: trimmedTitle,
+          description: trimmedDescription || null,
+          status: "todo",
+        }),
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to create task");
+      }
+
+      const createdTask = data?.task;
+      const nextCard = {
+        id: createdTask?.id || Date.now(),
+        createdAt: createdTask?.created_at
+          ? new Date(createdTask.created_at).getTime()
+          : Date.now(),
+        title: createdTask?.title || trimmedTitle,
+        description: createdTask?.description || "",
+        done: (createdTask?.status || "todo") === "done",
+      };
+
+      setCards((currentCards) => [nextCard, ...currentCards]);
+      setTitleInput("");
+      setDescriptionInput("");
+    } catch (error) {
+      setBoardError(error.message || "Failed to create task");
+    }
   };
 
   const visibleCards = useMemo(() => {
@@ -344,9 +432,11 @@ function BoardScreen({ user, onLogout }) {
             </select>
           </label>
         </div>
+        {boardError ? <p className="auth-error">{boardError}</p> : null}
       </header>
 
       <section className="cards-grid" aria-label="Task cards">
+        {isLoadingTasks ? <p>Loading tasks...</p> : null}
         {visibleCards.map((card) => {
           const isEditingCard = editingDraft?.id === card.id;
 
