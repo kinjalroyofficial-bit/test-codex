@@ -459,10 +459,10 @@ body.theme-light {
 .task-modal {
   position: relative;
   width: 100%;
-  max-width: 600px;
+  max-width: 420px;
   background: #fff;
   border-radius: 12px;
-  padding: 12px;
+  padding: 32px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   margin: auto 0;
   overflow-x: clip;
