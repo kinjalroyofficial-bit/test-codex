@@ -236,6 +236,36 @@ body.theme-light {
   justify-content: flex-end;
 }
 
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #94a3b8;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 10px;
+}
+
+.filter-pill-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.filter-pill select {
+  min-width: 132px;
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  padding: 2px 22px 2px 2px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filter-pill select:focus {
+  outline: none;
+}
+
 .controls-row label {
   display: flex;
   flex-direction: column;
@@ -942,7 +972,6 @@ body:not(.theme-light) .task-card.is-done-card {
 
 body:not(.theme-light) .task-card h2,
 body:not(.theme-light) .app__header h1,
-body:not(.theme-light) .controls-row label,
 body:not(.theme-light) .task-form label {
   color: #f3f4f6;
 }
@@ -960,6 +989,16 @@ body:not(.theme-light) .task-modal-form textarea {
   background: #111827;
   color: #f3f4f6;
   border-color: #64748b;
+}
+
+body:not(.theme-light) .filter-pill {
+  background: #0f172a;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .filter-pill-label,
+body:not(.theme-light) .filter-pill select {
+  color: #f3f4f6;
 }
 
 body:not(.theme-light) .auth-user-box button,

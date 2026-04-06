@@ -466,29 +466,31 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           </button>
 
           <div className="controls-row">
-            <label>
-              Status
+            <div className="filter-pill">
+              <span className="filter-pill-label">Status:</span>
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
+                aria-label="Status"
               >
                 <option value="all">All</option>
                 <option value="completed">Completed</option>
                 <option value="pending">Pending</option>
               </select>
-            </label>
+            </div>
 
-            <label>
-              Sort by
+            <div className="filter-pill">
+              <span className="filter-pill-label">Sort By:</span>
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value)}
+                aria-label="Sort by"
               >
                 <option value="created">Created time</option>
                 <option value="priority">Priority (later)</option>
                 <option value="alphabetical">Alphabetical</option>
               </select>
-            </label>
+            </div>
           </div>
         </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
