@@ -629,6 +629,19 @@ body.theme-light {
   grid-template-columns: 1fr;
 }
 
+.task-attributes-row.task-attributes-row-timelines {
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.task-attributes-row.task-attributes-row-completion {
+  grid-template-columns: 3fr 2fr;
+}
+
+.task-attributes-row.task-attributes-row-timelines label,
+.task-attributes-row.task-attributes-row-completion label {
+  width: 100%;
+}
+
 .category-chip.is-selected {
   background: #dbeafe;
   border-color: #3b82f6;

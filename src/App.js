@@ -1069,7 +1069,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </section>
               <section className="task-form-section">
                 <h4>Timelines</h4>
-                <div className="task-attributes-row task-attributes-row-stack">
+                <div className="task-attributes-row task-attributes-row-timelines">
                   <label>
                     Scheduled
                     <input
@@ -1128,7 +1128,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </section>
               <section className="task-form-section">
                 <h4>Completion</h4>
-                <div className="task-attributes-row task-attributes-row-stack">
+                <div className="task-attributes-row task-attributes-row-completion">
                   <label>
                     Time taken to complete (minutes)
                     <input
