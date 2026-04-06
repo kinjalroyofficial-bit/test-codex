@@ -264,7 +264,7 @@ function BoardScreen({ user, onLogout }) {
       <header className="app__header">
         <div className="app__topbar">
           <div>
-            <h1>Project Progress Board</h1>
+            <h1>Personal Task Tracker</h1>
             <p>Track the latest updates with quick Done/Not Done toggles.</p>
           </div>
           <div className="auth-user-box">
@@ -365,7 +365,7 @@ function BoardScreen({ user, onLogout }) {
                 className="edit-btn"
                 onClick={() => handleEdit(card)}
               >
-                Edit
+                Edit task
               </button>
             </div>
           </article>
