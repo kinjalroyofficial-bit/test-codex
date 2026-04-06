@@ -189,6 +189,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [taskMoodInput, setTaskMoodInput] = useState("neutral");
   const [taskIntentInput, setTaskIntentInput] = useState("productive");
   const [taskOutcomeInput, setTaskOutcomeInput] = useState("neutral");
+  const [taskEstimatedDurationInput, setTaskEstimatedDurationInput] = useState("");
+  const [taskTimeTakenInput, setTaskTimeTakenInput] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [customCategoryInput, setCustomCategoryInput] = useState("");
@@ -246,6 +248,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           mood: task.mood || "neutral",
           intent: task.intent || "productive",
           outcome: task.outcome || "neutral",
+          estimatedDurationMinutes: task.estimated_duration_minutes || null,
+          timeTakenMinutes: task.time_taken_minutes || null,
           categories: task.categories || [],
           done: task.status === "done",
         }));
@@ -310,6 +314,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 mood: updatedTask?.mood || card.mood || "neutral",
                 intent: updatedTask?.intent || card.intent || "productive",
                 outcome: updatedTask?.outcome || card.outcome || "neutral",
+                estimatedDurationMinutes:
+                  updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
+                timeTakenMinutes:
+                  updatedTask?.time_taken_minutes || card.timeTakenMinutes || null,
                 categories: updatedTask?.categories || card.categories || [],
                 done: (updatedTask?.status || "todo") === "done",
               }
@@ -351,6 +359,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskMoodInput("neutral");
     setTaskIntentInput("productive");
     setTaskOutcomeInput("neutral");
+    setTaskEstimatedDurationInput("");
+    setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
     setCustomCategoryInput("");
     setBoardError("");
@@ -366,6 +376,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskMoodInput(card.mood || "neutral");
     setTaskIntentInput(card.intent || "productive");
     setTaskOutcomeInput(card.outcome || "neutral");
+    setTaskEstimatedDurationInput(
+      card.estimatedDurationMinutes ? String(card.estimatedDurationMinutes) : ""
+    );
+    setTaskTimeTakenInput(card.timeTakenMinutes ? String(card.timeTakenMinutes) : "");
     setSelectedCategoryIds((card.categories || []).map((category) => category.id));
     setCustomCategoryInput("");
     setBoardError("");
@@ -381,6 +395,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskMoodInput("neutral");
     setTaskIntentInput("productive");
     setTaskOutcomeInput("neutral");
+    setTaskEstimatedDurationInput("");
+    setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
     setCustomCategoryInput("");
   };
@@ -412,6 +428,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     const scheduledForValue = taskScheduledInput
       ? new Date(taskScheduledInput).toISOString()
       : null;
+    const estimatedDurationValue = taskEstimatedDurationInput
+      ? Number(taskEstimatedDurationInput)
+      : null;
+    const timeTakenValue = taskTimeTakenInput ? Number(taskTimeTakenInput) : null;
 
     if (!trimmedTitle) return;
 
@@ -439,6 +459,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
+            estimatedDurationMinutes: estimatedDurationValue,
+            estimated_duration_minutes: estimatedDurationValue,
+            timeTakenMinutes: timeTakenValue,
+            time_taken_minutes: timeTakenValue,
           }),
         });
         const data = await parseApiResponse(response);
@@ -460,6 +484,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           mood: createdTask?.mood || taskMoodInput,
           intent: createdTask?.intent || taskIntentInput,
           outcome: createdTask?.outcome || taskOutcomeInput,
+          estimatedDurationMinutes:
+            createdTask?.estimated_duration_minutes || estimatedDurationValue || null,
+          timeTakenMinutes: createdTask?.time_taken_minutes || timeTakenValue || null,
           categories: createdTask?.categories || [],
           done: (createdTask?.status || "todo") === "done",
         };
@@ -480,6 +507,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
+            estimatedDurationMinutes: estimatedDurationValue,
+            estimated_duration_minutes: estimatedDurationValue,
+            timeTakenMinutes: timeTakenValue,
+            time_taken_minutes: timeTakenValue,
           }),
         });
         const data = await parseApiResponse(response);
@@ -501,6 +532,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   mood: updatedTask?.mood || taskMoodInput,
                   intent: updatedTask?.intent || taskIntentInput,
                   outcome: updatedTask?.outcome || taskOutcomeInput,
+                  estimatedDurationMinutes:
+                    updatedTask?.estimated_duration_minutes || estimatedDurationValue || null,
+                  timeTakenMinutes: updatedTask?.time_taken_minutes || timeTakenValue || null,
                   categories: updatedTask?.categories || card.categories || [],
                   done: (updatedTask?.status || "todo") === "done",
                 }
@@ -686,6 +720,16 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   Scheduled: <strong>{formatScheduledDate(card.scheduledFor)}</strong>
                 </p>
               ) : null}
+              {card.estimatedDurationMinutes ? (
+                <p className="task-schedule">
+                  Estimated duration: <strong>{card.estimatedDurationMinutes} min</strong>
+                </p>
+              ) : null}
+              {card.timeTakenMinutes ? (
+                <p className="task-schedule">
+                  Time taken: <strong>{card.timeTakenMinutes} min</strong>
+                </p>
+              ) : null}
 
               <div className="status-row">
                 <div className="container">
@@ -720,77 +764,55 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           <div className="task-modal">
             <h3>{taskModalMode === "create" ? "Create task" : "Edit task"}</h3>
             <form onSubmit={handleTaskModalSubmit} className="task-modal-form">
-              <label>
-                Task title
-                <input
-                  type="text"
-                  value={taskTitleInput}
-                  onChange={(event) => setTaskTitleInput(event.target.value)}
-                  placeholder="Enter task title"
-                  required
-                />
-              </label>
-              <label>
-                Task description
-                <textarea
-                  value={taskDescriptionInput}
-                  onChange={(event) => setTaskDescriptionInput(event.target.value)}
-                  placeholder="Optional description"
-                  rows={2}
-                />
-              </label>
-              <label>
-                Categories
-                <div className="category-chip-picker">
-                  {availableCategories.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      className={
-                        selectedCategoryIds.includes(category.id)
-                          ? "category-chip is-selected"
-                          : "category-chip"
-                      }
-                      onClick={() => toggleCategorySelection(category.id)}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  value={customCategoryInput}
-                  onChange={(event) => setCustomCategoryInput(event.target.value)}
-                  placeholder="Add custom category (comma separated)"
-                />
-              </label>
-              <fieldset className="task-mood-fieldset">
-                <legend>Mood</legend>
-                <div className="mood-discrete-slider" role="radiogroup" aria-label="Mood">
-                  {MOOD_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={taskMoodInput === option.value}
-                      aria-label={option.label}
-                      className={
-                        taskMoodInput === option.value
-                          ? "mood-option is-selected"
-                          : "mood-option"
-                      }
-                      onClick={() => setTaskMoodInput(option.value)}
-                    >
-                      <span className="mood-dot" aria-hidden="true" />
-                      <span className="mood-icon" aria-hidden="true">
-                        {option.icon}
-                      </span>
-                      <span className="mood-label">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="task-attributes-row">
+              <section className="task-form-section">
+                <h4>Basic Details</h4>
+                <label>
+                  Task title
+                  <input
+                    type="text"
+                    value={taskTitleInput}
+                    onChange={(event) => setTaskTitleInput(event.target.value)}
+                    placeholder="Enter task title"
+                    required
+                  />
+                </label>
+                <label>
+                  Task description
+                  <textarea
+                    value={taskDescriptionInput}
+                    onChange={(event) => setTaskDescriptionInput(event.target.value)}
+                    placeholder="Optional description"
+                    rows={2}
+                  />
+                </label>
+              </section>
+              <section className="task-form-section">
+                <h4>Value Addition</h4>
+                <label>
+                  Categories
+                  <div className="category-chip-picker">
+                    {availableCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        className={
+                          selectedCategoryIds.includes(category.id)
+                            ? "category-chip is-selected"
+                            : "category-chip"
+                        }
+                        onClick={() => toggleCategorySelection(category.id)}
+                      >
+                        {category.name}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={customCategoryInput}
+                    onChange={(event) => setCustomCategoryInput(event.target.value)}
+                    placeholder="Add custom category (comma separated)"
+                  />
+                </label>
                 <label>
                   Intent
                   <select
@@ -804,34 +826,95 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     ))}
                   </select>
                 </label>
-                <label>
-                  Outcome
-                  <div className="outcome-options">
-                    {OUTCOME_OPTIONS.map((option) => (
+              </section>
+              <section className="task-form-section">
+                <h4>Timelines</h4>
+                <div className="task-attributes-row">
+                  <label>
+                    Scheduled
+                    <input
+                      type="datetime-local"
+                      value={taskScheduledInput}
+                      onChange={(event) => setTaskScheduledInput(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Estimated duration (minutes)
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={taskEstimatedDurationInput}
+                      onChange={(event) => setTaskEstimatedDurationInput(event.target.value)}
+                      placeholder="e.g. 90"
+                    />
+                  </label>
+                </div>
+              </section>
+              <section className="task-form-section">
+                <h4>Mood During Activity</h4>
+                <fieldset className="task-mood-fieldset">
+                  <legend>Mood</legend>
+                  <div className="mood-discrete-slider" role="radiogroup" aria-label="Mood">
+                    {MOOD_OPTIONS.map((option) => (
                       <button
                         key={option.value}
                         type="button"
+                        role="radio"
+                        aria-checked={taskMoodInput === option.value}
+                        aria-label={option.label}
                         className={
-                          taskOutcomeInput === option.value
-                            ? "outcome-option is-selected"
-                            : "outcome-option"
+                          taskMoodInput === option.value
+                            ? "mood-option is-selected"
+                            : "mood-option"
                         }
-                        onClick={() => setTaskOutcomeInput(option.value)}
+                        onClick={() => setTaskMoodInput(option.value)}
                       >
-                        {option.label}
+                        <span className="mood-dot" aria-hidden="true" />
+                        <span className="mood-icon" aria-hidden="true">
+                          {option.icon}
+                        </span>
+                        <span className="mood-label">{option.label}</span>
                       </button>
                     ))}
                   </div>
-                </label>
-              </div>
-              <label>
-                Scheduled
-                <input
-                  type="datetime-local"
-                  value={taskScheduledInput}
-                  onChange={(event) => setTaskScheduledInput(event.target.value)}
-                />
-              </label>
+                </fieldset>
+              </section>
+              <section className="task-form-section">
+                <h4>Completion</h4>
+                <div className="task-attributes-row">
+                  <label>
+                    Time taken to complete (minutes)
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={taskTimeTakenInput}
+                      onChange={(event) => setTaskTimeTakenInput(event.target.value)}
+                      placeholder="e.g. 120"
+                    />
+                  </label>
+                  <label>
+                    Outcome
+                    <div className="outcome-options">
+                      {OUTCOME_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={
+                            taskOutcomeInput === option.value
+                              ? "outcome-option is-selected"
+                              : "outcome-option"
+                          }
+                          onClick={() => setTaskOutcomeInput(option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </label>
+                </div>
+              </section>
               <div className="task-modal-actions">
                 <button type="button" onClick={closeTaskModal}>
                   Cancel

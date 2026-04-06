@@ -467,7 +467,8 @@ app.post('/api/categories', authRequired, async (req, res) => {
 
 app.get('/api/tasks', authRequired, async (req, res) => {
   const result = await pool.query(
-    `SELECT id, title, description, status, mood, intent, outcome, due_date, scheduled_for, created_at, updated_at
+    `SELECT id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+            estimated_duration_minutes, time_taken_minutes, created_at, updated_at
      FROM tasks
      WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY created_at DESC`,
@@ -494,19 +495,28 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     dueDate = null,
     scheduledFor = null,
     scheduled_for: scheduledForSnake = null,
+    estimatedDurationMinutes = null,
+    estimated_duration_minutes: estimatedDurationMinutesSnake = null,
+    timeTakenMinutes = null,
+    time_taken_minutes: timeTakenMinutesSnake = null,
     categoryIds = [],
     customCategories = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
+  const normalizedEstimatedDuration =
+    estimatedDurationMinutes ?? estimatedDurationMinutesSnake ?? null;
+  const normalizedTimeTaken = timeTakenMinutes ?? timeTakenMinutesSnake ?? null;
 
   if (!title) {
     return res.status(400).json({ error: 'title is required' });
   }
 
   const result = await pool.query(
-    `INSERT INTO tasks (user_id, title, description, status, mood, intent, outcome, due_date, scheduled_for)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for, created_at, updated_at`,
+    `INSERT INTO tasks (user_id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+                        estimated_duration_minutes, time_taken_minutes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+               estimated_duration_minutes, time_taken_minutes, created_at, updated_at`,
     [
       req.session.userId,
       title,
@@ -517,6 +527,8 @@ app.post('/api/tasks', authRequired, async (req, res) => {
       outcome,
       dueDate,
       normalizedScheduledFor,
+      normalizedEstimatedDuration,
+      normalizedTimeTaken,
     ]
   );
   const createdTask = result.rows[0];
@@ -545,10 +557,17 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
     dueDate,
     scheduledFor,
     scheduled_for: scheduledForSnake,
+    estimatedDurationMinutes,
+    estimated_duration_minutes: estimatedDurationMinutesSnake,
+    timeTakenMinutes,
+    time_taken_minutes: timeTakenMinutesSnake,
     categoryIds,
     customCategories = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
+  const normalizedEstimatedDuration =
+    estimatedDurationMinutes ?? estimatedDurationMinutesSnake ?? null;
+  const normalizedTimeTaken = timeTakenMinutes ?? timeTakenMinutesSnake ?? null;
 
   const result = await pool.query(
     `UPDATE tasks
@@ -560,9 +579,12 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
          outcome = COALESCE($6, outcome),
          due_date = COALESCE($7, due_date),
          scheduled_for = COALESCE($8, scheduled_for),
+         estimated_duration_minutes = COALESCE($9, estimated_duration_minutes),
+         time_taken_minutes = COALESCE($10, time_taken_minutes),
          updated_at = NOW()
-     WHERE id = $9 AND user_id = $10 AND deleted_at IS NULL
-     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for, created_at, updated_at`,
+     WHERE id = $11 AND user_id = $12 AND deleted_at IS NULL
+     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+               estimated_duration_minutes, time_taken_minutes, created_at, updated_at`,
     [
       title,
       description,
@@ -572,6 +594,8 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
       outcome,
       dueDate,
       normalizedScheduledFor,
+      normalizedEstimatedDuration,
+      normalizedTimeTaken,
       taskId,
       req.session.userId,
     ]
