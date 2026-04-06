@@ -337,11 +337,9 @@ body {
 .container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   --hue: 220deg;
-  --width: 15rem;
-  transform: scale(0.28);
-  transform-origin: left bottom;
+  --width: 4.2rem;
   --accent-hue: 22deg;
   --duration: 0.6s;
   --easing: cubic-bezier(1, 0, 1, 1);
