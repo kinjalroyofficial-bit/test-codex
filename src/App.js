@@ -607,6 +607,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   }, [cards, sortBy, statusFilter]);
 
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
+  const selectedMoodIndex = Math.max(
+    0,
+    MOOD_OPTIONS.findIndex((option) => option.value === taskMoodInput)
+  );
 
   return (
     <main className="app">
@@ -876,7 +880,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </section>
               <section className="task-form-section">
                 <h4>Timelines</h4>
-                <div className="task-attributes-row">
+                <div className="task-attributes-row task-attributes-row-stack">
                   <label>
                     Scheduled
                     <input
@@ -903,6 +907,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <fieldset className="task-mood-fieldset">
                   <legend>Mood</legend>
                   <div className="mood-discrete-slider" role="radiogroup" aria-label="Mood">
+                    <span
+                      className="mood-active-blob"
+                      style={{
+                        left: `${(selectedMoodIndex * 100) / (MOOD_OPTIONS.length - 1)}%`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      <span className="mood-active-emoji">
+                        {MOOD_OPTIONS[selectedMoodIndex]?.icon || "😐"}
+                      </span>
+                    </span>
                     {MOOD_OPTIONS.map((option) => (
                       <button
                         key={option.value}
@@ -918,9 +933,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                         onClick={() => setTaskMoodInput(option.value)}
                       >
                         <span className="mood-dot" aria-hidden="true" />
-                        <span className="mood-icon" aria-hidden="true">
-                          {option.icon}
-                        </span>
                         <span className="mood-label">{option.label}</span>
                       </button>
                     ))}
