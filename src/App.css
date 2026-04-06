@@ -279,6 +279,7 @@ body.theme-light {
 .filter-pill select option {
   color: #0f172a;
   background: #ffffff;
+  padding: 6px 10px;
 }
 
 .filter-pill select option:checked {
@@ -350,12 +351,17 @@ body.theme-light {
   justify-content: center;
 }
 
-.task-card p {
+.task-description {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   line-height: 1.45;
   color: #334155;
   flex-grow: 1;
+}
+
+.task-schedule {
+  font-size: 0.74rem;
+  color: #64748b;
 }
 
 .status-row {

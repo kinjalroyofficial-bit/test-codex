@@ -301,7 +301,7 @@ app.post('/api/auth/password-reset/confirm', async (req, res) => {
 
 app.get('/api/tasks', authRequired, async (req, res) => {
   const result = await pool.query(
-    `SELECT id, title, description, status, due_date, created_at, updated_at
+    `SELECT id, title, description, status, due_date, scheduled_for, created_at, updated_at
      FROM tasks
      WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY created_at DESC`,
@@ -312,17 +312,23 @@ app.get('/api/tasks', authRequired, async (req, res) => {
 });
 
 app.post('/api/tasks', authRequired, async (req, res) => {
-  const { title, description = null, status = 'todo', dueDate = null } = req.body;
+  const {
+    title,
+    description = null,
+    status = 'todo',
+    dueDate = null,
+    scheduledFor = null,
+  } = req.body;
 
   if (!title) {
     return res.status(400).json({ error: 'title is required' });
   }
 
   const result = await pool.query(
-    `INSERT INTO tasks (user_id, title, description, status, due_date)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, title, description, status, due_date, created_at, updated_at`,
-    [req.session.userId, title, description, status, dueDate]
+    `INSERT INTO tasks (user_id, title, description, status, due_date, scheduled_for)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, title, description, status, due_date, scheduled_for, created_at, updated_at`,
+    [req.session.userId, title, description, status, dueDate, scheduledFor]
   );
 
   return res.status(201).json({ task: result.rows[0] });
@@ -330,7 +336,7 @@ app.post('/api/tasks', authRequired, async (req, res) => {
 
 app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
   const { taskId } = req.params;
-  const { title, description, status, dueDate } = req.body;
+  const { title, description, status, dueDate, scheduledFor } = req.body;
 
   const result = await pool.query(
     `UPDATE tasks
@@ -338,10 +344,11 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
          description = COALESCE($2, description),
          status = COALESCE($3, status),
          due_date = COALESCE($4, due_date),
+         scheduled_for = COALESCE($5, scheduled_for),
          updated_at = NOW()
-     WHERE id = $5 AND user_id = $6 AND deleted_at IS NULL
-     RETURNING id, title, description, status, due_date, created_at, updated_at`,
-    [title, description, status, dueDate, taskId, req.session.userId]
+     WHERE id = $6 AND user_id = $7 AND deleted_at IS NULL
+     RETURNING id, title, description, status, due_date, scheduled_for, created_at, updated_at`,
+    [title, description, status, dueDate, scheduledFor, taskId, req.session.userId]
   );
 
   if (!result.rows[0]) {

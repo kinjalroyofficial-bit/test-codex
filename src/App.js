@@ -161,6 +161,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [taskTitleInput, setTaskTitleInput] = useState("");
   const [taskDescriptionInput, setTaskDescriptionInput] = useState("");
+  const [taskScheduledInput, setTaskScheduledInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -177,6 +178,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
     if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`;
     return `${Math.floor(diffMs / day)}d ago`;
+  };
+
+  const toDateTimeInputValue = (timestamp) => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+    return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
+  };
+
+  const formatScheduledDate = (timestamp) => {
+    if (!timestamp) return "";
+    return new Date(timestamp).toLocaleString();
   };
 
   useEffect(() => {
@@ -199,6 +212,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           createdAt: task.created_at ? new Date(task.created_at).getTime() : Date.now(),
           title: task.title,
           description: task.description || "",
+          scheduledFor: task.scheduled_for || null,
           done: task.status === "done",
         }));
 
@@ -241,6 +255,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 ...card,
                 title: updatedTask?.title || card.title,
                 description: updatedTask?.description || "",
+                scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
                 done: (updatedTask?.status || "todo") === "done",
               }
             : card
@@ -277,6 +292,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setActiveTaskId(null);
     setTaskTitleInput("");
     setTaskDescriptionInput("");
+    setTaskScheduledInput("");
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -286,6 +302,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setActiveTaskId(card.id);
     setTaskTitleInput(card.title);
     setTaskDescriptionInput(card.description || "");
+    setTaskScheduledInput(toDateTimeInputValue(card.scheduledFor));
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -295,12 +312,16 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setActiveTaskId(null);
     setTaskTitleInput("");
     setTaskDescriptionInput("");
+    setTaskScheduledInput("");
   };
 
   const handleTaskModalSubmit = async (event) => {
     event.preventDefault();
     const trimmedTitle = taskTitleInput.trim();
     const trimmedDescription = taskDescriptionInput.trim();
+    const scheduledForValue = taskScheduledInput
+      ? new Date(taskScheduledInput).toISOString()
+      : null;
 
     if (!trimmedTitle) return;
 
@@ -316,6 +337,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: trimmedTitle,
             description: trimmedDescription || null,
             status: "todo",
+            scheduledFor: scheduledForValue,
           }),
         });
         const data = await parseApiResponse(response);
@@ -332,6 +354,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             : Date.now(),
           title: createdTask?.title || trimmedTitle,
           description: createdTask?.description || "",
+          scheduledFor: createdTask?.scheduled_for || scheduledForValue,
           done: (createdTask?.status || "todo") === "done",
         };
 
@@ -341,7 +364,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ title: trimmedTitle, description: trimmedDescription }),
+          body: JSON.stringify({
+            title: trimmedTitle,
+            description: trimmedDescription,
+            scheduledFor: scheduledForValue,
+          }),
         });
         const data = await parseApiResponse(response);
 
@@ -357,6 +384,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   ...card,
                   title: updatedTask?.title || trimmedTitle,
                   description: updatedTask?.description || "",
+                  scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
                   done: (updatedTask?.status || "todo") === "done",
                 }
               : card
@@ -521,7 +549,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </button>
               </div>
 
-              <p>{card.description}</p>
+              <p className="task-description">{card.description}</p>
+              {card.scheduledFor ? (
+                <p className="task-schedule">
+                  Scheduled: <strong>{formatScheduledDate(card.scheduledFor)}</strong>
+                </p>
+              ) : null}
 
               <div className="status-row">
                 <div className="container">
@@ -573,6 +606,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   onChange={(event) => setTaskDescriptionInput(event.target.value)}
                   placeholder="Optional description"
                   rows={3}
+                />
+              </label>
+              <label>
+                Scheduled
+                <input
+                  type="datetime-local"
+                  value={taskScheduledInput}
+                  onChange={(event) => setTaskScheduledInput(event.target.value)}
                 />
               </label>
               <div className="task-modal-actions">
