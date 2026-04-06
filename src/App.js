@@ -1,98 +1,142 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import "./App.css";
+
+const mockCards = [
+  {
+    id: 1,
+    createdAt: 1712500000000,
+    title: "Landing Page",
+    description: "Finalize hero section and supporting content blocks.",
+    done: false,
+  },
+  {
+    id: 2,
+    createdAt: 1712503600000,
+    title: "Authentication",
+    description: "Add sign-in and sign-up flow with validation.",
+    done: true,
+  },
+  {
+    id: 3,
+    createdAt: 1712507200000,
+    title: "User Dashboard",
+    description: "Design analytics cards and activity timeline widgets.",
+    done: false,
+  },
+  {
+    id: 4,
+    createdAt: 1712510800000,
+    title: "Notifications",
+    description: "Connect push and in-app notifications with preferences.",
+    done: false,
+  },
+  {
+    id: 5,
+    createdAt: 1712514400000,
+    title: "Deployment",
+    description: "Prepare CI/CD pipeline and production environment checks.",
+    done: true,
+  },
+];
 
 function App() {
-  const [inputText, setInputText] = useState("");
-  const [submittedText, setSubmittedText] = useState("");
+  const [cards, setCards] = useState(mockCards);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("created");
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setSubmittedText(inputText.toUpperCase());
+  const toggleStatus = (cardId) => {
+    setCards((currentCards) =>
+      currentCards.map((card) =>
+        card.id === cardId ? { ...card, done: !card.done } : card
+      )
+    );
   };
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "12px 24px 24px",
-        boxSizing: "border-box",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-start",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "1200px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px",
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "2rem",
-            fontWeight: 700,
-            letterSpacing: "0.01em",
-          }}
-        >
-          TextFlow: Daily Input Formatter
-        </h1>
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "24px",
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <textarea
-              value={inputText}
-              onChange={(event) => setInputText(event.target.value)}
-              placeholder="Type text here"
-              aria-label="Left input text"
-              style={{
-                width: "100%",
-                minHeight: "320px",
-                fontSize: "1.2rem",
-                padding: "16px",
-                resize: "vertical",
-                boxSizing: "border-box",
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                padding: "12px 16px",
-                fontSize: "1rem",
-                cursor: "pointer",
-                width: "180px",
-              }}
-            >
-              Submit
-            </button>
-          </div>
+  const visibleCards = useMemo(() => {
+    const filteredCards = cards.filter((card) => {
+      if (statusFilter === "completed") return card.done;
+      if (statusFilter === "pending") return !card.done;
+      return true;
+    });
 
-          <textarea
-            value={submittedText}
-            readOnly
-            placeholder="Capitalized text will appear here"
-            aria-label="Right output text"
-            style={{
-              width: "100%",
-              minHeight: "320px",
-              fontSize: "1.2rem",
-              padding: "16px",
-              resize: "vertical",
-              boxSizing: "border-box",
-            }}
-          />
-        </form>
-      </div>
-    </div>
+    const sortedCards = [...filteredCards];
+
+    if (sortBy === "alphabetical") {
+      sortedCards.sort((a, b) => a.title.localeCompare(b.title));
+      return sortedCards;
+    }
+
+    if (sortBy === "priority") {
+      return sortedCards;
+    }
+
+    sortedCards.sort(
+      (a, b) => (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0)
+    );
+    return sortedCards;
+  }, [cards, sortBy, statusFilter]);
+
+  return (
+    <main className="app">
+      <header className="app__header">
+        <h1>Project Progress Board</h1>
+        <p>Track the latest updates with quick Done/Not Done toggles.</p>
+
+        <div className="controls-row">
+          <label>
+            Status
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+            </select>
+          </label>
+
+          <label>
+            Sort by
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              <option value="created">Created time</option>
+              <option value="priority">Priority (later)</option>
+              <option value="alphabetical">Alphabetical</option>
+            </select>
+          </label>
+        </div>
+      </header>
+
+      <section className="cards-grid" aria-label="Task cards">
+        {visibleCards.map((card) => (
+          <article className="task-card" key={card.id}>
+            <h2>{card.title}</h2>
+            <p>{card.description}</p>
+
+            <div className="status-row">
+              <div className="container">
+                <label className="switch" aria-label={`Toggle ${card.title} status`}>
+                  <input
+                    className="togglesw"
+                    type="checkbox"
+                    checked={card.done}
+                    onChange={() => toggleStatus(card.id)}
+                  />
+                  <div className="indicator left" />
+                  <div className="indicator right" />
+                  <div className="button" />
+                </label>
+              </div>
+              <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
+                {card.done ? "Done" : "Not Done"}
+              </span>
+            </div>
+          </article>
+        ))}
+      </section>
+    </main>
   );
 }
 
