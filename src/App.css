@@ -239,27 +239,35 @@ body.theme-light {
 .filter-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #94a3b8;
+  gap: 6px;
+  border: 1px solid #15803d;
   border-radius: 999px;
-  background: #fff;
-  padding: 6px 10px;
+  background: #16a34a;
+  padding: 5px 10px;
 }
 
 .filter-pill-label {
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 700;
-  color: #334155;
+  color: #fff;
 }
 
 .filter-pill select {
-  min-width: 132px;
-  border: 0;
+  min-width: 110px;
+  border: 0 !important;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
   background: transparent;
-  color: #0f172a;
-  padding: 2px 22px 2px 2px;
-  font-size: 0.9rem;
+  color: #fff;
+  padding: 2px 20px 2px 0;
+  font-size: 0.86rem;
+  font-weight: 700;
   cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.1 1.02l-4.25 4.5a.75.75 0 01-1.1 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 14px;
 }
 
 .filter-pill select:focus {
@@ -992,13 +1000,13 @@ body:not(.theme-light) .task-modal-form textarea {
 }
 
 body:not(.theme-light) .filter-pill {
-  background: #0f172a;
-  border-color: #64748b;
+  background: #16a34a;
+  border-color: #15803d;
 }
 
 body:not(.theme-light) .filter-pill-label,
 body:not(.theme-light) .filter-pill select {
-  color: #f3f4f6;
+  color: #fff;
 }
 
 body:not(.theme-light) .auth-user-box button,
