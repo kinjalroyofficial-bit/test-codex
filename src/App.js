@@ -6,12 +6,12 @@ const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
 
 const MOOD_OPTIONS = [
-  { value: "energetic", label: "Energetic" },
-  { value: "happy", label: "Happy" },
-  { value: "neutral", label: "Neutral" },
-  { value: "tired", label: "Tired" },
-  { value: "stressed", label: "Stressed" },
-  { value: "depressed", label: "Depressed" },
+  { value: "energetic", label: "Energetic", icon: "🤩" },
+  { value: "happy", label: "Happy", icon: "😊" },
+  { value: "neutral", label: "Neutral", icon: "😐" },
+  { value: "tired", label: "Tired", icon: "🥱" },
+  { value: "stressed", label: "Stressed", icon: "😣" },
+  { value: "depressed", label: "Depressed", icon: "😞" },
 ];
 
 const INTENT_OPTIONS = [
@@ -736,7 +736,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   value={taskDescriptionInput}
                   onChange={(event) => setTaskDescriptionInput(event.target.value)}
                   placeholder="Optional description"
-                  rows={3}
+                  rows={2}
                 />
               </label>
               <label>
@@ -773,6 +773,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       type="button"
                       role="radio"
                       aria-checked={taskMoodInput === option.value}
+                      aria-label={option.label}
                       className={
                         taskMoodInput === option.value
                           ? "mood-option is-selected"
@@ -780,7 +781,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       }
                       onClick={() => setTaskMoodInput(option.value)}
                     >
-                      {option.label}
+                      <span className="mood-dot" aria-hidden="true" />
+                      <span className="mood-icon" aria-hidden="true">
+                        {option.icon}
+                      </span>
+                      <span className="mood-label">{option.label}</span>
                     </button>
                   ))}
                 </div>

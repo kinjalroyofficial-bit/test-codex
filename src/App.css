@@ -450,29 +450,27 @@ body.theme-light {
 
 .task-modal {
   width: min(460px, 100%);
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
   background: #fff;
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
 }
 
 .task-modal h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .task-modal-form {
-  margin-top: 10px;
+  margin-top: 8px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .task-modal-form label {
   display: grid;
-  gap: 6px;
-  font-size: 0.88rem;
+  gap: 4px;
+  font-size: 0.84rem;
   font-weight: 600;
   color: #334155;
 }
@@ -484,8 +482,8 @@ body.theme-light {
   border-radius: 8px;
   background: #fff;
   color: #0f172a;
-  padding: 10px;
-  font-size: 0.9rem;
+  padding: 8px;
+  font-size: 0.84rem;
   font-family: inherit;
   resize: vertical;
 }
@@ -493,7 +491,7 @@ body.theme-light {
 .category-chip-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .category-chip {
@@ -517,38 +515,95 @@ body.theme-light {
 
 .task-mood-fieldset legend {
   padding: 0;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   font-weight: 600;
   color: #334155;
 }
 
 .mood-discrete-slider {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px;
+  padding: 8px 2px 2px;
+}
+
+.mood-discrete-slider::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: #f472b6;
+  opacity: 0.45;
 }
 
 .mood-option {
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  border-radius: 8px;
-  padding: 7px 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #334155;
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0;
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
   cursor: pointer;
 }
 
+.mood-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f472b6;
+}
+
+.mood-icon {
+  display: none;
+}
+
+.mood-label {
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.64rem;
+  color: #334155;
+}
+
 .mood-option.is-selected {
-  border-color: #4f46e5;
-  background: #e0e7ff;
-  color: #312e81;
+  width: 52px;
+  height: 52px;
+  margin-top: -12px;
+  background: #ec4899;
+  box-shadow: 0 0 0 6px #f9a8d4;
+}
+
+.mood-option.is-selected .mood-dot {
+  display: none;
+}
+
+.mood-option.is-selected .mood-icon {
+  display: block;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.mood-option.is-selected .mood-label {
+  top: 56px;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
 .task-attributes-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
 }
 
@@ -560,14 +615,14 @@ body.theme-light {
 
 .outcome-options {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .outcome-option {
   border: 1px solid #cbd5e1;
   background: #fff;
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 5px 9px;
   cursor: pointer;
 }
 
@@ -587,7 +642,8 @@ body.theme-light {
   background: #f8fafc;
   color: #0f172a;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 7px 10px;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1180,15 +1236,20 @@ body:not(.theme-light) .outcome-option.is-selected {
 }
 
 body:not(.theme-light) .mood-option {
-  background: #1e293b;
-  color: #f3f4f6;
-  border-color: #64748b;
+  background: transparent;
 }
 
 body:not(.theme-light) .mood-option.is-selected {
-  background: #312e81;
-  color: #eef2ff;
-  border-color: #818cf8;
+  background: #ec4899;
+  box-shadow: 0 0 0 6px rgba(244, 114, 182, 0.35);
+}
+
+body:not(.theme-light) .mood-dot {
+  background: #f472b6;
+}
+
+body:not(.theme-light) .mood-label {
+  color: #e5e7eb;
 }
 
 body:not(.theme-light) .theme-slider {
@@ -1203,10 +1264,6 @@ body:not(.theme-light) .theme-slider {
 
   .cards-grid {
     grid-template-columns: 1fr;
-  }
-
-  .mood-discrete-slider {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .task-attributes-row {
