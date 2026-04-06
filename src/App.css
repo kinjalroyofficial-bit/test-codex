@@ -299,6 +299,7 @@ body.theme-light {
 .task-card {
   position: relative;
   background: #ffffff;
+  border: 1px solid transparent;
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 10px 25px rgba(20, 35, 60, 0.08);
@@ -309,8 +310,12 @@ body.theme-light {
 }
 
 .task-card.is-done-card {
-  background: #ecfdf5;
   border: 1px solid #6ee7b7;
+}
+
+.task-card.is-dragging {
+  opacity: 0.65;
+  transform: scale(0.99);
 }
 
 .card-header {
@@ -383,6 +388,7 @@ body.theme-light {
   border-radius: 999px;
   background: #d1fae5;
   color: #065f46;
+  border: 1px solid rgba(6, 95, 70, 0.2);
 }
 
 .status-row {
@@ -600,6 +606,11 @@ body.theme-light {
   text-align: center;
   font-size: 0.64rem;
   color: #64748b;
+}
+
+.mood-icon {
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
 .mood-simple-label.is-selected {
@@ -875,6 +886,42 @@ body.theme-light {
   width: fit-content;
   padding: 3px 8px;
   border-radius: 999px;
+}
+
+.category-filter-row {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-filter-chip {
+  border: 1px solid #475569;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.category-filter-chip span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.category-filter-chip small {
+  font-size: 0.64rem;
+  opacity: 0.88;
+}
+
+.category-filter-chip.is-active {
+  background: #1e293b;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
 }
 
 .status-text.is-done {

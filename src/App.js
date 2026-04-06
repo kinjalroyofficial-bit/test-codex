@@ -29,6 +29,73 @@ const OUTCOME_OPTIONS = [
   { value: "negative", label: "👎" },
 ];
 
+const CATEGORY_COLORS = {
+  health: "#22c55e",
+  fitness: "#10b981",
+  work: "#3b82f6",
+  learning: "#6366f1",
+  study: "#6366f1",
+  personal: "#a855f7",
+  family: "#f59e0b",
+  finance: "#eab308",
+  chores: "#14b8a6",
+  social: "#ec4899",
+  leisure: "#8b5cf6",
+  travel: "#06b6d4",
+  custom: "#64748b",
+};
+
+const DEFAULT_CATEGORY_COLOR = "#64748b";
+
+const normalizeCategoryName = (name) => `${name || ""}`.trim().toLowerCase();
+
+const hexToRgb = (hex) => {
+  const normalized = `${hex}`.replace("#", "");
+  const fullHex =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((part) => `${part}${part}`)
+          .join("")
+      : normalized;
+  const parsed = Number.parseInt(fullHex, 16);
+  return {
+    r: (parsed >> 16) & 255,
+    g: (parsed >> 8) & 255,
+    b: parsed & 255,
+  };
+};
+
+const rgbToHex = ({ r, g, b }) =>
+  `#${[r, g, b]
+    .map((value) =>
+      Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")
+    )
+    .join("")}`;
+
+const getCategoryColor = (name) =>
+  CATEGORY_COLORS[normalizeCategoryName(name)] || DEFAULT_CATEGORY_COLOR;
+
+const blendCategoryColors = (colors) => {
+  if (!colors.length) return DEFAULT_CATEGORY_COLOR;
+  const sum = colors.reduce(
+    (accumulator, color) => {
+      const rgb = hexToRgb(color);
+      return {
+        r: accumulator.r + rgb.r,
+        g: accumulator.g + rgb.g,
+        b: accumulator.b + rgb.b,
+      };
+    },
+    { r: 0, g: 0, b: 0 }
+  );
+  return rgbToHex({
+    r: sum.r / colors.length,
+    g: sum.g / colors.length,
+    b: sum.b / colors.length,
+  });
+};
+
 async function parseApiResponse(response) {
   const rawBody = await response.text();
   const contentType = response.headers.get("content-type") || "";
@@ -176,6 +243,7 @@ function LoginScreen({ onAuthSuccess }) {
 function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [cards, setCards] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
   const [boardError, setBoardError] = useState("");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
@@ -196,6 +264,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [customCategoryNames, setCustomCategoryNames] = useState([]);
   const [isCustomCategoryModalOpen, setIsCustomCategoryModalOpen] = useState(false);
   const [customCategoryNameInput, setCustomCategoryNameInput] = useState("");
+  const [draggedCardId, setDraggedCardId] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -588,8 +657,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       if (statusFilter === "pending") return !card.done;
       return true;
     });
+    const categoryFilteredCards =
+      categoryFilter === "all"
+        ? filteredCards
+        : filteredCards.filter((card) =>
+            (card.categories || []).some((category) => category.id === categoryFilter)
+          );
 
-    const sortedCards = [...filteredCards];
+    const sortedCards = [...categoryFilteredCards];
 
     if (sortBy === "alphabetical") {
       sortedCards.sort((a, b) => a.title.localeCompare(b.title));
@@ -604,7 +679,82 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       (a, b) => (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0)
     );
     return sortedCards;
-  }, [cards, sortBy, statusFilter]);
+  }, [cards, sortBy, statusFilter, categoryFilter]);
+
+  const categoryStats = useMemo(() => {
+    const stats = {};
+    cards.forEach((card) => {
+      (card.categories || []).forEach((category) => {
+        if (!stats[category.id]) {
+          stats[category.id] = {
+            id: category.id,
+            name: category.name,
+            color: getCategoryColor(category.name),
+            cardCount: 0,
+            totalTimeMinutes: 0,
+          };
+        }
+        stats[category.id].cardCount += 1;
+        stats[category.id].totalTimeMinutes += Number(card.timeTakenMinutes || 0);
+      });
+    });
+    return Object.values(stats).sort((a, b) => a.name.localeCompare(b.name));
+  }, [cards]);
+
+  const buildCardBackground = (card) => {
+    const categoryColors = (card.categories || []).map((category) =>
+      getCategoryColor(category.name)
+    );
+    if (!categoryColors.length) {
+      return card.done ? "#ecfdf5" : "#ffffff";
+    }
+    if (categoryColors.length === 1) return categoryColors[0];
+
+    const stop = 100 / categoryColors.length;
+    const segments = categoryColors
+      .map((color, index) => {
+        const start = Math.round(index * stop);
+        const end = Math.round((index + 1) * stop);
+        return `${color} ${start}% ${end}%`;
+      })
+      .join(", ");
+    return `linear-gradient(135deg, ${segments})`;
+  };
+
+  const getCardStyle = (card) => {
+    const mixedColor = blendCategoryColors(
+      (card.categories || []).map((category) => getCategoryColor(category.name))
+    );
+    return {
+      background: buildCardBackground(card),
+      borderColor: mixedColor,
+    };
+  };
+
+  const handleCardDragStart = (cardId) => {
+    setDraggedCardId(cardId);
+    if (sortBy !== "priority") {
+      setSortBy("priority");
+    }
+  };
+
+  const handleCardDrop = (targetCardId) => {
+    if (!draggedCardId || draggedCardId === targetCardId) {
+      setDraggedCardId(null);
+      return;
+    }
+
+    setCards((currentCards) => {
+      const currentIndex = currentCards.findIndex((card) => card.id === draggedCardId);
+      const targetIndex = currentCards.findIndex((card) => card.id === targetCardId);
+      if (currentIndex < 0 || targetIndex < 0) return currentCards;
+      const reorderedCards = [...currentCards];
+      const [draggedCard] = reorderedCards.splice(currentIndex, 1);
+      reorderedCards.splice(targetIndex, 0, draggedCard);
+      return reorderedCards;
+    });
+    setDraggedCardId(null);
+  };
 
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
   const selectedMoodIndex = Math.max(
@@ -709,6 +859,34 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             </div>
           </div>
         </div>
+        <div className="category-filter-row" aria-label="Category filters">
+          <button
+            type="button"
+            className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
+            onClick={() => setCategoryFilter("all")}
+          >
+            <span>All</span>
+            <small>{cards.length} cards</small>
+          </button>
+          {categoryStats.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              className={
+                categoryFilter === category.id
+                  ? "category-filter-chip is-active"
+                  : "category-filter-chip"
+              }
+              style={{ borderColor: category.color }}
+              onClick={() => setCategoryFilter(category.id)}
+            >
+              <span>{category.name}</span>
+              <small>
+                {category.cardCount} cards · {category.totalTimeMinutes} min
+              </small>
+            </button>
+          ))}
+        </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
       </header>
 
@@ -716,7 +894,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         {isLoadingTasks ? <p>Loading tasks...</p> : null}
         {visibleCards.map((card) => {
           return (
-            <article className={`task-card ${card.done ? "is-done-card" : ""}`} key={card.id}>
+            <article
+              className={`task-card ${card.done ? "is-done-card" : ""} ${
+                draggedCardId === card.id ? "is-dragging" : ""
+              }`}
+              key={card.id}
+              style={getCardStyle(card)}
+              draggable
+              onDragStart={() => handleCardDragStart(card.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => handleCardDrop(card.id)}
+              onDragEnd={() => setDraggedCardId(null)}
+            >
               <div className="card-header">
                 <div className="card-title-group">
                   <h2>{card.title}</h2>
@@ -764,7 +953,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               ) : null}
               {card.timeTakenMinutes ? (
                 <p className="task-schedule">
-                  Time taken: <strong>{card.timeTakenMinutes} min</strong>
+                  Completion time: <strong>{card.timeTakenMinutes} min</strong>
                 </p>
               ) : null}
 
@@ -929,7 +1118,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                               : "mood-simple-label"
                           }
                         >
-                          <span>{option.icon}</span>
+                          <span className="mood-icon">{option.icon}</span>
                           <span>{option.label}</span>
                         </span>
                       ))}
