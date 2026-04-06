@@ -318,7 +318,9 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     status = 'todo',
     dueDate = null,
     scheduledFor = null,
+    scheduled_for: scheduledForSnake = null,
   } = req.body;
+  const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
 
   if (!title) {
     return res.status(400).json({ error: 'title is required' });
@@ -328,7 +330,7 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     `INSERT INTO tasks (user_id, title, description, status, due_date, scheduled_for)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, title, description, status, due_date, scheduled_for, created_at, updated_at`,
-    [req.session.userId, title, description, status, dueDate, scheduledFor]
+    [req.session.userId, title, description, status, dueDate, normalizedScheduledFor]
   );
 
   return res.status(201).json({ task: result.rows[0] });
@@ -336,7 +338,9 @@ app.post('/api/tasks', authRequired, async (req, res) => {
 
 app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
   const { taskId } = req.params;
-  const { title, description, status, dueDate, scheduledFor } = req.body;
+  const { title, description, status, dueDate, scheduledFor, scheduled_for: scheduledForSnake } =
+    req.body;
+  const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
 
   const result = await pool.query(
     `UPDATE tasks
@@ -348,7 +352,7 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
          updated_at = NOW()
      WHERE id = $6 AND user_id = $7 AND deleted_at IS NULL
      RETURNING id, title, description, status, due_date, scheduled_for, created_at, updated_at`,
-    [title, description, status, dueDate, scheduledFor, taskId, req.session.userId]
+    [title, description, status, dueDate, normalizedScheduledFor, taskId, req.session.userId]
   );
 
   if (!result.rows[0]) {

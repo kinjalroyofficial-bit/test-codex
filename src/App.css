@@ -262,7 +262,7 @@ body.theme-light {
   -webkit-appearance: none;
   background: transparent;
   color: #fff;
-  padding: 2px 16px 2px 0;
+  padding: 2px 16px 2px 4px;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -280,6 +280,7 @@ body.theme-light {
   color: #0f172a;
   background: #ffffff;
   padding: 6px 10px;
+  text-indent: 8px;
 }
 
 .filter-pill select option:checked {

@@ -338,6 +338,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             description: trimmedDescription || null,
             status: "todo",
             scheduledFor: scheduledForValue,
+            scheduled_for: scheduledForValue,
           }),
         });
         const data = await parseApiResponse(response);
@@ -368,6 +369,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: trimmedTitle,
             description: trimmedDescription,
             scheduledFor: scheduledForValue,
+            scheduled_for: scheduledForValue,
           }),
         });
         const data = await parseApiResponse(response);
