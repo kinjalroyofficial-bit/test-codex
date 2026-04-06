@@ -547,8 +547,7 @@ body.theme-light {
 .theme-slider {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #131a2b 0%, #0d1320 100%);
-  border: 1px solid #334155;
+  background-color: #000;
   border-radius: 20px;
   transition: 0.4s;
   overflow: hidden;
@@ -811,14 +810,14 @@ body:not(.theme-light) .app__header p,
 body:not(.theme-light) .auth-card p,
 body:not(.theme-light) .task-card p,
 body:not(.theme-light) .auth-user-box span {
-  color: #cbd5e1;
+  color: #d1d5db;
 }
 
 body:not(.theme-light) .auth-card,
 body:not(.theme-light) .task-card,
 body:not(.theme-light) .auth-user-box {
-  background: #111827;
-  border: 1px solid #374151;
+  background: #0f172a;
+  border: 1px solid #475569;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
@@ -838,16 +837,21 @@ body:not(.theme-light) .task-form input,
 body:not(.theme-light) .controls-row select,
 body:not(.theme-light) .inline-edit-form input,
 body:not(.theme-light) .auth-form input {
-  background: #0b1220;
-  color: #e5e7eb;
-  border-color: #475569;
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #64748b;
 }
 
 body:not(.theme-light) .auth-user-box button,
 body:not(.theme-light) .inline-edit-actions button {
-  background: #1f2937;
-  color: #e5e7eb;
-  border-color: #4b5563;
+  background: #1e293b;
+  color: #f3f4f6;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .theme-slider {
+  background: linear-gradient(180deg, #1f2937 0%, #0f172a 100%);
+  border: 1px solid #64748b;
 }
 
 @media (max-width: 640px) {
