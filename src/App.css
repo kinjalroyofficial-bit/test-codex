@@ -5,13 +5,13 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f3f6fb;
-  color: #1a2332;
+  background: #06080f;
+  color: #e5e7eb;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 body.theme-light {
-  background: #fff7ed;
+  background: #f3f6fb;
   color: #1f2937;
 }
 
@@ -532,10 +532,10 @@ body.theme-light {
 .theme-switch {
   position: relative;
   display: inline-block;
-  width: 90px;
-  height: 40px;
+  width: 74px;
+  height: 32px;
   border: 1px solid rgb(58, 58, 58);
-  border-radius: 22px;
+  border-radius: 18px;
 }
 
 .theme-switch input {
@@ -557,10 +557,10 @@ body.theme-light {
 .theme-slider::before {
   position: absolute;
   content: "";
-  height: 30px;
-  width: 30px;
+  height: 22px;
+  width: 22px;
   left: 4px;
-  bottom: 5px;
+  bottom: 4px;
   background-color: #fff;
   transition: 1s;
   border-radius: 50%;
@@ -581,26 +581,26 @@ body.theme-light {
 
 .moon-hole:nth-child(1) {
   background-color: rgb(85, 85, 85);
-  height: 5px;
-  width: 5px;
-  top: 26px;
-  left: 20px;
+  height: 4px;
+  width: 4px;
+  top: 19px;
+  left: 15px;
 }
 
 .moon-hole:nth-child(2) {
   background-color: rgb(85, 85, 85);
-  height: 10px;
-  width: 10px;
-  top: 16px;
-  left: 7px;
+  height: 7px;
+  width: 7px;
+  top: 11px;
+  left: 6px;
 }
 
 .moon-hole:nth-child(3) {
   background-color: rgb(85, 85, 85);
-  height: 4px;
-  width: 4px;
-  top: 12px;
-  left: 21px;
+  height: 3px;
+  width: 3px;
+  top: 8px;
+  left: 16px;
 }
 
 .theme-switch input:checked + .theme-slider {
@@ -608,18 +608,18 @@ body.theme-light {
 }
 
 .theme-switch input:checked + .theme-slider::before {
-  transform: translateX(52px);
+  transform: translateX(41px);
   background-color: orange;
 }
 
 .theme-switch input:checked + .theme-slider .moons-hole {
-  transform: translateX(52px);
+  transform: translateX(41px);
   opacity: 0;
 }
 
 .stars {
   position: absolute;
-  right: 6px;
+  right: 4px;
   top: 0;
   bottom: 0;
   transition: 1s;
@@ -634,41 +634,41 @@ body.theme-light {
 }
 
 .star:nth-child(1) {
-  top: 5px;
-  right: 29px;
-  width: 20px;
+  top: 3px;
+  right: 24px;
+  width: 14px;
   animation-delay: 0.3s;
 }
 
 .star:nth-child(2) {
-  top: 18px;
-  right: 9px;
-  width: 15px;
+  top: 14px;
+  right: 8px;
+  width: 11px;
 }
 
 .star:nth-child(3) {
-  top: 5px;
-  right: 15px;
-  width: 10px;
+  top: 4px;
+  right: 12px;
+  width: 8px;
   animation-delay: 0.6s;
 }
 
 .star:nth-child(4) {
-  top: 26px;
-  right: 28px;
-  width: 12px;
+  top: 20px;
+  right: 23px;
+  width: 9px;
   animation-delay: 0.9s;
 }
 
 .star:nth-child(5) {
   top: 2px;
-  right: 50px;
-  width: 8px;
+  right: 39px;
+  width: 6px;
   animation-delay: 1.2s;
 }
 
 .theme-switch input:checked + .theme-slider .stars {
-  transform: translateY(-32px);
+  transform: translateY(-24px);
   opacity: 0;
 }
 
@@ -690,12 +690,12 @@ body.theme-light {
 .clouds,
 .black-clouds {
   position: absolute;
-  left: 6px;
+  left: 4px;
   top: 0;
   bottom: 0;
   width: 20px;
   transition: 1s;
-  transform: translateX(-55px);
+  transform: translateX(-46px);
 }
 
 .black-clouds {
@@ -705,8 +705,8 @@ body.theme-light {
 
 .black-cloud {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   background-color: #555;
   opacity: 60%;
   border-radius: 50%;
@@ -715,29 +715,29 @@ body.theme-light {
 }
 
 .black-cloud:nth-child(1) {
-  top: 1px;
+  top: 2px;
   right: 3px;
 }
 
 .black-cloud:nth-child(2) {
-  top: 15px;
-  left: 9px;
+  top: 10px;
+  left: 7px;
 }
 
 .black-cloud:nth-child(3) {
-  top: 20px;
-  left: 27px;
+  top: 14px;
+  left: 21px;
 }
 
 .theme-switch input:checked + .theme-slider .black-clouds {
-  transform: translateX(32px);
+  transform: translateX(24px);
   opacity: 1;
 }
 
 .cloud {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   background-color: #fff;
   border-radius: 50%;
   z-index: 1;
@@ -746,64 +746,107 @@ body.theme-light {
 
 .cloud:nth-child(1) {
   top: 0;
-  height: 21px;
-  width: 21px;
-  right: 14px;
+  height: 15px;
+  width: 15px;
+  right: 10px;
 }
 
 .cloud:nth-child(2) {
-  height: 25px;
-  width: 25px;
+  height: 17px;
+  width: 17px;
   border-radius: 50%;
-  top: 14px;
-  right: 6px;
+  top: 10px;
+  right: 4px;
 }
 
 .cloud:nth-child(3) {
-  height: 23px;
-  width: 23px;
-  top: 28px;
+  height: 15px;
+  width: 15px;
+  top: 20px;
   left: 4px;
 }
 
 .cloud:nth-child(4) {
-  top: 26px;
-  left: 20px;
+  top: 18px;
+  left: 15px;
 }
 
 .cloud:nth-child(5) {
-  top: 30px;
-  left: 30px;
+  top: 22px;
+  left: 22px;
 }
 
 .cloud:nth-child(6) {
-  top: 27px;
-  left: 46px;
+  top: 20px;
+  left: 33px;
 }
 
 .cloud:nth-child(7) {
-  top: 31px;
-  left: 58px;
+  top: 23px;
+  left: 42px;
 }
 
 .theme-switch input:checked + .theme-slider .clouds {
-  transform: translateX(32px);
+  transform: translateX(24px);
   opacity: 1;
 }
 
 @keyframes cloud-move {
   0% {
-    transform: translateX(-32px);
+    transform: translateX(-24px);
   }
   40% {
-    transform: translateX(-36px);
+    transform: translateX(-27px);
   }
   80% {
-    transform: translateX(-28px);
+    transform: translateX(-21px);
   }
   100% {
-    transform: translateX(-32px);
+    transform: translateX(-24px);
   }
+}
+
+body:not(.theme-light) .app__header p,
+body:not(.theme-light) .auth-card p,
+body:not(.theme-light) .task-card p,
+body:not(.theme-light) .auth-user-box span {
+  color: #cbd5e1;
+}
+
+body:not(.theme-light) .auth-card,
+body:not(.theme-light) .task-card,
+body:not(.theme-light) .auth-user-box {
+  background: #111827;
+  border: 1px solid #374151;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+body:not(.theme-light) .task-card.is-done-card {
+  background: #052e2b;
+  border-color: #047857;
+}
+
+body:not(.theme-light) .task-card h2,
+body:not(.theme-light) .app__header h1,
+body:not(.theme-light) .controls-row label,
+body:not(.theme-light) .task-form label {
+  color: #f3f4f6;
+}
+
+body:not(.theme-light) .task-form input,
+body:not(.theme-light) .controls-row select,
+body:not(.theme-light) .inline-edit-form input,
+body:not(.theme-light) .auth-form input {
+  background: #0b1220;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+body:not(.theme-light) .auth-user-box button,
+body:not(.theme-light) .inline-edit-actions button {
+  background: #1f2937;
+  color: #e5e7eb;
+  border-color: #4b5563;
 }
 
 @media (max-width: 640px) {
