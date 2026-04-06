@@ -314,7 +314,7 @@ body.theme-light {
 }
 
 .task-card.is-dragging {
-  opacity: 0.82;
+  opacity: 0.7;
   transform: scale(0.99);
 }
 
@@ -667,6 +667,10 @@ body.theme-light {
 .task-attributes-row.task-attributes-row-timelines label,
 .task-attributes-row.task-attributes-row-completion label {
   width: 100%;
+}
+
+.task-attributes-row.task-attributes-row-timelines input {
+  max-width: 92%;
 }
 
 .category-chip.is-selected {
