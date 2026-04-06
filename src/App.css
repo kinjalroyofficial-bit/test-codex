@@ -458,7 +458,7 @@ body.theme-light {
 
 .task-modal {
   position: relative;
-  width: min(560px, 100%);
+  width: min(600px, 100%);
   background: #fff;
   border-radius: 12px;
   padding: 12px;
@@ -575,14 +575,15 @@ body.theme-light {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 2px 2px 0;
+  padding: 2px 20px 0;
+  touch-action: none;
 }
 
 .mood-discrete-slider::before {
   content: "";
   position: absolute;
-  left: 4px;
-  right: 4px;
+  left: 24px;
+  right: 24px;
   top: 13px;
   height: 2px;
   border-radius: 999px;
@@ -604,6 +605,15 @@ body.theme-light {
   transition: left 220ms ease-in-out;
   z-index: 2;
   pointer-events: none;
+}
+
+.mood-active-blob {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.mood-active-blob:active {
+  cursor: grabbing;
 }
 
 .mood-active-emoji {
