@@ -267,6 +267,13 @@ body.theme-light {
   gap: 4px;
 }
 
+.card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .task-card h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -506,6 +513,13 @@ body.theme-light {
 .status-text.not-done {
   color: #334155;
   background: #cbd5e1;
+}
+
+.task-age {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 @media (max-width: 1024px) {
@@ -831,6 +845,10 @@ body:not(.theme-light) .app__header h1,
 body:not(.theme-light) .controls-row label,
 body:not(.theme-light) .task-form label {
   color: #f3f4f6;
+}
+
+body:not(.theme-light) .task-age {
+  color: #94a3b8;
 }
 
 body:not(.theme-light) .task-form input,

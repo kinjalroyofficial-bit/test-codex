@@ -140,6 +140,24 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [editingDraft, setEditingDraft] = useState(null);
   const [boardError, setBoardError] = useState("");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTimeAgo = (timestamp) => {
+    const diffMs = now - (timestamp || now);
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+
+    if (diffMs < minute) return "just now";
+    if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
+    if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`;
+    return `${Math.floor(diffMs / day)}d ago`;
+  };
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -493,9 +511,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               <div className="card-header">
                 <div className="card-title-group">
                   <h2>{card.title}</h2>
-                  <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
-                    {card.done ? "Done" : "Not Done"}
-                  </span>
+                  <div className="card-meta-row">
+                    <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
+                      {card.done ? "Done" : "Not Done"}
+                    </span>
+                    <span className="task-age">{formatTimeAgo(card.createdAt)}</span>
+                  </div>
                 </div>
                 <button
                   type="button"
