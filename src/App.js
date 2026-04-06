@@ -131,7 +131,7 @@ function LoginScreen({ onAuthSuccess }) {
   );
 }
 
-function BoardScreen({ user, onLogout }) {
+function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [cards, setCards] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
@@ -376,11 +376,59 @@ function BoardScreen({ user, onLogout }) {
             <h1>Personal Task Tracker</h1>
             <p>Track the latest updates with quick Done/Not Done toggles.</p>
           </div>
-          <div className="auth-user-box">
-            <span>{user?.email || "Signed in"}</span>
-            <button type="button" onClick={onLogout}>
-              Logout
-            </button>
+          <div className="user-panel">
+            <div className="auth-user-box">
+              <span>{user?.email || "Signed in"}</span>
+              <button type="button" onClick={onLogout}>
+                Logout
+              </button>
+            </div>
+
+            <label className="theme-switch" aria-label="Toggle theme">
+              <input
+                type="checkbox"
+                checked={theme === "light"}
+                onChange={onToggleTheme}
+              />
+              <span className="theme-slider">
+                <div className="moons-hole">
+                  <div className="moon-hole" />
+                  <div className="moon-hole" />
+                  <div className="moon-hole" />
+                </div>
+                <div className="black-clouds">
+                  <div className="black-cloud" />
+                  <div className="black-cloud" />
+                  <div className="black-cloud" />
+                </div>
+                <div className="clouds">
+                  <div className="cloud" />
+                  <div className="cloud" />
+                  <div className="cloud" />
+                  <div className="cloud" />
+                  <div className="cloud" />
+                  <div className="cloud" />
+                  <div className="cloud" />
+                </div>
+                <div className="stars">
+                  <svg className="star" viewBox="0 0 20 20">
+                    <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z" />
+                  </svg>
+                  <svg className="star" viewBox="0 0 20 20">
+                    <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z" />
+                  </svg>
+                  <svg className="star" viewBox="0 0 20 20">
+                    <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z" />
+                  </svg>
+                  <svg className="star" viewBox="0 0 20 20">
+                    <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z" />
+                  </svg>
+                  <svg className="star" viewBox="0 0 20 20">
+                    <path d="M 0 10 C 10 10,10 10 ,0 10 C 10 10 , 10 10 , 10 20 C 10 10 , 10 10 , 20 10 C 10 10 , 10 10 , 10 0 C 10 10,10 10 ,0 10 Z" />
+                  </svg>
+                </div>
+              </span>
+            </label>
           </div>
         </div>
 
@@ -441,9 +489,14 @@ function BoardScreen({ user, onLogout }) {
           const isEditingCard = editingDraft?.id === card.id;
 
           return (
-            <article className="task-card" key={card.id}>
+            <article className={`task-card ${card.done ? "is-done-card" : ""}`} key={card.id}>
               <div className="card-header">
-                <h2>{card.title}</h2>
+                <div className="card-title-group">
+                  <h2>{card.title}</h2>
+                  <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
+                    {card.done ? "Done" : "Not Done"}
+                  </span>
+                </div>
                 <button
                   type="button"
                   className="delete-cross"
@@ -453,10 +506,6 @@ function BoardScreen({ user, onLogout }) {
                   ×
                 </button>
               </div>
-
-              <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
-                {card.done ? "Done" : "Not Done"}
-              </span>
 
               {isEditingCard ? (
                 <div className="inline-edit-form" aria-label={`Edit ${card.title}`}>
@@ -527,6 +576,12 @@ function BoardScreen({ user, onLogout }) {
 function App() {
   const [user, setUser] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem("taskTheme") || "dark");
+
+  useEffect(() => {
+    document.body.classList.toggle("theme-light", theme === "light");
+    localStorage.setItem("taskTheme", theme);
+  }, [theme]);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -578,7 +633,16 @@ function App() {
     return <LoginScreen onAuthSuccess={setUser} />;
   }
 
-  return <BoardScreen user={user} onLogout={handleLogout} />;
+  return (
+    <BoardScreen
+      user={user}
+      onLogout={handleLogout}
+      theme={theme}
+      onToggleTheme={() =>
+        setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))
+      }
+    />
+  );
 }
 
 export default App;
