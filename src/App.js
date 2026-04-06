@@ -153,12 +153,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [cards, setCards] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
-  const [titleInput, setTitleInput] = useState("");
-  const [descriptionInput, setDescriptionInput] = useState("");
-  const [editingDraft, setEditingDraft] = useState(null);
   const [boardError, setBoardError] = useState("");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskModalMode, setTaskModalMode] = useState("create");
+  const [activeTaskId, setActiveTaskId] = useState(null);
+  const [taskTitleInput, setTaskTitleInput] = useState("");
+  const [taskDescriptionInput, setTaskDescriptionInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -268,115 +270,103 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       setBoardError(error.message || "Failed to delete task");
     }
 
-    if (editingDraft?.id === cardId) {
-      setEditingDraft(null);
-    }
   };
 
-  const startCardEdit = (card) => {
-    setEditingDraft({
-      id: card.id,
-      title: card.title,
-      description: card.description || "",
-    });
+  const openCreateTaskModal = () => {
+    setTaskModalMode("create");
+    setActiveTaskId(null);
+    setTaskTitleInput("");
+    setTaskDescriptionInput("");
+    setBoardError("");
+    setIsTaskModalOpen(true);
   };
 
-  const cancelCardEdit = () => {
-    setEditingDraft(null);
+  const openEditTaskModal = (card) => {
+    setTaskModalMode("edit");
+    setActiveTaskId(card.id);
+    setTaskTitleInput(card.title);
+    setTaskDescriptionInput(card.description || "");
+    setBoardError("");
+    setIsTaskModalOpen(true);
   };
 
-  const updateDraftField = (field, value) => {
-    setEditingDraft((currentDraft) =>
-      currentDraft ? { ...currentDraft, [field]: value } : currentDraft
-    );
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setActiveTaskId(null);
+    setTaskTitleInput("");
+    setTaskDescriptionInput("");
   };
 
-  const saveCardEdit = async (cardId) => {
-    if (!editingDraft || editingDraft.id !== cardId) return;
-
-    const trimmedTitle = editingDraft.title.trim();
-    const trimmedDescription = editingDraft.description.trim();
+  const handleTaskModalSubmit = async (event) => {
+    event.preventDefault();
+    const trimmedTitle = taskTitleInput.trim();
+    const trimmedDescription = taskDescriptionInput.trim();
 
     if (!trimmedTitle) return;
 
     setBoardError("");
 
     try {
-      const response = await fetch(buildApiUrl(`/api/tasks/${cardId}`), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title: trimmedTitle, description: trimmedDescription }),
-      });
-      const data = await parseApiResponse(response);
+      if (taskModalMode === "create") {
+        const response = await fetch(buildApiUrl("/api/tasks"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            title: trimmedTitle,
+            description: trimmedDescription || null,
+            status: "todo",
+          }),
+        });
+        const data = await parseApiResponse(response);
 
-      if (!response.ok) {
-        throw new Error(data?.error || "Failed to save task");
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to create task");
+        }
+
+        const createdTask = data?.task;
+        const nextCard = {
+          id: createdTask?.id || Date.now(),
+          createdAt: createdTask?.created_at
+            ? new Date(createdTask.created_at).getTime()
+            : Date.now(),
+          title: createdTask?.title || trimmedTitle,
+          description: createdTask?.description || "",
+          done: (createdTask?.status || "todo") === "done",
+        };
+
+        setCards((currentCards) => [nextCard, ...currentCards]);
+      } else {
+        const response = await fetch(buildApiUrl(`/api/tasks/${activeTaskId}`), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ title: trimmedTitle, description: trimmedDescription }),
+        });
+        const data = await parseApiResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to save task");
+        }
+
+        const updatedTask = data?.task;
+        setCards((currentCards) =>
+          currentCards.map((card) =>
+            card.id === activeTaskId
+              ? {
+                  ...card,
+                  title: updatedTask?.title || trimmedTitle,
+                  description: updatedTask?.description || "",
+                  done: (updatedTask?.status || "todo") === "done",
+                }
+              : card
+          )
+        );
       }
 
-      const updatedTask = data?.task;
-      setCards((currentCards) =>
-        currentCards.map((card) =>
-          card.id === cardId
-            ? {
-                ...card,
-                title: updatedTask?.title || trimmedTitle,
-                description: updatedTask?.description || "",
-                done: (updatedTask?.status || "todo") === "done",
-              }
-            : card
-        )
-      );
-
-      cancelCardEdit();
+      closeTaskModal();
     } catch (error) {
       setBoardError(error.message || "Failed to save task");
-    }
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    const trimmedTitle = titleInput.trim();
-    const trimmedDescription = descriptionInput.trim();
-
-    if (!trimmedTitle) return;
-
-    setBoardError("");
-
-    try {
-      const response = await fetch(buildApiUrl("/api/tasks"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          title: trimmedTitle,
-          description: trimmedDescription || null,
-          status: "todo",
-        }),
-      });
-      const data = await parseApiResponse(response);
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Failed to create task");
-      }
-
-      const createdTask = data?.task;
-      const nextCard = {
-        id: createdTask?.id || Date.now(),
-        createdAt: createdTask?.created_at
-          ? new Date(createdTask.created_at).getTime()
-          : Date.now(),
-        title: createdTask?.title || trimmedTitle,
-        description: createdTask?.description || "",
-        done: (createdTask?.status || "todo") === "done",
-      };
-
-      setCards((currentCards) => [nextCard, ...currentCards]);
-      setTitleInput("");
-      setDescriptionInput("");
-    } catch (error) {
-      setBoardError(error.message || "Failed to create task");
     }
   };
 
@@ -404,12 +394,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     return sortedCards;
   }, [cards, sortBy, statusFilter]);
 
+  const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
+
   return (
     <main className="app">
       <header className="app__header">
         <div className="app__topbar">
           <div>
-            <h1>Welcome {user?.full_name || "back"}.</h1>
+            <h1>Welcome {firstName}.</h1>
             <p>Track the latest updates with quick Done/Not Done toggles.</p>
           </div>
           <div className="user-panel">
@@ -468,28 +460,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           </div>
         </div>
 
-        <form className="task-form" onSubmit={handleSubmit}>
-          <label>
-            Task name
-            <input
-              type="text"
-              value={titleInput}
-              onChange={(event) => setTitleInput(event.target.value)}
-              placeholder="Enter task title"
-              required
-            />
-          </label>
-          <label>
-            Task details
-            <input
-              type="text"
-              value={descriptionInput}
-              onChange={(event) => setDescriptionInput(event.target.value)}
-              placeholder="Optional description"
-            />
-          </label>
-          <button type="submit">Add task</button>
-        </form>
+        <div className="task-form-actions">
+          <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
+            Create new task
+          </button>
+        </div>
 
         <div className="controls-row">
           <label>
@@ -522,8 +497,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       <section className="cards-grid" aria-label="Task cards">
         {isLoadingTasks ? <p>Loading tasks...</p> : null}
         {visibleCards.map((card) => {
-          const isEditingCard = editingDraft?.id === card.id;
-
           return (
             <article className={`task-card ${card.done ? "is-done-card" : ""}`} key={card.id}>
               <div className="card-header">
@@ -546,38 +519,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </button>
               </div>
 
-              {isEditingCard ? (
-                <div className="inline-edit-form" aria-label={`Edit ${card.title}`}>
-                  <label>
-                    Title
-                    <input
-                      type="text"
-                      value={editingDraft?.title || ""}
-                      onChange={(event) => updateDraftField("title", event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Details
-                    <input
-                      type="text"
-                      value={editingDraft?.description || ""}
-                      onChange={(event) =>
-                        updateDraftField("description", event.target.value)
-                      }
-                    />
-                  </label>
-                  <div className="inline-edit-actions">
-                    <button type="button" onClick={() => saveCardEdit(card.id)}>
-                      Save
-                    </button>
-                    <button type="button" onClick={cancelCardEdit}>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p>{card.description}</p>
-              )}
+              <p>{card.description}</p>
 
               <div className="status-row">
                 <div className="container">
@@ -594,20 +536,53 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   </label>
                 </div>
 
-                {!isEditingCard ? (
-                  <button
-                    type="button"
-                    className="edit-btn card-edit-btn"
-                    onClick={() => startCardEdit(card)}
-                  >
-                    Edit task
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className="edit-btn card-edit-btn"
+                  onClick={() => openEditTaskModal(card)}
+                >
+                  Edit task
+                </button>
               </div>
             </article>
           );
         })}
       </section>
+
+      {isTaskModalOpen ? (
+        <div className="task-modal-overlay" role="dialog" aria-modal="true">
+          <div className="task-modal">
+            <h3>{taskModalMode === "create" ? "Create task" : "Edit task"}</h3>
+            <form onSubmit={handleTaskModalSubmit} className="task-modal-form">
+              <label>
+                Task title
+                <input
+                  type="text"
+                  value={taskTitleInput}
+                  onChange={(event) => setTaskTitleInput(event.target.value)}
+                  placeholder="Enter task title"
+                  required
+                />
+              </label>
+              <label>
+                Task description
+                <textarea
+                  value={taskDescriptionInput}
+                  onChange={(event) => setTaskDescriptionInput(event.target.value)}
+                  placeholder="Optional description"
+                  rows={3}
+                />
+              </label>
+              <div className="task-modal-actions">
+                <button type="button" onClick={closeTaskModal}>
+                  Cancel
+                </button>
+                <button type="submit">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

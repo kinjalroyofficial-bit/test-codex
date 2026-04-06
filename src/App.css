@@ -142,6 +142,21 @@ body.theme-light {
   align-items: end;
 }
 
+.task-form-actions {
+  margin-top: 16px;
+}
+
+.create-task-btn {
+  border: 0;
+  border-radius: 10px;
+  background: #4f46e5;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .task-form label {
   display: flex;
   flex-direction: column;
@@ -353,6 +368,77 @@ body.theme-light {
   background: #1d4ed8;
   color: #fff;
   border-color: #1d4ed8;
+}
+
+.task-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 30;
+}
+
+.task-modal {
+  width: min(460px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.task-modal h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.task-modal-form {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.task-modal-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.task-modal-form input,
+.task-modal-form textarea {
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.task-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.task-modal-actions button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.task-modal-actions button[type="submit"] {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
 }
 
 .card-edit-btn {
@@ -854,7 +940,9 @@ body:not(.theme-light) .task-age {
 body:not(.theme-light) .task-form input,
 body:not(.theme-light) .controls-row select,
 body:not(.theme-light) .inline-edit-form input,
-body:not(.theme-light) .auth-form input {
+body:not(.theme-light) .auth-form input,
+body:not(.theme-light) .task-modal-form input,
+body:not(.theme-light) .task-modal-form textarea {
   background: #111827;
   color: #f3f4f6;
   border-color: #64748b;
@@ -865,6 +953,28 @@ body:not(.theme-light) .inline-edit-actions button {
   background: #1e293b;
   color: #f3f4f6;
   border-color: #64748b;
+}
+
+body:not(.theme-light) .task-modal {
+  background: #0f172a;
+  border: 1px solid #475569;
+}
+
+body:not(.theme-light) .task-modal h3,
+body:not(.theme-light) .task-modal-form label {
+  color: #f3f4f6;
+}
+
+body:not(.theme-light) .task-modal-actions button {
+  background: #1e293b;
+  color: #f3f4f6;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .task-modal-actions button[type="submit"] {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
 }
 
 body:not(.theme-light) .theme-slider {
