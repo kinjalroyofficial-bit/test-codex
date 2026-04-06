@@ -175,9 +175,7 @@ function BoardScreen({ user, onLogout }) {
   const [sortBy, setSortBy] = useState("created");
   const [titleInput, setTitleInput] = useState("");
   const [descriptionInput, setDescriptionInput] = useState("");
-  const [editingCardId, setEditingCardId] = useState(null);
-  const [editTitleInput, setEditTitleInput] = useState("");
-  const [editDescriptionInput, setEditDescriptionInput] = useState("");
+  const [editingDraft, setEditingDraft] = useState(null);
 
   const toggleStatus = (cardId) => {
     setCards((currentCards) =>
@@ -190,27 +188,33 @@ function BoardScreen({ user, onLogout }) {
   const handleDelete = (cardId) => {
     setCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
 
-    if (editingCardId === cardId) {
-      setEditingCardId(null);
-      setEditTitleInput("");
-      setEditDescriptionInput("");
+    if (editingDraft?.id === cardId) {
+      setEditingDraft(null);
     }
   };
 
   const startCardEdit = (card) => {
-    setEditingCardId(card.id);
-    setEditTitleInput(card.title);
-    setEditDescriptionInput(card.description || "");
+    setEditingDraft({
+      id: card.id,
+      title: card.title,
+      description: card.description || "",
+    });
   };
 
   const cancelCardEdit = () => {
-    setEditingCardId(null);
-    setEditTitleInput("");
-    setEditDescriptionInput("");
+    setEditingDraft(null);
+  };
+
+  const updateDraftField = (field, value) => {
+    setEditingDraft((currentDraft) =>
+      currentDraft ? { ...currentDraft, [field]: value } : currentDraft
+    );
   };
 
   const saveCardEdit = (cardId) => {
-    const trimmedTitle = editTitleInput.trim();
+    if (!editingDraft || editingDraft.id !== cardId) return;
+
+    const trimmedTitle = editingDraft.title.trim();
 
     if (!trimmedTitle) return;
 
@@ -220,7 +224,7 @@ function BoardScreen({ user, onLogout }) {
           ? {
               ...card,
               title: trimmedTitle,
-              description: editDescriptionInput.trim(),
+              description: editingDraft.description.trim(),
             }
           : card
       )
@@ -344,7 +348,7 @@ function BoardScreen({ user, onLogout }) {
 
       <section className="cards-grid" aria-label="Task cards">
         {visibleCards.map((card) => {
-          const isEditingCard = editingCardId === card.id;
+          const isEditingCard = editingDraft?.id === card.id;
 
           return (
             <article className="task-card" key={card.id}>
@@ -370,16 +374,18 @@ function BoardScreen({ user, onLogout }) {
                     Title
                     <input
                       type="text"
-                      value={editTitleInput}
-                      onChange={(event) => setEditTitleInput(event.target.value)}
+                      value={editingDraft?.title || ""}
+                      onChange={(event) => updateDraftField("title", event.target.value)}
                     />
                   </label>
                   <label>
                     Details
                     <input
                       type="text"
-                      value={editDescriptionInput}
-                      onChange={(event) => setEditDescriptionInput(event.target.value)}
+                      value={editingDraft?.description || ""}
+                      onChange={(event) =>
+                        updateDraftField("description", event.target.value)
+                      }
                     />
                   </label>
                   <div className="inline-edit-actions">
@@ -411,13 +417,15 @@ function BoardScreen({ user, onLogout }) {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="edit-btn card-edit-btn"
-                onClick={() => startCardEdit(card)}
-              >
-                Edit task
-              </button>
+              {!isEditingCard ? (
+                <button
+                  type="button"
+                  className="edit-btn card-edit-btn"
+                  onClick={() => startCardEdit(card)}
+                >
+                  Edit task
+                </button>
+              ) : null}
             </article>
           );
         })}
