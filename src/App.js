@@ -320,6 +320,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [boardError, setBoardError] = useState("");
   const [boardNotice, setBoardNotice] = useState("");
   const [activeView, setActiveView] = useState("board");
+  const [boardLayoutMode, setBoardLayoutMode] = useState("board");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -1148,6 +1149,28 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     touchDropTargetIdRef.current = null;
   };
 
+  const timelineTasks = useMemo(() => {
+    return [...visibleCards]
+      .filter((card) => card.scheduledFor)
+      .map((card) => {
+        const scheduledDate = new Date(card.scheduledFor);
+        const startMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
+        const durationMinutes = Math.max(
+          15,
+          Number(card.estimatedDurationMinutes || card.timeTakenMinutes || 30)
+        );
+        return {
+          ...card,
+          startMinutes,
+          durationMinutes,
+          startTimeLabel: `${String(scheduledDate.getHours()).padStart(2, "0")}:${String(
+            scheduledDate.getMinutes()
+          ).padStart(2, "0")}`,
+        };
+      })
+      .sort((a, b) => a.startMinutes - b.startMinutes);
+  }, [visibleCards]);
+
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
   const selectedMoodIndex = Math.max(
     0,
@@ -1267,41 +1290,63 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   </div>
                 </div>
               </div>
-              <div className="board-date-controls" aria-label="Task date controls">
-                <button
-                  type="button"
-                  className="date-nav-btn"
-                  onClick={() => moveSelectedDateByDays(-1)}
-                >
-                  Previous day
-                </button>
-                <div className="board-date-display">
-                  <p>Showing tasks for</p>
+              <div className="board-date-and-view-row">
+                <div className="board-date-controls" aria-label="Task date controls">
                   <button
                     type="button"
-                    className="board-date-display-trigger"
-                    onClick={openInlineDatePicker}
-                    aria-label="Select task date"
+                    className="date-nav-btn"
+                    onClick={() => moveSelectedDateByDays(-1)}
                   >
-                    {formatSelectedDate(selectedDate)}
+                    Previous day
                   </button>
-                  <input
-                    ref={dateInputRef}
-                    type="date"
-                    value={selectedDate}
-                    onChange={(event) => setSelectedDate(event.target.value)}
-                    className="board-date-input-hidden"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  />
+                  <div className="board-date-display">
+                    <p>Showing tasks for</p>
+                    <button
+                      type="button"
+                      className="board-date-display-trigger"
+                      onClick={openInlineDatePicker}
+                      aria-label="Select task date"
+                    >
+                      {formatSelectedDate(selectedDate)}
+                    </button>
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      value={selectedDate}
+                      onChange={(event) => setSelectedDate(event.target.value)}
+                      className="board-date-input-hidden"
+                      tabIndex={-1}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="date-nav-btn"
+                    onClick={() => moveSelectedDateByDays(1)}
+                  >
+                    Next day
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="date-nav-btn"
-                  onClick={() => moveSelectedDateByDays(1)}
-                >
-                  Next day
-                </button>
+                <div className="board-view-toggle" role="tablist" aria-label="Board layout">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={boardLayoutMode === "board"}
+                    className={boardLayoutMode === "board" ? "is-active" : ""}
+                    onClick={() => setBoardLayoutMode("board")}
+                  >
+                    Board
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={boardLayoutMode === "timeline"}
+                    className={boardLayoutMode === "timeline" ? "is-active" : ""}
+                    onClick={() => setBoardLayoutMode("timeline")}
+                  >
+                    Timeline
+                  </button>
+                </div>
               </div>
             </div>
             <div className="category-filter-row" aria-label="Category filters">
@@ -1354,10 +1399,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         <AnalyticsDashboard onBack={() => setActiveView("board")} />
       ) : (
         <>
-          <section className="cards-grid" aria-label="Task cards">
-        {isLoadingTasks ? <p>Loading tasks...</p> : null}
-        {visibleCards.map((card) => {
-          return (
+          {boardLayoutMode === "board" ? (
+            <section className="cards-grid" aria-label="Task cards">
+              {isLoadingTasks ? <p>Loading tasks...</p> : null}
+              {visibleCards.map((card) => {
+                return (
             <article
               className={`task-card ${card.done ? "is-done-card" : ""} ${
                 draggedCardId === card.id ? "is-dragging" : ""
@@ -1512,9 +1558,39 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </span>
               ) : null}
             </article>
-          );
-        })}
-          </section>
+                );
+              })}
+            </section>
+          ) : (
+            <section className="timeline-board" aria-label="Timeline view">
+              <div className="timeline-hours">
+                {Array.from({ length: 24 }).map((_, hour) => (
+                  <div className="timeline-hour-row" key={`hour-${hour}`}>
+                    <span>{String(hour).padStart(2, "0")}:00</span>
+                  </div>
+                ))}
+              </div>
+              <div className="timeline-canvas">
+                {timelineTasks.map((task) => (
+                  <article
+                    key={`timeline-${task.id}`}
+                    className="timeline-task-block"
+                    style={{
+                      top: `${task.startMinutes}px`,
+                      minHeight: `${task.durationMinutes}px`,
+                      borderColor: getCardStyle(task).borderColor,
+                      background: getCardStyle(task).background,
+                    }}
+                  >
+                    <strong>{task.title}</strong>
+                    <small>
+                      {task.startTimeLabel} · {formatMinutesLabel(task.durationMinutes)}
+                    </small>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           {isTaskModalOpen ? (
             <div className="task-modal-overlay" role="dialog" aria-modal="true">
