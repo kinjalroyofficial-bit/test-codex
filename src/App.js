@@ -27,6 +27,9 @@ const getDayPartGreeting = (dayPart) => {
 
 const getDayPartBackgroundUrl = (dayPart) =>
   `${process.env.PUBLIC_URL || ""}/${DAY_PART_BACKGROUND_IMAGE_NAMES[dayPart]}`;
+const CREATE_TASK_MODAL_BACKGROUND_URL = `${
+  process.env.PUBLIC_URL || ""
+}/create-task-bg.webp`;
 
 const getOutcomeCue = (outcome) => {
   if (outcome === "positive") return "🙂";
@@ -1098,7 +1101,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
       {isTaskModalOpen ? (
         <div className="task-modal-overlay" role="dialog" aria-modal="true">
-          <div className="task-modal">
+          <div
+            className="task-modal"
+            style={{
+              "--task-modal-background-image": `url("${CREATE_TASK_MODAL_BACKGROUND_URL}")`,
+            }}
+          >
             <button
               type="button"
               className="task-modal-close"
