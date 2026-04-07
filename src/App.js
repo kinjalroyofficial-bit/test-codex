@@ -63,7 +63,7 @@ const CATEGORY_COLORS = {
   "financial enrichment": "#16a34a",
   "mental enrichment": "#dc2626",
   operational: "#5b21b6",
-  "self developement": "#a16207",
+  "self developement": "#166534",
   "social enrichment": "#db2777",
   wellness: "#06b6d4",
   custom: "#64748b",
@@ -984,17 +984,19 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
                       {card.done ? "Done" : "Not Done"}
                     </span>
-                    <span className="task-age">{formatTimeAgo(card.createdAt)}</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="delete-cross"
-                  aria-label={`Delete ${card.title}`}
-                  onClick={() => handleDelete(card.id)}
-                >
-                  ×
-                </button>
+                <div className="card-actions">
+                  <button
+                    type="button"
+                    className="delete-cross"
+                    aria-label={`Delete ${card.title}`}
+                    onClick={() => handleDelete(card.id)}
+                  >
+                    ×
+                  </button>
+                  <span className="task-age task-age-top">{formatTimeAgo(card.createdAt)}</span>
+                </div>
               </div>
 
               <p className="task-description">{card.description}</p>
@@ -1042,10 +1044,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <span className="task-attributes-separator">•</span>
                 <span className="task-attribute-item">
                   <strong>Intent:</strong> {card.intent || "productive"}
-                </span>
-                <span className="task-attributes-separator">•</span>
-                <span className="task-attribute-item">
-                  <strong>Outcome:</strong> {card.outcome || "neutral"}
                 </span>
               </p>
               {card.scheduledFor ? <div className="task-detail-divider" /> : null}
