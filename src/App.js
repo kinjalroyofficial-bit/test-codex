@@ -28,6 +28,12 @@ const getDayPartGreeting = (dayPart) => {
 const getDayPartBackgroundUrl = (dayPart) =>
   `${process.env.PUBLIC_URL || ""}/${DAY_PART_BACKGROUND_IMAGE_NAMES[dayPart]}`;
 
+const getOutcomeCue = (outcome) => {
+  if (outcome === "positive") return "🙂";
+  if (outcome === "negative") return "🙁";
+  return "😐";
+};
+
 const MOOD_OPTIONS = [
   { value: "energetic", label: "Energetic", icon: "🤩" },
   { value: "happy", label: "Happy", icon: "😊" },
@@ -1030,16 +1036,16 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </div>
               ) : null}
               <p className="task-attributes">
-                <span>
-                  Mood: <strong>{card.mood || "neutral"}</strong>
+                <span className="task-attribute-item">
+                  <strong>Mood:</strong> {card.mood || "neutral"}
                 </span>
                 <span className="task-attributes-separator">•</span>
-                <span>
-                  Intent: <strong>{card.intent || "productive"}</strong>
+                <span className="task-attribute-item">
+                  <strong>Intent:</strong> {card.intent || "productive"}
                 </span>
                 <span className="task-attributes-separator">•</span>
-                <span>
-                  Outcome: <strong>{card.outcome || "neutral"}</strong>
+                <span className="task-attribute-item">
+                  <strong>Outcome:</strong> {card.outcome || "neutral"}
                 </span>
               </p>
               {card.scheduledFor ? <div className="task-detail-divider" /> : null}
@@ -1084,6 +1090,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   Edit task
                 </button>
               </div>
+              <span className="task-outcome-emoji" aria-hidden="true">
+                {getOutcomeCue(card.outcome)}
+              </span>
             </article>
           );
         })}
