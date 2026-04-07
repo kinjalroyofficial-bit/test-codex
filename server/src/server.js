@@ -177,9 +177,9 @@ async function ensureCustomCategoryIds(userId, customCategories) {
   return ids;
 }
 
-function buildAnalyticsRangeClause(range) {
-  if (range === '7d') return " AND created_at >= NOW() - INTERVAL '7 days'";
-  if (range === '30d') return " AND created_at >= NOW() - INTERVAL '30 days'";
+function buildAnalyticsRangeClause(range, column = 'created_at') {
+  if (range === '7d') return ` AND ${column} >= NOW() - INTERVAL '7 days'`;
+  if (range === '30d') return ` AND ${column} >= NOW() - INTERVAL '30 days'`;
   return '';
 }
 
@@ -539,6 +539,7 @@ app.get('/api/analytics', authRequired, async (req, res) => {
     const range = ['7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
     const userId = req.session.userId;
     const rangeClause = buildAnalyticsRangeClause(range);
+    const completionRangeClause = buildAnalyticsRangeClause(range, 'updated_at');
 
     const summaryQuery = await pool.query(
       `WITH filtered_tasks AS (
@@ -549,10 +550,13 @@ app.get('/api/analytics', authRequired, async (req, res) => {
            ${rangeClause}
        ),
        daily_done AS (
-         SELECT DATE(created_at) AS day, COUNT(*)::int AS completed
-         FROM filtered_tasks
-         WHERE status = 'done'
-         GROUP BY DATE(created_at)
+         SELECT DATE(updated_at) AS day, COUNT(*)::int AS completed
+         FROM tasks
+         WHERE user_id = $1
+           AND deleted_at IS NULL
+           AND status = 'done'
+           ${completionRangeClause}
+         GROUP BY DATE(updated_at)
        )
        SELECT
          (SELECT COUNT(*)::int FROM filtered_tasks) AS total_tasks,
@@ -627,14 +631,14 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       100;
 
     const completedOverTimeQuery = await pool.query(
-      `SELECT DATE(created_at)::text AS day, COUNT(*)::int AS completed
+      `SELECT DATE(updated_at)::text AS day, COUNT(*)::int AS completed
        FROM tasks
        WHERE user_id = $1
          AND deleted_at IS NULL
          AND status = 'done'
-         ${rangeClause}
-       GROUP BY DATE(created_at)
-       ORDER BY DATE(created_at) ASC`,
+         ${completionRangeClause}
+       GROUP BY DATE(updated_at)
+       ORDER BY DATE(updated_at) ASC`,
       [userId]
     );
 
