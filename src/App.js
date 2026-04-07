@@ -1047,17 +1047,24 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             name: category.name,
             color: getCategoryColor(category.name),
             cardCount: 0,
-            totalTimeMinutes: 0,
+            totalEstimatedMinutes: 0,
+            totalActualMinutes: 0,
           };
         }
         stats[category.id].cardCount += 1;
-        stats[category.id].totalTimeMinutes += Number(card.timeTakenMinutes || 0);
+        stats[category.id].totalEstimatedMinutes += Number(card.estimatedDurationMinutes || 0);
+        stats[category.id].totalActualMinutes += Number(card.timeTakenMinutes || 0);
       });
     });
     return Object.values(stats).sort((a, b) => a.name.localeCompare(b.name));
   }, [cards]);
-  const totalCategoryMinutes = useMemo(
-    () => categoryStats.reduce((sum, category) => sum + Number(category.totalTimeMinutes || 0), 0),
+  const totalCategoryEstimatedMinutes = useMemo(
+    () =>
+      categoryStats.reduce((sum, category) => sum + Number(category.totalEstimatedMinutes || 0), 0),
+    [categoryStats]
+  );
+  const totalCategoryActualMinutes = useMemo(
+    () => categoryStats.reduce((sum, category) => sum + Number(category.totalActualMinutes || 0), 0),
     [categoryStats]
   );
 
@@ -1305,7 +1312,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               >
                 <span>All</span>
                 <small>
-                  {cards.length} tasks · {totalCategoryMinutes} min
+                  {cards.length}t · e{totalCategoryEstimatedMinutes}m · a{totalCategoryActualMinutes}m
                 </small>
               </button>
               {categoryStats.map((category) => (
@@ -1326,7 +1333,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 >
                   <span>{category.name}</span>
                   <small>
-                    {category.cardCount} tasks · {category.totalTimeMinutes} min
+                    {category.cardCount}t · e{category.totalEstimatedMinutes}m · a{category.totalActualMinutes}m
                   </small>
                 </button>
               ))}
