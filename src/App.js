@@ -33,7 +33,7 @@ const CATEGORY_COLORS = {
   entertainment: "#2563eb",
   "financial enrichment": "#16a34a",
   "mental enrichment": "#dc2626",
-  operational: "#6b7280",
+  operational: "#5b21b6",
   "self developement": "#a16207",
   "social enrichment": "#db2777",
   wellness: "#06b6d4",
