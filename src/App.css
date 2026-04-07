@@ -480,6 +480,9 @@ body.theme-light .analytics-placeholder {
   transform: scale(1.006);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .task-card.is-done-card {

@@ -357,6 +357,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionTimeInput, setCompletionTimeInput] = useState("");
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
   const dateInputRef = useRef(null);
+  const touchDropTargetIdRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -1101,6 +1102,34 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setDraggedCardId(null);
   };
 
+  const isInteractiveDragTarget = (target) =>
+    Boolean(target?.closest("button, input, select, textarea, label, a"));
+
+  const handleCardTouchStart = (event, cardId) => {
+    if (isInteractiveDragTarget(event.target)) return;
+    event.preventDefault();
+    touchDropTargetIdRef.current = cardId;
+    handleCardDragStart(cardId);
+  };
+
+  const handleCardTouchMove = (event) => {
+    if (!draggedCardId) return;
+    event.preventDefault();
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropCard = element?.closest("[data-card-id]");
+    if (!dropCard?.dataset?.cardId) return;
+    touchDropTargetIdRef.current = dropCard.dataset.cardId;
+  };
+
+  const handleCardTouchEnd = () => {
+    if (!draggedCardId) return;
+    const targetCardId = touchDropTargetIdRef.current || draggedCardId;
+    handleCardDrop(targetCardId);
+    touchDropTargetIdRef.current = null;
+  };
+
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
   const selectedMoodIndex = Math.max(
     0,
@@ -1310,12 +1339,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 draggedCardId === card.id ? "is-dragging" : ""
               }`}
               key={card.id}
+              data-card-id={card.id}
               style={getCardStyle(card)}
               draggable
               onDragStart={() => handleCardDragStart(card.id)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={() => handleCardDrop(card.id)}
               onDragEnd={() => setDraggedCardId(null)}
+              onTouchStart={(event) => handleCardTouchStart(event, card.id)}
+              onTouchMove={handleCardTouchMove}
+              onTouchEnd={handleCardTouchEnd}
+              onTouchCancel={handleCardTouchEnd}
+              onContextMenu={(event) => event.preventDefault()}
             >
               <div className="card-header">
                 <div className="card-title-group">
