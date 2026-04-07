@@ -35,7 +35,8 @@ const CREATE_TASK_MODAL_BACKGROUND_URL = `${
 const getOutcomeCue = (outcome) => {
   if (outcome === "positive") return "🙂";
   if (outcome === "negative") return "🙁";
-  return "😐";
+  if (outcome === "neutral") return "😐";
+  return null;
 };
 
 const getSeededUnit = (seed) => {
@@ -325,9 +326,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [taskTitleInput, setTaskTitleInput] = useState("");
   const [taskDescriptionInput, setTaskDescriptionInput] = useState("");
   const [taskScheduledInput, setTaskScheduledInput] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    () => new Date().toISOString().slice(0, 10)
+  );
   const [taskMoodInput, setTaskMoodInput] = useState("neutral");
   const [taskIntentInput, setTaskIntentInput] = useState("productive");
-  const [taskOutcomeInput, setTaskOutcomeInput] = useState("neutral");
+  const [taskOutcomeInput, setTaskOutcomeInput] = useState("");
   const [taskEstimatedDurationInput, setTaskEstimatedDurationInput] = useState("");
   const [taskTimeTakenInput, setTaskTimeTakenInput] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
@@ -375,13 +379,29 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     return new Date(timestamp).toLocaleString();
   };
 
+  const formatSelectedDate = (dateString) =>
+    new Date(`${dateString}T00:00:00`).toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const moveSelectedDateByDays = (dayOffset) => {
+    setSelectedDate((currentDate) => {
+      const baseDate = new Date(`${currentDate}T00:00:00`);
+      baseDate.setDate(baseDate.getDate() + dayOffset);
+      return baseDate.toISOString().slice(0, 10);
+    });
+  };
+
   useEffect(() => {
     const loadTasks = async () => {
       setBoardError("");
       setIsLoadingTasks(true);
 
       try {
-        const response = await fetch(buildApiUrl("/api/tasks"), {
+        const response = await fetch(buildApiUrl(`/api/tasks?date=${selectedDate}`), {
           credentials: "include",
         });
         const data = await parseApiResponse(response);
@@ -398,7 +418,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           scheduledFor: task.scheduled_for || null,
           mood: task.mood || "neutral",
           intent: task.intent || "productive",
-          outcome: task.outcome || "neutral",
+          outcome: task.outcome || null,
           estimatedDurationMinutes: task.estimated_duration_minutes || null,
           timeTakenMinutes: task.time_taken_minutes || null,
           categories: task.categories || [],
@@ -414,7 +434,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     };
 
     loadTasks();
-  }, [user?.id]);
+  }, [selectedDate, user?.id]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -464,7 +484,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
                 mood: updatedTask?.mood || card.mood || "neutral",
                 intent: updatedTask?.intent || card.intent || "productive",
-                outcome: updatedTask?.outcome || card.outcome || "neutral",
+                outcome: updatedTask?.outcome || card.outcome || null,
                 estimatedDurationMinutes:
                   updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
                 timeTakenMinutes:
@@ -509,7 +529,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskScheduledInput("");
     setTaskMoodInput("neutral");
     setTaskIntentInput("productive");
-    setTaskOutcomeInput("neutral");
+    setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
     setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
@@ -528,7 +548,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskScheduledInput(toDateTimeInputValue(card.scheduledFor));
     setTaskMoodInput(card.mood || "neutral");
     setTaskIntentInput(card.intent || "productive");
-    setTaskOutcomeInput(card.outcome || "neutral");
+    setTaskOutcomeInput(card.outcome || "");
     setTaskEstimatedDurationInput(
       card.estimatedDurationMinutes ? String(card.estimatedDurationMinutes) : ""
     );
@@ -549,7 +569,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskScheduledInput("");
     setTaskMoodInput("neutral");
     setTaskIntentInput("productive");
-    setTaskOutcomeInput("neutral");
+    setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
     setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
@@ -627,7 +647,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             status: "todo",
             mood: taskMoodInput,
             intent: taskIntentInput,
-            outcome: taskOutcomeInput,
+            outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
             customCategories: customNames,
             scheduledFor: scheduledForValue,
@@ -656,7 +676,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           scheduledFor: createdTask?.scheduled_for || scheduledForValue,
           mood: createdTask?.mood || taskMoodInput,
           intent: createdTask?.intent || taskIntentInput,
-          outcome: createdTask?.outcome || taskOutcomeInput,
+          outcome: createdTask?.outcome || taskOutcomeInput || null,
           estimatedDurationMinutes:
             createdTask?.estimated_duration_minutes || estimatedDurationValue || null,
           timeTakenMinutes: createdTask?.time_taken_minutes || timeTakenValue || null,
@@ -675,7 +695,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             description: trimmedDescription,
             mood: taskMoodInput,
             intent: taskIntentInput,
-            outcome: taskOutcomeInput,
+            outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
             customCategories: customNames,
             scheduledFor: scheduledForValue,
@@ -704,7 +724,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
                   mood: updatedTask?.mood || taskMoodInput,
                   intent: updatedTask?.intent || taskIntentInput,
-                  outcome: updatedTask?.outcome || taskOutcomeInput,
+                  outcome: updatedTask?.outcome || taskOutcomeInput || null,
                   estimatedDurationMinutes:
                     updatedTask?.estimated_duration_minutes || estimatedDurationValue || null,
                   timeTakenMinutes: updatedTask?.time_taken_minutes || timeTakenValue || null,
@@ -919,6 +939,33 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
             Create new task
           </button>
+          <div className="board-date-controls" aria-label="Task date controls">
+            <button
+              type="button"
+              className="date-nav-btn"
+              onClick={() => moveSelectedDateByDays(-1)}
+            >
+              Previous day
+            </button>
+            <div className="board-date-display">
+              <p>Showing tasks for</p>
+              <strong>{formatSelectedDate(selectedDate)}</strong>
+            </div>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(event) => setSelectedDate(event.target.value)}
+              className="board-date-input"
+              aria-label="Select task date"
+            />
+            <button
+              type="button"
+              className="date-nav-btn"
+              onClick={() => moveSelectedDateByDays(1)}
+            >
+              Next day
+            </button>
+          </div>
 
           <div className="controls-row">
             <div className="filter-pill">
@@ -1122,9 +1169,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   Edit task
                 </button>
               </div>
-              <span className="task-outcome-emoji" aria-hidden="true">
-                {getOutcomeCue(card.outcome)}
-              </span>
+              {getOutcomeCue(card.outcome) ? (
+                <span className="task-outcome-emoji" aria-hidden="true">
+                  {getOutcomeCue(card.outcome)}
+                </span>
+              ) : null}
             </article>
           );
         })}

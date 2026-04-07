@@ -928,13 +928,22 @@ app.get('/api/analytics', authRequired, async (req, res) => {
 });
 
 app.get('/api/tasks', authRequired, async (req, res) => {
+  const selectedDate = req.query?.date ? `${req.query.date}` : null;
+  const isValidDate =
+    !selectedDate || /^\d{4}-\d{2}-\d{2}$/.test(selectedDate);
+
+  if (!isValidDate) {
+    return res.status(400).json({ error: 'Invalid date query. Expected YYYY-MM-DD' });
+  }
+
   const result = await pool.query(
     `SELECT id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
             estimated_duration_minutes, time_taken_minutes, created_at, updated_at
      FROM tasks
      WHERE user_id = $1 AND deleted_at IS NULL
+       AND ($2::date IS NULL OR DATE(COALESCE(scheduled_for, created_at)) = $2::date)
      ORDER BY created_at DESC`,
-    [req.session.userId]
+    [req.session.userId, selectedDate]
   );
   const taskIds = result.rows.map((row) => row.id);
   const categoriesByTaskId = await getCategoriesByTaskIds(taskIds, req.session.userId);

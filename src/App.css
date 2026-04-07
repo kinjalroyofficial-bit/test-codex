@@ -189,6 +189,61 @@ body.morning-background .app__header p {
   flex-wrap: wrap;
 }
 
+.board-date-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.date-nav-btn {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.35);
+  color: #fff;
+  padding: 7px 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.board-date-display {
+  display: grid;
+  gap: 2px;
+}
+
+.board-date-display p {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.board-date-display strong {
+  color: #fff;
+  font-size: 0.96rem;
+}
+
+.board-date-input {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.35);
+  color: #fff;
+  padding: 7px 10px;
+}
+
+body.theme-light .date-nav-btn,
+body.theme-light .board-date-input {
+  border-color: rgba(15, 23, 42, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+}
+
+body.theme-light .board-date-display p,
+body.theme-light .board-date-display strong {
+  color: #0f172a;
+}
+
 .task-form label {
   display: flex;
   flex-direction: column;
