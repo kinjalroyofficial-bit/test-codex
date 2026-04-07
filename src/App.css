@@ -506,14 +506,27 @@ body.morning-background .app__header p {
 
 .task-outcome-emoji {
   position: absolute;
-  right: 10px;
-  bottom: 56px;
-  font-size: 6.2rem;
-  opacity: 0.14;
+  right: -24px;
+  top: 50%;
+  font-size: 8.4rem;
+  opacity: 0.2;
   line-height: 1;
   pointer-events: none;
-  transform: rotate(-10deg);
+  transform: translateY(-50%) rotate(-8deg);
   z-index: 0;
+  animation: outcomeFloat 6.8s ease-in-out infinite;
+}
+
+@keyframes outcomeFloat {
+  0% {
+    transform: translateY(-50%) rotate(-8deg) scale(1);
+  }
+  50% {
+    transform: translateY(-54%) rotate(-6deg) scale(1.04);
+  }
+  100% {
+    transform: translateY(-50%) rotate(-8deg) scale(1);
+  }
 }
 
 .task-age-top {
