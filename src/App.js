@@ -1054,22 +1054,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             name: category.name,
             color: getCategoryColor(category.name),
             cardCount: 0,
-            totalEstimatedMinutes: 0,
             totalActualMinutes: 0,
           };
         }
         stats[category.id].cardCount += 1;
-        stats[category.id].totalEstimatedMinutes += Number(card.estimatedDurationMinutes || 0);
         stats[category.id].totalActualMinutes += Number(card.timeTakenMinutes || 0);
       });
     });
     return Object.values(stats).sort((a, b) => a.name.localeCompare(b.name));
   }, [cards]);
-  const totalCategoryEstimatedMinutes = useMemo(
-    () =>
-      categoryStats.reduce((sum, category) => sum + Number(category.totalEstimatedMinutes || 0), 0),
-    [categoryStats]
-  );
   const totalCategoryActualMinutes = useMemo(
     () => categoryStats.reduce((sum, category) => sum + Number(category.totalActualMinutes || 0), 0),
     [categoryStats]
@@ -1317,12 +1310,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
                 onClick={() => setCategoryFilter("all")}
               >
-                <span>All</span>
                 <small>
-                  <span className="category-chip-line">{cards.length} tasks</span>
-                  <span className="category-chip-line">
-                    Est. Duration: {formatMinutesLabel(totalCategoryEstimatedMinutes)}
-                  </span>
+                  <span className="category-chip-line">{cards.length} All Tasks</span>
                   <span className="category-chip-line">
                     Time Spent: {formatMinutesLabel(totalCategoryActualMinutes)}
                   </span>
@@ -1344,11 +1333,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   }}
                   onClick={() => setCategoryFilter(category.id)}
                 >
-                  <span>{category.name}</span>
                   <small>
-                    <span className="category-chip-line">{category.cardCount} tasks</span>
                     <span className="category-chip-line">
-                      Est. Duration: {formatMinutesLabel(category.totalEstimatedMinutes)}
+                      {category.cardCount} {category.name} Tasks
                     </span>
                     <span className="category-chip-line">
                       Time Spent: {formatMinutesLabel(category.totalActualMinutes)}
