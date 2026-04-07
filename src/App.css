@@ -1406,6 +1406,25 @@ body.theme-light .analytics-placeholder {
   background-size: 100% 60px;
 }
 
+.timeline-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px solid rgba(255, 255, 255, 0.95);
+  z-index: 2;
+}
+
+.timeline-now-line::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
 .timeline-task-block {
   position: absolute;
   left: 8px;

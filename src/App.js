@@ -1177,7 +1177,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     MOOD_OPTIONS.findIndex((option) => option.value === taskMoodInput)
   );
   const localHour = new Date(now).getHours();
+  const localMinute = new Date(now).getMinutes();
   const greeting = getDayPartGreeting(getDayPart(localHour));
+  const todayDate = new Date(now);
+  const todayKey = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(todayDate.getDate()).padStart(2, "0")}`;
+  const isSelectedDateToday = selectedDate === todayKey;
+  const currentMinuteMarker = localHour * 60 + localMinute;
 
   return (
     <main className="app">
@@ -1571,6 +1579,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 ))}
               </div>
               <div className="timeline-canvas">
+                {isSelectedDateToday ? (
+                  <div
+                    className="timeline-now-line"
+                    style={{ top: `${currentMinuteMarker}px` }}
+                    aria-hidden="true"
+                  />
+                ) : null}
                 {timelineTasks.map((task) => (
                   <article
                     key={`timeline-${task.id}`}
