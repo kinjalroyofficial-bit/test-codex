@@ -315,6 +315,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
   const [boardError, setBoardError] = useState("");
+  const [activeView, setActiveView] = useState("board");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -849,7 +850,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           </div>
           <div className="user-panel">
             <div className="header-menu" role="navigation" aria-label="Header actions">
-              <span className="analytics-link">Analytics</span>
+              <button
+                type="button"
+                className="analytics-link"
+                onClick={() =>
+                  setActiveView((currentView) =>
+                    currentView === "board" ? "analytics" : "board"
+                  )
+                }
+              >
+                {activeView === "board" ? "Analytics" : "Board"}
+              </button>
               <button type="button" className="logout-btn" onClick={onLogout}>
                 Logout
               </button>
@@ -973,7 +984,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         {boardError ? <p className="auth-error">{boardError}</p> : null}
       </header>
 
-      <section className="cards-grid" aria-label="Task cards">
+      {activeView === "analytics" ? (
+        <section className="analytics-placeholder" aria-label="Analytics page placeholder">
+          <h2>Analytics</h2>
+          <p>Coming soon</p>
+        </section>
+      ) : (
+        <>
+          <section className="cards-grid" aria-label="Task cards">
         {isLoadingTasks ? <p>Loading tasks...</p> : null}
         {visibleCards.map((card) => {
           return (
@@ -1112,10 +1130,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             </article>
           );
         })}
-      </section>
+          </section>
 
-      {isTaskModalOpen ? (
-        <div className="task-modal-overlay" role="dialog" aria-modal="true">
+          {isTaskModalOpen ? (
+            <div className="task-modal-overlay" role="dialog" aria-modal="true">
           <div
             className="task-modal"
             style={{
@@ -1332,8 +1350,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </div>
             ) : null}
           </div>
-        </div>
-      ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
     </main>
   );
 }
