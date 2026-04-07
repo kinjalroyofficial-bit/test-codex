@@ -789,13 +789,24 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     0,
     MOOD_OPTIONS.findIndex((option) => option.value === taskMoodInput)
   );
+  const localHour = new Date(now).getHours();
+  const greeting =
+    localHour < 12
+      ? "Good morning"
+      : localHour < 17
+        ? "Good afternoon"
+        : localHour < 22
+          ? "Good evening"
+          : "Good night";
 
   return (
     <main className="app">
       <header className="app__header">
         <div className="app__topbar">
           <div>
-            <h1>Welcome {firstName}.</h1>
+            <h1>
+              {greeting}, {firstName}.
+            </h1>
             <p>Track the latest updates with quick Done/Not Done toggles.</p>
           </div>
           <div className="user-panel">
