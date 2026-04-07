@@ -316,7 +316,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [cards, setCards] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("created");
+  const [sortBy, setSortBy] = useState("scheduled");
   const [boardError, setBoardError] = useState("");
   const [boardNotice, setBoardNotice] = useState("");
   const [activeView, setActiveView] = useState("board");
@@ -1019,7 +1019,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       return sortedCards;
     }
 
-    if (sortBy === "priority") {
+    if (sortBy === "scheduled") {
+      sortedCards.sort((a, b) => {
+        const aScheduled = a.scheduledFor ? new Date(a.scheduledFor).getTime() : Number.POSITIVE_INFINITY;
+        const bScheduled = b.scheduledFor ? new Date(b.scheduledFor).getTime() : Number.POSITIVE_INFINITY;
+        if (aScheduled !== bScheduled) {
+          return aScheduled - bScheduled;
+        }
+        return (b.createdAt || b.id || 0) - (a.createdAt || a.id || 0);
+      });
       return sortedCards;
     }
 
@@ -1085,9 +1093,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
   const handleCardDragStart = (cardId) => {
     setDraggedCardId(cardId);
-    if (sortBy !== "priority") {
-      setSortBy("priority");
-    }
   };
 
   const handleCardDrop = (targetCardId) => {
@@ -1249,7 +1254,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       aria-label="Sort by"
                     >
                       <option value="created">Created time</option>
-                      <option value="priority">Priority (later)</option>
+                      <option value="scheduled">Scheduled time</option>
                       <option value="alphabetical">Alphabetical</option>
                     </select>
                   </div>
