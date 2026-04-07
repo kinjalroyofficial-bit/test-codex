@@ -1273,11 +1273,25 @@ function App() {
   const [user, setUser] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem("taskTheme") || "dark");
+  const [currentHour, setCurrentHour] = useState(() => new Date().getHours());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentHour(new Date().getHours()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     document.body.classList.toggle("theme-light", theme === "light");
     localStorage.setItem("taskTheme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const isMorning = currentHour >= 5 && currentHour < 12;
+    document.body.classList.toggle("morning-background", isMorning);
+    return () => {
+      document.body.classList.remove("morning-background");
+    };
+  }, [currentHour]);
 
   useEffect(() => {
     const loadSession = async () => {

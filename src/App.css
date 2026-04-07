@@ -15,6 +15,14 @@ body.theme-light {
   color: #f8fafc;
 }
 
+body.morning-background {
+  background-image: linear-gradient(rgba(7, 10, 18, 0.28), rgba(7, 10, 18, 0.35)),
+    url("/morning-background.webp");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
 .auth-page {
   min-height: 100vh;
   display: grid;
