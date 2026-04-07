@@ -221,6 +221,7 @@ body.morning-background .app__header p {
 }
 
 .board-date-display {
+  position: relative;
   display: grid;
   gap: 2px;
   padding: 6px 14px;
@@ -237,30 +238,44 @@ body.morning-background .app__header p {
   color: rgba(255, 255, 255, 0.9);
 }
 
-.board-date-display strong {
+.board-date-display-trigger {
+  border: 0;
+  background: transparent;
+  padding: 0;
   color: #ffffff;
   font-size: 0.96rem;
   font-weight: 800;
   text-shadow: 0 1px 3px rgba(15, 23, 42, 0.7);
+  cursor: pointer;
 }
 
-.board-date-input {
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.35);
-  color: #fff;
-  padding: 7px 10px;
+.board-date-display-trigger:hover {
+  text-decoration: underline;
 }
 
-body.theme-light .date-nav-btn,
-body.theme-light .board-date-input {
+.board-date-display-trigger:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.board-date-input-hidden {
+  position: absolute;
+  inset: auto;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.theme-light .date-nav-btn {
   border-color: rgba(15, 23, 42, 0.22);
   background: rgba(255, 255, 255, 0.92);
   color: #0f172a;
 }
 
 body.theme-light .board-date-display p,
-body.theme-light .board-date-display strong {
+body.theme-light .board-date-display-trigger {
   color: #0f172a;
 }
 

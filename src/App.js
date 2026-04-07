@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
@@ -355,6 +355,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionMoodInput, setCompletionMoodInput] = useState("neutral");
   const [completionTimeInput, setCompletionTimeInput] = useState("");
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
+  const dateInputRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -412,6 +413,19 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       const nextDay = String(baseDate.getDate()).padStart(2, "0");
       return `${nextYear}-${nextMonth}-${nextDay}`;
     });
+  };
+
+  const openInlineDatePicker = () => {
+    const dateInput = dateInputRef.current;
+    if (!dateInput) return;
+
+    if (typeof dateInput.showPicker === "function") {
+      dateInput.showPicker();
+      return;
+    }
+
+    dateInput.focus();
+    dateInput.click();
   };
 
   useEffect(() => {
@@ -1215,7 +1229,23 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </button>
                 <div className="board-date-display">
                   <p>Showing tasks for</p>
-                  <strong>{formatSelectedDate(selectedDate)}</strong>
+                  <button
+                    type="button"
+                    className="board-date-display-trigger"
+                    onClick={openInlineDatePicker}
+                    aria-label="Select task date"
+                  >
+                    {formatSelectedDate(selectedDate)}
+                  </button>
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={selectedDate}
+                    onChange={(event) => setSelectedDate(event.target.value)}
+                    className="board-date-input-hidden"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
                 </div>
                 <button
                   type="button"
@@ -1224,13 +1254,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 >
                   Next day
                 </button>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(event) => setSelectedDate(event.target.value)}
-                  className="board-date-input"
-                  aria-label="Select task date"
-                />
               </div>
             </div>
             <div className="category-filter-row" aria-label="Category filters">
