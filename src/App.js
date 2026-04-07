@@ -1173,99 +1173,100 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         {activeView === "board" ? (
           <>
             <div className="task-toolbar">
-          <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
-            Create new task
-          </button>
-          <div className="board-date-controls" aria-label="Task date controls">
-            <button
-              type="button"
-              className="date-nav-btn"
-              onClick={() => moveSelectedDateByDays(-1)}
-            >
-              Previous day
-            </button>
-            <div className="board-date-display">
-              <p>Showing tasks for</p>
-              <strong>{formatSelectedDate(selectedDate)}</strong>
-            </div>
-            <button
-              type="button"
-              className="date-nav-btn"
-              onClick={() => moveSelectedDateByDays(1)}
-            >
-              Next day
-            </button>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(event) => setSelectedDate(event.target.value)}
-              className="board-date-input"
-              aria-label="Select task date"
-            />
-          </div>
+              <div className="task-toolbar-main">
+                <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
+                  Create new task
+                </button>
+                <div className="controls-row">
+                  <div className="filter-pill">
+                    <span className="filter-pill-label">Status:</span>
+                    <select
+                      value={statusFilter}
+                      onChange={(event) => setStatusFilter(event.target.value)}
+                      aria-label="Status"
+                    >
+                      <option value="all">All</option>
+                      <option value="completed">Completed</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
 
-          <div className="controls-row">
-            <div className="filter-pill">
-              <span className="filter-pill-label">Status:</span>
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                aria-label="Status"
-              >
-                <option value="all">All</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-              </select>
+                  <div className="filter-pill">
+                    <span className="filter-pill-label">Sort By:</span>
+                    <select
+                      value={sortBy}
+                      onChange={(event) => setSortBy(event.target.value)}
+                      aria-label="Sort by"
+                    >
+                      <option value="created">Created time</option>
+                      <option value="priority">Priority (later)</option>
+                      <option value="alphabetical">Alphabetical</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="board-date-controls" aria-label="Task date controls">
+                <button
+                  type="button"
+                  className="date-nav-btn"
+                  onClick={() => moveSelectedDateByDays(-1)}
+                >
+                  Previous day
+                </button>
+                <div className="board-date-display">
+                  <p>Showing tasks for</p>
+                  <strong>{formatSelectedDate(selectedDate)}</strong>
+                </div>
+                <button
+                  type="button"
+                  className="date-nav-btn"
+                  onClick={() => moveSelectedDateByDays(1)}
+                >
+                  Next day
+                </button>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(event) => setSelectedDate(event.target.value)}
+                  className="board-date-input"
+                  aria-label="Select task date"
+                />
+              </div>
             </div>
-
-            <div className="filter-pill">
-              <span className="filter-pill-label">Sort By:</span>
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value)}
-                aria-label="Sort by"
+            <div className="category-filter-row" aria-label="Category filters">
+              <button
+                type="button"
+                className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
+                onClick={() => setCategoryFilter("all")}
               >
-                <option value="created">Created time</option>
-                <option value="priority">Priority (later)</option>
-                <option value="alphabetical">Alphabetical</option>
-              </select>
+                <span>All</span>
+                <small>
+                  {cards.length} tasks · {totalCategoryMinutes} min
+                </small>
+              </button>
+              {categoryStats.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={
+                    categoryFilter === category.id
+                      ? "category-filter-chip is-active"
+                      : "category-filter-chip"
+                  }
+                  style={{
+                    borderColor: category.color,
+                    backgroundColor: category.color,
+                    color: getReadableTextColor(category.color),
+                  }}
+                  onClick={() => setCategoryFilter(category.id)}
+                >
+                  <span>{category.name}</span>
+                  <small>
+                    {category.cardCount} tasks · {category.totalTimeMinutes} min
+                  </small>
+                </button>
+              ))}
             </div>
-          </div>
-        </div>
-        <div className="category-filter-row" aria-label="Category filters">
-          <button
-            type="button"
-            className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
-            onClick={() => setCategoryFilter("all")}
-          >
-            <span>All</span>
-            <small>
-              {cards.length} tasks · {totalCategoryMinutes} min
-            </small>
-          </button>
-          {categoryStats.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              className={
-                categoryFilter === category.id
-                  ? "category-filter-chip is-active"
-                  : "category-filter-chip"
-              }
-              style={{
-                borderColor: category.color,
-                backgroundColor: category.color,
-                color: getReadableTextColor(category.color),
-              }}
-              onClick={() => setCategoryFilter(category.id)}
-            >
-              <span>{category.name}</span>
-              <small>
-                {category.cardCount} tasks · {category.totalTimeMinutes} min
-              </small>
-            </button>
-          ))}
-        </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
         {boardNotice ? <p className="board-success">{boardNotice}</p> : null}
           </>

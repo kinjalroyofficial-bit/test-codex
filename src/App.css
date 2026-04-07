@@ -189,6 +189,11 @@ body.morning-background .app__header p {
 
 .task-toolbar {
   margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.task-toolbar-main {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -1321,7 +1326,7 @@ body.theme-light .analytics-placeholder {
     grid-template-columns: 1fr;
   }
 
-  .task-toolbar {
+  .task-toolbar-main {
     justify-content: space-between;
   }
 
@@ -1816,7 +1821,7 @@ body:not(.theme-light) .theme-slider {
     padding: 20px 14px 24px;
   }
 
-  .task-toolbar {
+  .task-toolbar-main {
     flex-direction: column;
     align-items: flex-start;
   }
