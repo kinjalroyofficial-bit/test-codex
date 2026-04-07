@@ -541,7 +541,7 @@ body.morning-background .app__header p {
   white-space: nowrap;
 }
 
-.task-card > *:not(.task-outcome-emoji) {
+.task-card > *:not(.task-outcome-emoji):not(.task-card-band-vectors) {
   position: relative;
   z-index: 1;
 }
@@ -556,19 +556,16 @@ body.morning-background .app__header p {
 
 .task-card-band-vectors {
   position: absolute;
-  right: 2px;
-  top: 10px;
-  bottom: 10px;
-  width: 58px;
+  inset: 0;
   pointer-events: none;
+  z-index: 0;
 }
 
 .task-card-band-vector {
   position: absolute;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
-  opacity: 0.78;
+  width: 28px;
+  height: 28px;
+  opacity: 0.64;
 }
 
 .task-card-band-vector svg {

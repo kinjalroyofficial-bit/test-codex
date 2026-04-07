@@ -37,6 +37,15 @@ const getOutcomeCue = (outcome) => {
   return "😐";
 };
 
+const getSeededUnit = (seed) => {
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash << 5) - hash + seed.charCodeAt(index);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 1000) / 1000;
+};
+
 const MOOD_OPTIONS = [
   { value: "energetic", label: "Energetic", icon: "🤩" },
   { value: "happy", label: "Happy", icon: "😊" },
@@ -1007,14 +1016,19 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <div className="task-card-band-vectors" aria-hidden="true">
                   {card.categories.map((category, index) => {
                     const color = getCategoryColor(category.name);
+                    const baseSeed = `${card.id}-${category.id}-${index}`;
+                    const randomTop = 14 + getSeededUnit(`${baseSeed}-top`) * 64;
+                    const randomLeft = 10 + getSeededUnit(`${baseSeed}-left`) * 74;
+                    const randomRotate = -20 + getSeededUnit(`${baseSeed}-rot`) * 40;
                     return (
                       <span
                         key={`vector-${card.id}-${category.id}`}
                         className="task-card-band-vector"
                         style={{
-                          top: `${((index + 1) / (card.categories.length + 1)) * 100}%`,
-                          right: `${2 + (index % 2) * 18}px`,
+                          top: `${randomTop}%`,
+                          left: `${randomLeft}%`,
                           color: softenColor(color, 0.72),
+                          transform: `translate(-50%, -50%) rotate(${randomRotate}deg)`,
                         }}
                       >
                         <svg viewBox="0 0 24 24">
