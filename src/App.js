@@ -1185,6 +1185,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
                       {card.done ? "Done" : "Not Done"}
                     </span>
+                    <button
+                      type="button"
+                      className="replicate-btn"
+                      onClick={() => openReplicateModal(card)}
+                    >
+                      Replicate
+                    </button>
                   </div>
                 </div>
                 <div className="card-actions">
@@ -1293,13 +1300,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   onClick={() => openEditTaskModal(card)}
                 >
                   Edit task
-                </button>
-                <button
-                  type="button"
-                  className="edit-btn card-edit-btn replicate-btn"
-                  onClick={() => openReplicateModal(card)}
-                >
-                  Replicate
                 </button>
               </div>
               {getOutcomeCue(card.outcome) ? (

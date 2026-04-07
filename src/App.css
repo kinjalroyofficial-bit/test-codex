@@ -1059,7 +1059,14 @@ body.theme-light .analytics-placeholder {
 }
 
 .replicate-btn {
-  background: #2563eb;
+  border: 0;
+  border-radius: 999px;
+  background: #f97316;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  cursor: pointer;
 }
 
 .replicate-modal {
