@@ -326,9 +326,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [taskTitleInput, setTaskTitleInput] = useState("");
   const [taskDescriptionInput, setTaskDescriptionInput] = useState("");
   const [taskScheduledInput, setTaskScheduledInput] = useState("");
-  const [selectedDate, setSelectedDate] = useState(
-    () => new Date().toISOString().slice(0, 10)
-  );
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const nowDate = new Date();
+    const year = nowDate.getFullYear();
+    const month = String(nowDate.getMonth() + 1).padStart(2, "0");
+    const day = String(nowDate.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  });
   const [taskMoodInput, setTaskMoodInput] = useState("neutral");
   const [taskIntentInput, setTaskIntentInput] = useState("productive");
   const [taskOutcomeInput, setTaskOutcomeInput] = useState("");
@@ -389,9 +393,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
   const moveSelectedDateByDays = (dayOffset) => {
     setSelectedDate((currentDate) => {
-      const baseDate = new Date(`${currentDate}T00:00:00`);
+      const [year, month, day] = currentDate.split("-").map(Number);
+      const baseDate = new Date(year, month - 1, day);
       baseDate.setDate(baseDate.getDate() + dayOffset);
-      return baseDate.toISOString().slice(0, 10);
+      const nextYear = baseDate.getFullYear();
+      const nextMonth = String(baseDate.getMonth() + 1).padStart(2, "0");
+      const nextDay = String(baseDate.getDate()).padStart(2, "0");
+      return `${nextYear}-${nextMonth}-${nextDay}`;
     });
   };
 
@@ -935,7 +943,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           </div>
         </div>
 
-        <div className="task-toolbar">
+        {activeView === "board" ? (
+          <>
+            <div className="task-toolbar">
           <button type="button" className="create-task-btn" onClick={openCreateTaskModal}>
             Create new task
           </button>
@@ -1030,6 +1040,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           ))}
         </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
+          </>
+        ) : null}
       </header>
 
       {activeView === "analytics" ? (
