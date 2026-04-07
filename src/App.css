@@ -1442,6 +1442,12 @@ body.theme-light .analytics-placeholder {
 
 .timeline-task-block small {
   opacity: 0.88;
+  display: block;
+}
+
+.timeline-task-meta {
+  margin-top: 3px;
+  font-size: 0.72rem;
 }
 
 .status-text.not-done {

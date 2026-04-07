@@ -321,6 +321,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [boardNotice, setBoardNotice] = useState("");
   const [activeView, setActiveView] = useState("board");
   const [boardLayoutMode, setBoardLayoutMode] = useState("board");
+  const [previousDayCards, setPreviousDayCards] = useState([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [now, setNow] = useState(Date.now());
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -425,6 +426,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     });
   };
 
+  const shiftDateString = (dateString, dayOffset) => {
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + dayOffset);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
+  };
+
   const openInlineDatePicker = () => {
     const dateInput = dateInputRef.current;
     if (!dateInput) return;
@@ -484,6 +494,45 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
     loadTasks();
   }, [selectedDate, user?.id]);
+
+  useEffect(() => {
+    const loadPreviousDayTasks = async () => {
+      if (boardLayoutMode !== "timeline") return;
+
+      try {
+        const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+        const previousDate = shiftDateString(selectedDate, -1);
+        const response = await fetch(
+          buildApiUrl(
+            `/api/tasks?date=${previousDate}&tzOffsetMinutes=${timezoneOffsetMinutes}`
+          ),
+          { credentials: "include" }
+        );
+        const data = await parseApiResponse(response);
+        if (!response.ok) return;
+
+        const mappedCards = (data?.tasks || []).map((task) => ({
+          id: task.id,
+          createdAt: task.created_at ? new Date(task.created_at).getTime() : Date.now(),
+          title: task.title,
+          description: task.description || "",
+          scheduledFor: task.scheduled_for || null,
+          mood: task.mood || "neutral",
+          intent: task.intent || "productive",
+          outcome: task.outcome || null,
+          estimatedDurationMinutes: task.estimated_duration_minutes || null,
+          timeTakenMinutes: task.time_taken_minutes || null,
+          categories: task.categories || [],
+          done: task.status === "done",
+        }));
+        setPreviousDayCards(mappedCards);
+      } catch (error) {
+        setPreviousDayCards([]);
+      }
+    };
+
+    loadPreviousDayTasks();
+  }, [boardLayoutMode, selectedDate, user?.id]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -1150,15 +1199,25 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   };
 
   const timelineTasks = useMemo(() => {
-    return [...visibleCards]
+    const matchesFilters = (card) => {
+      if (statusFilter === "completed" && !card.done) return false;
+      if (statusFilter === "pending" && card.done) return false;
+      if (categoryFilter !== "all") {
+        return (card.categories || []).some((category) => category.id === categoryFilter);
+      }
+      return true;
+    };
+
+    const currentDaySegments = [...visibleCards]
       .filter((card) => card.scheduledFor)
       .map((card) => {
         const scheduledDate = new Date(card.scheduledFor);
         const startMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
-        const durationMinutes = Math.max(
+        const totalDurationMinutes = Math.max(
           15,
           Number(card.estimatedDurationMinutes || card.timeTakenMinutes || 30)
         );
+        const durationMinutes = Math.max(15, Math.min(totalDurationMinutes, 1440 - startMinutes));
         return {
           ...card,
           startMinutes,
@@ -1169,7 +1228,33 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         };
       })
       .sort((a, b) => a.startMinutes - b.startMinutes);
-  }, [visibleCards]);
+
+    const carryOverSegments = previousDayCards
+      .filter((card) => card.scheduledFor && matchesFilters(card))
+      .map((card) => {
+        const scheduledDate = new Date(card.scheduledFor);
+        const startMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
+        const totalDurationMinutes = Math.max(
+          15,
+          Number(card.estimatedDurationMinutes || card.timeTakenMinutes || 30)
+        );
+        const overflowMinutes = startMinutes + totalDurationMinutes - 1440;
+        if (overflowMinutes <= 0) return null;
+        return {
+          ...card,
+          id: `${card.id}-carryover`,
+          startMinutes: 0,
+          durationMinutes: Math.min(overflowMinutes, 1440),
+          startTimeLabel: "00:00",
+          carriesOver: true,
+        };
+      })
+      .filter(Boolean);
+
+    return [...currentDaySegments, ...carryOverSegments].sort(
+      (a, b) => a.startMinutes - b.startMinutes
+    );
+  }, [visibleCards, previousDayCards, statusFilter, categoryFilter]);
 
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
   const selectedMoodIndex = Math.max(
@@ -1595,11 +1680,16 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       minHeight: `${task.durationMinutes}px`,
                       borderColor: getCardStyle(task).borderColor,
                       background: getCardStyle(task).background,
+                      opacity: task.done ? 1 : 0.58,
                     }}
                   >
                     <strong>{task.title}</strong>
                     <small>
                       {task.startTimeLabel} · {formatMinutesLabel(task.durationMinutes)}
+                      {task.carriesOver ? " · continues" : ""}
+                    </small>
+                    <small className="timeline-task-meta">
+                      Mood: {task.mood || "neutral"} · Intent: {task.intent || "productive"}
                     </small>
                   </article>
                 ))}
