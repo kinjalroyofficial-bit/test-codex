@@ -4,7 +4,29 @@ import "./App.css";
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
-const MORNING_BACKGROUND_URL = `${process.env.PUBLIC_URL || ""}/morning-background.webp`;
+const DAY_PART_BACKGROUND_IMAGE_NAMES = {
+  morning: "morning-background.webp",
+  afternoon: "afternoon-background.webp",
+  evening: "evening-background.webp",
+  night: "night-background.webp",
+};
+
+const getDayPart = (hour) => {
+  if (hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  if (hour < 22) return "evening";
+  return "night";
+};
+
+const getDayPartGreeting = (dayPart) => {
+  if (dayPart === "morning") return "Good morning";
+  if (dayPart === "afternoon") return "Good afternoon";
+  if (dayPart === "evening") return "Good evening";
+  return "Good night";
+};
+
+const getDayPartBackgroundUrl = (dayPart) =>
+  `${process.env.PUBLIC_URL || ""}/${DAY_PART_BACKGROUND_IMAGE_NAMES[dayPart]}`;
 
 const MOOD_OPTIONS = [
   { value: "energetic", label: "Energetic", icon: "🤩" },
@@ -791,14 +813,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     MOOD_OPTIONS.findIndex((option) => option.value === taskMoodInput)
   );
   const localHour = new Date(now).getHours();
-  const greeting =
-    localHour < 12
-      ? "Good morning"
-      : localHour < 17
-        ? "Good afternoon"
-        : localHour < 22
-          ? "Good evening"
-          : "Good night";
+  const greeting = getDayPartGreeting(getDayPart(localHour));
 
   return (
     <main className="app">
@@ -1287,12 +1302,12 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    const isMorning = true;
+    const dayPart = getDayPart(currentHour);
     document.body.style.setProperty(
       "--morning-background-image",
-      `url("${MORNING_BACKGROUND_URL}")`
+      `url("${getDayPartBackgroundUrl(dayPart)}")`
     );
-    document.body.classList.toggle("morning-background", isMorning);
+    document.body.classList.add("morning-background");
     return () => {
       document.body.style.removeProperty("--morning-background-image");
       document.body.classList.remove("morning-background");
