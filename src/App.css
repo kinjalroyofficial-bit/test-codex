@@ -135,6 +135,8 @@ body.morning-background {
 .app__header h1 {
   margin: 0;
   font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+  color: #f8fafc;
+  text-shadow: 0 2px 8px rgba(15, 23, 42, 0.75);
 }
 
 body.theme-light .app__header h1 {
@@ -143,7 +145,16 @@ body.theme-light .app__header h1 {
 
 .app__header p {
   margin: 8px 0 0;
-  color: #4a5568;
+  color: #e2e8f0;
+  text-shadow: 0 1px 6px rgba(15, 23, 42, 0.7);
+}
+
+body.morning-background .app__header h1 {
+  color: #f8fafc;
+}
+
+body.morning-background .app__header p {
+  color: #e2e8f0;
 }
 
 .task-form {
@@ -1495,6 +1506,20 @@ body:not(.theme-light) .theme-slider {
 @media (max-width: 640px) {
   .app {
     padding: 20px 14px 24px;
+  }
+
+  .task-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .controls-row {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .category-filter-row {
+    justify-content: flex-start;
   }
 
   .cards-grid {
