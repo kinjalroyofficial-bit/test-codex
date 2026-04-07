@@ -551,6 +551,8 @@ body.morning-background .app__header p {
   flex-wrap: wrap;
   gap: 5px;
   margin-top: 2px;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .task-card-band-vectors {
@@ -661,12 +663,34 @@ body.morning-background .app__header p {
   position: relative;
   width: 100%;
   max-width: 450px;
-  background: #fff;
+  background-color: #fff;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.92)),
+    url("/afternoon-background.webp");
+  background-size: cover;
+  background-position: center;
   border-radius: 12px;
   padding: 32px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   margin: auto 0;
   overflow-x: clip;
+}
+
+.task-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .task-modal h3 {
@@ -1529,8 +1553,18 @@ body:not(.theme-light) .inline-edit-actions button {
 }
 
 body:not(.theme-light) .task-modal {
-  background: #0f172a;
+  background-color: #0f172a;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.9)),
+    url("/afternoon-background.webp");
+  background-size: cover;
+  background-position: center;
   border: 1px solid #475569;
+}
+
+body:not(.theme-light) .task-modal-close {
+  background: rgba(15, 23, 42, 0.84);
+  color: #f8fafc;
+  border-color: #64748b;
 }
 
 body:not(.theme-light) .task-form-section {

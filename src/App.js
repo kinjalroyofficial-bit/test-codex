@@ -1099,6 +1099,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       {isTaskModalOpen ? (
         <div className="task-modal-overlay" role="dialog" aria-modal="true">
           <div className="task-modal">
+            <button
+              type="button"
+              className="task-modal-close"
+              aria-label="Close task form"
+              onClick={closeTaskModal}
+            >
+              ×
+            </button>
             <h3>{taskModalMode === "create" ? "Create task" : "Edit task"}</h3>
             <form onSubmit={handleTaskModalSubmit} className="task-modal-form">
               <section className="task-form-section section-basic">
