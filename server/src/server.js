@@ -934,6 +934,10 @@ app.get('/api/analytics', authRequired, async (req, res) => {
 
 app.get('/api/tasks', authRequired, async (req, res) => {
   const selectedDate = req.query?.date ? `${req.query.date}` : null;
+  const rawTimezoneOffsetMinutes = Number.parseInt(`${req.query?.tzOffsetMinutes ?? 0}`, 10);
+  const timezoneOffsetMinutes = Number.isFinite(rawTimezoneOffsetMinutes)
+    ? rawTimezoneOffsetMinutes
+    : 0;
   const isValidDate =
     !selectedDate || /^\d{4}-\d{2}-\d{2}$/.test(selectedDate);
 
@@ -946,9 +950,15 @@ app.get('/api/tasks', authRequired, async (req, res) => {
             estimated_duration_minutes, time_taken_minutes, created_at, updated_at
      FROM tasks
      WHERE user_id = $1 AND deleted_at IS NULL
-       AND ($2::date IS NULL OR DATE(COALESCE(scheduled_for, created_at)) = $2::date)
+       AND (
+         $2::date IS NULL
+         OR DATE(
+           (COALESCE(scheduled_for, created_at) AT TIME ZONE 'UTC')
+           - ($3::int * INTERVAL '1 minute')
+         ) = $2::date
+       )
      ORDER BY created_at DESC`,
-    [req.session.userId, selectedDate]
+    [req.session.userId, selectedDate, timezoneOffsetMinutes]
   );
   const taskIds = result.rows.map((row) => row.id);
   const categoriesByTaskId = await getCategoriesByTaskIds(taskIds, req.session.userId);

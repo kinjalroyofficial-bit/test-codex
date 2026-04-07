@@ -436,9 +436,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       setIsLoadingTasks(true);
 
       try {
-        const response = await fetch(buildApiUrl(`/api/tasks?date=${selectedDate}`), {
+        const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+        const response = await fetch(
+          buildApiUrl(
+            `/api/tasks?date=${selectedDate}&tzOffsetMinutes=${timezoneOffsetMinutes}`
+          ),
+          {
           credentials: "include",
-        });
+          }
+        );
         const data = await parseApiResponse(response);
 
         if (!response.ok) {
