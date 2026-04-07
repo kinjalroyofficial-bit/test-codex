@@ -222,10 +222,6 @@ body.morning-background .app__header p {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  padding: 9px 12px;
-  border-radius: 12px;
 }
 
 .user-panel {
@@ -424,11 +420,14 @@ body.morning-background .app__header p {
 }
 
 .task-description {
-  margin: 0;
+  margin: 0 0 2px;
   font-size: 0.82rem;
   line-height: 1.45;
   color: #f8fafc;
   flex-grow: 1;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.18);
 }
 
 .task-schedule {
@@ -1403,8 +1402,7 @@ body:not(.theme-light) .analytics-link {
 }
 
 body:not(.theme-light) .auth-card,
-body:not(.theme-light) .task-card,
-body:not(.theme-light) .header-menu {
+body:not(.theme-light) .task-card {
   background: #0f172a;
   border: 1px solid #475569;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);

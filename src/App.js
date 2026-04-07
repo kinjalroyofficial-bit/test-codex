@@ -751,6 +751,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     });
     return Object.values(stats).sort((a, b) => a.name.localeCompare(b.name));
   }, [cards]);
+  const totalCategoryMinutes = useMemo(
+    () => categoryStats.reduce((sum, category) => sum + Number(category.totalTimeMinutes || 0), 0),
+    [categoryStats]
+  );
 
   const buildCardBackground = (card) => {
     const categoryColors = (card.categories || []).map((category) =>
@@ -921,7 +925,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             onClick={() => setCategoryFilter("all")}
           >
             <span>All</span>
-            <small>{cards.length} cards</small>
+            <small>
+              {cards.length} tasks · {totalCategoryMinutes} min
+            </small>
           </button>
           {categoryStats.map((category) => (
             <button
@@ -941,7 +947,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             >
               <span>{category.name}</span>
               <small>
-                {category.cardCount} cards · {category.totalTimeMinutes} min
+                {category.cardCount} tasks · {category.totalTimeMinutes} min
               </small>
             </button>
           ))}
