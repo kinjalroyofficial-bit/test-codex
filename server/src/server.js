@@ -538,8 +538,13 @@ app.get('/api/analytics', authRequired, async (req, res) => {
   try {
     const range = ['7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
     const userId = req.session.userId;
+    const rawTimezoneOffsetMinutes = Number.parseInt(`${req.query?.tzOffsetMinutes ?? 0}`, 10);
+    const timezoneOffsetMinutes = Number.isFinite(rawTimezoneOffsetMinutes)
+      ? rawTimezoneOffsetMinutes
+      : 0;
     const rangeClause = buildAnalyticsRangeClause(range);
-    const completionDateExpression = 'COALESCE(scheduled_for, updated_at)';
+    const completionDateExpression =
+      "((COALESCE(scheduled_for, updated_at) AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))";
     const completionRangeClause = buildAnalyticsRangeClause(range, completionDateExpression);
 
     const summaryQuery = await pool.query(
@@ -551,13 +556,13 @@ app.get('/api/analytics', authRequired, async (req, res) => {
            ${rangeClause}
        ),
        daily_done AS (
-         SELECT DATE(COALESCE(scheduled_for, updated_at)) AS day, COUNT(*)::int AS completed
+         SELECT DATE(${completionDateExpression}) AS day, COUNT(*)::int AS completed
          FROM tasks
          WHERE user_id = $1
            AND deleted_at IS NULL
            AND status = 'done'
            ${completionRangeClause}
-         GROUP BY DATE(COALESCE(scheduled_for, updated_at))
+         GROUP BY DATE(${completionDateExpression})
        )
        SELECT
          (SELECT COUNT(*)::int FROM filtered_tasks) AS total_tasks,
@@ -588,7 +593,7 @@ app.get('/api/analytics', authRequired, async (req, res) => {
            FROM filtered_tasks
            WHERE intent = 'productive' AND time_taken_minutes IS NOT NULL
          ) AS productive_time_spent_minutes`,
-      [userId]
+      [userId, timezoneOffsetMinutes]
     );
 
     const summary = summaryQuery.rows[0] || {};
@@ -632,15 +637,15 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       100;
 
     const completedOverTimeQuery = await pool.query(
-      `SELECT DATE(COALESCE(scheduled_for, updated_at))::text AS day, COUNT(*)::int AS completed
+      `SELECT DATE(${completionDateExpression})::text AS day, COUNT(*)::int AS completed
        FROM tasks
        WHERE user_id = $1
          AND deleted_at IS NULL
          AND status = 'done'
          ${completionRangeClause}
-       GROUP BY DATE(COALESCE(scheduled_for, updated_at))
-       ORDER BY DATE(COALESCE(scheduled_for, updated_at)) ASC`,
-      [userId]
+       GROUP BY DATE(${completionDateExpression})
+       ORDER BY DATE(${completionDateExpression}) ASC`,
+      [userId, timezoneOffsetMinutes]
     );
 
     const estimatedVsActualQuery = await pool.query(

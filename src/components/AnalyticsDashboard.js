@@ -72,9 +72,15 @@ export default function AnalyticsDashboard({ onBack }) {
       setError("");
 
       try {
-        const response = await fetch(buildApiUrl(`/api/analytics?range=${range}`), {
-          credentials: "include",
-        });
+        const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+        const response = await fetch(
+          buildApiUrl(
+            `/api/analytics?range=${range}&tzOffsetMinutes=${timezoneOffsetMinutes}`
+          ),
+          {
+            credentials: "include",
+          }
+        );
         const payload = await response.json();
 
         if (!response.ok) {
