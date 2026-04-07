@@ -41,6 +41,24 @@ const CATEGORY_COLORS = {
 };
 
 const DEFAULT_CATEGORY_COLOR = "#64748b";
+const DEFAULT_CATEGORY_VECTOR = "M12 7v10m5-5H7";
+
+const CATEGORY_VECTORS = {
+  entertainment:
+    "M8 6v12l10-6-10-6Z",
+  "financial enrichment":
+    "M5 18h14M8 14v-4m4 4V6m4 8v-6",
+  "mental enrichment":
+    "M12 4a5 5 0 0 0-5 5c0 1.8.9 3.3 2.2 4.2.5.4.8 1 .8 1.6V16h4v-1.2c0-.6.3-1.2.8-1.6A5 5 0 0 0 17 9a5 5 0 0 0-5-5Zm-2 14h4",
+  operational:
+    "M19.4 13a7.9 7.9 0 0 0 .1-2l2-1.6-2-3.4-2.4 1a8.2 8.2 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a8.2 8.2 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 0 0 .1 2l-2 1.6 2 3.4 2.4-1a8.2 8.2 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8.2 8.2 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6ZM12 14.5A2.5 2.5 0 1 1 12 9a2.5 2.5 0 0 1 0 5.5Z",
+  "self developement":
+    "M12 19V5m0 0 5 5m-5-5-5 5",
+  "social enrichment":
+    "M16 17v-1a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v1m13-7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  wellness:
+    "M12 20s-6.5-4.2-8.5-8.3C1.9 8.5 4.1 5 7.5 5c1.9 0 3.2 1 4.5 2.6C13.3 6 14.6 5 16.5 5 19.9 5 22 8.5 20.5 11.7 18.5 15.8 12 20 12 20Z",
+};
 
 const normalizeCategoryName = (name) => `${name || ""}`.trim().toLowerCase();
 
@@ -95,6 +113,15 @@ const getReadableTextColor = (backgroundHex) => {
   const { r, g, b } = hexToRgb(backgroundHex);
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
   return brightness > 155 ? "#111827" : "#ffffff";
+};
+
+const softenColor = (hex, factor = 0.45) => {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex({
+    r: r + (255 - r) * factor,
+    g: g + (255 - g) * factor,
+    b: b + (255 - b) * factor,
+  });
 };
 
 async function parseApiResponse(response) {
@@ -932,6 +959,34 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </div>
 
               <p className="task-description">{card.description}</p>
+              {card.categories?.length ? (
+                <div className="task-card-band-vectors" aria-hidden="true">
+                  {card.categories.map((category, index) => {
+                    const color = getCategoryColor(category.name);
+                    return (
+                      <span
+                        key={`vector-${card.id}-${category.id}`}
+                        className="task-card-band-vector"
+                        style={{
+                          top: `${((index + 0.5) / card.categories.length) * 100}%`,
+                          color: softenColor(color, 0.55),
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24">
+                          <path
+                            d={CATEGORY_VECTORS[normalizeCategoryName(category.name)] || DEFAULT_CATEGORY_VECTOR}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : null}
               {card.categories?.length ? (
                 <div className="task-category-tags">
                   {card.categories.map((category) => (
