@@ -296,7 +296,7 @@ body.theme-light .app__header h1 {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  gap: 16px;
+  gap: 24px;
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
@@ -312,12 +312,14 @@ body.theme-light .app__header h1 {
   flex-direction: column;
   gap: 10px;
   min-height: 230px;
+  transform: scale(1.02);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
 .task-card.is-done-card {
   border: 1px solid #6ee7b7;
-  transform: translateY(-1px) scale(1.004);
+  transform: translateY(-1px) scale(1.008);
   box-shadow: 0 10px 18px rgba(16, 185, 129, 0.2),
     0 0 0 1px rgba(16, 185, 129, 0.38) inset;
   z-index: 1;
@@ -420,20 +422,20 @@ body.theme-light .app__header h1 {
 
 .task-card-band-vectors {
   position: absolute;
-  right: 6px;
+  right: 4px;
   top: 10px;
   bottom: 10px;
-  width: 24px;
+  width: 42px;
   pointer-events: none;
 }
 
 .task-card-band-vector {
   position: absolute;
-  right: 0;
+  right: 2px;
   transform: translateY(-50%);
-  width: 17px;
-  height: 17px;
-  opacity: 0.45;
+  width: 32px;
+  height: 32px;
+  opacity: 0.72;
 }
 
 .task-card-band-vector svg {

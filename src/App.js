@@ -968,8 +968,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                         key={`vector-${card.id}-${category.id}`}
                         className="task-card-band-vector"
                         style={{
-                          top: `${((index + 0.5) / card.categories.length) * 100}%`,
-                          color: softenColor(color, 0.55),
+                          top: `${((index + 1) / (card.categories.length + 1)) * 100}%`,
+                          color: softenColor(color, 0.72),
                         }}
                       >
                         <svg viewBox="0 0 24 24">
@@ -977,7 +977,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                             d={CATEGORY_VECTORS[normalizeCategoryName(category.name)] || DEFAULT_CATEGORY_VECTOR}
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth="1.8"
+                            strokeWidth="2.4"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
