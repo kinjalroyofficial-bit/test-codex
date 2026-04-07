@@ -317,6 +317,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created");
   const [boardError, setBoardError] = useState("");
+  const [boardNotice, setBoardNotice] = useState("");
   const [activeView, setActiveView] = useState("board");
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [now, setNow] = useState(Date.now());
@@ -344,6 +345,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [isCustomCategoryModalOpen, setIsCustomCategoryModalOpen] = useState(false);
   const [customCategoryNameInput, setCustomCategoryNameInput] = useState("");
   const [draggedCardId, setDraggedCardId] = useState(null);
+  const [isReplicateModalOpen, setIsReplicateModalOpen] = useState(false);
+  const [replicateSourceTask, setReplicateSourceTask] = useState(null);
+  const [replicateDateInput, setReplicateDateInput] = useState("");
+  const [replicateTimeInput, setReplicateTimeInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -584,6 +589,114 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+  };
+
+  const toDateInputValue = (timestamp) => {
+    if (!timestamp) return selectedDate;
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const toTimeInputValue = (timestamp) => {
+    if (!timestamp) return "09:00";
+    const date = new Date(timestamp);
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const openReplicateModal = (card) => {
+    setReplicateSourceTask(card);
+    setReplicateDateInput(toDateInputValue(card.scheduledFor));
+    setReplicateTimeInput(toTimeInputValue(card.scheduledFor));
+    setBoardError("");
+    setBoardNotice("");
+    setIsReplicateModalOpen(true);
+  };
+
+  const closeReplicateModal = () => {
+    setIsReplicateModalOpen(false);
+    setReplicateSourceTask(null);
+    setReplicateDateInput("");
+    setReplicateTimeInput("");
+  };
+
+  const handleReplicateSubmit = async (event) => {
+    event.preventDefault();
+    if (!replicateSourceTask) return;
+    if (!replicateDateInput || !replicateTimeInput) {
+      setBoardError("Target date and time are required for replication.");
+      return;
+    }
+
+    const scheduledForValue = new Date(
+      `${replicateDateInput}T${replicateTimeInput}:00`
+    ).toISOString();
+
+    setBoardError("");
+    setBoardNotice("");
+
+    try {
+      const response = await fetch(buildApiUrl("/api/tasks"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: replicateSourceTask.title,
+          description: replicateSourceTask.description || null,
+          status: "todo",
+          mood: null,
+          intent: replicateSourceTask.intent || "productive",
+          outcome: null,
+          categoryIds: (replicateSourceTask.categories || []).map((category) => category.id),
+          scheduledFor: scheduledForValue,
+          scheduled_for: scheduledForValue,
+          estimatedDurationMinutes: replicateSourceTask.estimatedDurationMinutes || null,
+          estimated_duration_minutes: replicateSourceTask.estimatedDurationMinutes || null,
+          timeTakenMinutes: null,
+          time_taken_minutes: null,
+        }),
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to replicate task");
+      }
+
+      const replicatedTask = data?.task;
+      mergeAvailableCategories(replicatedTask?.categories || []);
+      const replicatedDate = replicateDateInput;
+      if (replicatedDate === selectedDate) {
+        const nextCard = {
+          id: replicatedTask?.id || Date.now(),
+          createdAt: replicatedTask?.created_at
+            ? new Date(replicatedTask.created_at).getTime()
+            : Date.now(),
+          title: replicatedTask?.title || replicateSourceTask.title,
+          description: replicatedTask?.description || "",
+          scheduledFor: replicatedTask?.scheduled_for || scheduledForValue,
+          mood: replicatedTask?.mood || null,
+          intent: replicatedTask?.intent || replicateSourceTask.intent || "productive",
+          outcome: replicatedTask?.outcome || null,
+          estimatedDurationMinutes:
+            replicatedTask?.estimated_duration_minutes ||
+            replicateSourceTask.estimatedDurationMinutes ||
+            null,
+          timeTakenMinutes: null,
+          categories: replicatedTask?.categories || replicateSourceTask.categories || [],
+          done: false,
+        };
+        setCards((currentCards) => [nextCard, ...currentCards]);
+      }
+
+      setBoardNotice("Task replicated successfully.");
+      closeReplicateModal();
+    } catch (error) {
+      setBoardError(error.message || "Failed to replicate task");
+    }
   };
 
   const toggleCategorySelection = (categoryId) => {
@@ -1040,6 +1153,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           ))}
         </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
+        {boardNotice ? <p className="board-success">{boardNotice}</p> : null}
           </>
         ) : null}
       </header>
@@ -1179,6 +1293,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   onClick={() => openEditTaskModal(card)}
                 >
                   Edit task
+                </button>
+                <button
+                  type="button"
+                  className="edit-btn card-edit-btn replicate-btn"
+                  onClick={() => openReplicateModal(card)}
+                >
+                  Replicate
                 </button>
               </div>
               {getOutcomeCue(card.outcome) ? (
@@ -1409,6 +1530,49 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </div>
             ) : null}
           </div>
+            </div>
+          ) : null}
+
+          {isReplicateModalOpen ? (
+            <div className="task-modal-overlay" role="dialog" aria-modal="true">
+              <div className="task-modal replicate-modal">
+                <button
+                  type="button"
+                  className="task-modal-close"
+                  aria-label="Close replicate form"
+                  onClick={closeReplicateModal}
+                >
+                  ×
+                </button>
+                <h3>Replicate task</h3>
+                <form onSubmit={handleReplicateSubmit} className="replicate-form">
+                  <p className="replicate-source-title">{replicateSourceTask?.title}</p>
+                  <label>
+                    Target Date
+                    <input
+                      type="date"
+                      value={replicateDateInput}
+                      onChange={(event) => setReplicateDateInput(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Target Time
+                    <input
+                      type="time"
+                      value={replicateTimeInput}
+                      onChange={(event) => setReplicateTimeInput(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <div className="task-modal-actions">
+                    <button type="button" onClick={closeReplicateModal}>
+                      Cancel
+                    </button>
+                    <button type="submit">Replicate task</button>
+                  </div>
+                </form>
+              </div>
             </div>
           ) : null}
         </>

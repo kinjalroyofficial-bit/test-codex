@@ -99,6 +99,13 @@ body.morning-background {
   font-size: 0.9rem;
 }
 
+.board-success {
+  margin: 0;
+  color: #16a34a;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .auth-submit {
   border: 0;
   border-radius: 8px;
@@ -1051,6 +1058,39 @@ body.theme-light .analytics-placeholder {
   margin-left: auto;
 }
 
+.replicate-btn {
+  background: #2563eb;
+}
+
+.replicate-modal {
+  max-width: 430px;
+  width: 100%;
+}
+
+.replicate-form {
+  display: grid;
+  gap: 12px;
+}
+
+.replicate-source-title {
+  margin: 0;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.replicate-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.replicate-form input {
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  padding: 10px;
+}
+
 /* From Uiverse.io by csemszepp */
 .container {
   display: flex;
@@ -1654,6 +1694,8 @@ body:not(.theme-light) .task-form-section h4::after {
 
 body:not(.theme-light) .task-modal h3,
 body:not(.theme-light) .task-modal-form label,
+body:not(.theme-light) .replicate-form label,
+body:not(.theme-light) .replicate-source-title,
 body:not(.theme-light) .task-mood-fieldset legend {
   color: #f3f4f6;
 }
@@ -1680,6 +1722,12 @@ body:not(.theme-light) .inline-modal h5 {
 }
 
 body:not(.theme-light) .inline-modal input {
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .replicate-form input {
   background: #111827;
   color: #f3f4f6;
   border-color: #64748b;
