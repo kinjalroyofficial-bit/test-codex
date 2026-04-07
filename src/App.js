@@ -349,6 +349,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [replicateSourceTask, setReplicateSourceTask] = useState(null);
   const [replicateDateInput, setReplicateDateInput] = useState("");
   const [replicateTimeInput, setReplicateTimeInput] = useState("");
+  const [replicateRepeatDaysInput, setReplicateRepeatDaysInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -612,6 +613,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setReplicateSourceTask(card);
     setReplicateDateInput(toDateInputValue(card.scheduledFor));
     setReplicateTimeInput(toTimeInputValue(card.scheduledFor));
+    setReplicateRepeatDaysInput("");
     setBoardError("");
     setBoardNotice("");
     setIsReplicateModalOpen(true);
@@ -622,6 +624,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setReplicateSourceTask(null);
     setReplicateDateInput("");
     setReplicateTimeInput("");
+    setReplicateRepeatDaysInput("");
   };
 
   const handleReplicateSubmit = async (event) => {
@@ -631,68 +634,91 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       setBoardError("Target date and time are required for replication.");
       return;
     }
-
-    const scheduledForValue = new Date(
-      `${replicateDateInput}T${replicateTimeInput}:00`
-    ).toISOString();
+    const repeatDaysValue = replicateRepeatDaysInput.trim();
+    const repeatCount = repeatDaysValue ? Number.parseInt(repeatDaysValue, 10) : 1;
+    if (!Number.isInteger(repeatCount) || repeatCount <= 0) {
+      setBoardError("Repeat days must be a positive integer.");
+      return;
+    }
+    if (repeatCount > 30) {
+      setBoardError("Repeat days cannot exceed 30.");
+      return;
+    }
 
     setBoardError("");
     setBoardNotice("");
 
     try {
-      const response = await fetch(buildApiUrl("/api/tasks"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          title: replicateSourceTask.title,
-          description: replicateSourceTask.description || null,
-          status: "todo",
-          mood: null,
-          intent: replicateSourceTask.intent || "productive",
-          outcome: null,
-          categoryIds: (replicateSourceTask.categories || []).map((category) => category.id),
-          scheduledFor: scheduledForValue,
-          scheduled_for: scheduledForValue,
-          estimatedDurationMinutes: replicateSourceTask.estimatedDurationMinutes || null,
-          estimated_duration_minutes: replicateSourceTask.estimatedDurationMinutes || null,
-          timeTakenMinutes: null,
-          time_taken_minutes: null,
-        }),
-      });
-      const data = await parseApiResponse(response);
+      const [year, month, day] = replicateDateInput.split("-").map(Number);
+      const nextCards = [];
 
-      if (!response.ok) {
-        throw new Error(data?.error || "Failed to replicate task");
+      for (let index = 0; index < repeatCount; index += 1) {
+        const scheduledDate = new Date(year, month - 1, day + index);
+        const nextYear = scheduledDate.getFullYear();
+        const nextMonth = String(scheduledDate.getMonth() + 1).padStart(2, "0");
+        const nextDay = String(scheduledDate.getDate()).padStart(2, "0");
+        const replicatedDate = `${nextYear}-${nextMonth}-${nextDay}`;
+        const scheduledForValue = new Date(
+          `${replicatedDate}T${replicateTimeInput}:00`
+        ).toISOString();
+
+        const response = await fetch(buildApiUrl("/api/tasks"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            title: replicateSourceTask.title,
+            description: replicateSourceTask.description || null,
+            status: "todo",
+            mood: null,
+            intent: replicateSourceTask.intent || "productive",
+            outcome: null,
+            categoryIds: (replicateSourceTask.categories || []).map((category) => category.id),
+            scheduledFor: scheduledForValue,
+            scheduled_for: scheduledForValue,
+            estimatedDurationMinutes: replicateSourceTask.estimatedDurationMinutes || null,
+            estimated_duration_minutes: replicateSourceTask.estimatedDurationMinutes || null,
+            timeTakenMinutes: null,
+            time_taken_minutes: null,
+          }),
+        });
+        const data = await parseApiResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to replicate task");
+        }
+
+        const replicatedTask = data?.task;
+        mergeAvailableCategories(replicatedTask?.categories || []);
+        if (replicatedDate === selectedDate) {
+          nextCards.push({
+            id: replicatedTask?.id || `${Date.now()}-${index}`,
+            createdAt: replicatedTask?.created_at
+              ? new Date(replicatedTask.created_at).getTime()
+              : Date.now(),
+            title: replicatedTask?.title || replicateSourceTask.title,
+            description: replicatedTask?.description || "",
+            scheduledFor: replicatedTask?.scheduled_for || scheduledForValue,
+            mood: null,
+            intent: replicatedTask?.intent || replicateSourceTask.intent || "productive",
+            outcome: null,
+            estimatedDurationMinutes:
+              replicatedTask?.estimated_duration_minutes ||
+              replicateSourceTask.estimatedDurationMinutes ||
+              null,
+            timeTakenMinutes: null,
+            categories: replicatedTask?.categories || replicateSourceTask.categories || [],
+            done: false,
+          });
+        }
       }
 
-      const replicatedTask = data?.task;
-      mergeAvailableCategories(replicatedTask?.categories || []);
-      const replicatedDate = replicateDateInput;
-      if (replicatedDate === selectedDate) {
-        const nextCard = {
-          id: replicatedTask?.id || Date.now(),
-          createdAt: replicatedTask?.created_at
-            ? new Date(replicatedTask.created_at).getTime()
-            : Date.now(),
-          title: replicatedTask?.title || replicateSourceTask.title,
-          description: replicatedTask?.description || "",
-          scheduledFor: replicatedTask?.scheduled_for || scheduledForValue,
-          mood: replicatedTask?.mood || null,
-          intent: replicatedTask?.intent || replicateSourceTask.intent || "productive",
-          outcome: replicatedTask?.outcome || null,
-          estimatedDurationMinutes:
-            replicatedTask?.estimated_duration_minutes ||
-            replicateSourceTask.estimatedDurationMinutes ||
-            null,
-          timeTakenMinutes: null,
-          categories: replicatedTask?.categories || replicateSourceTask.categories || [],
-          done: false,
-        };
-        setCards((currentCards) => [nextCard, ...currentCards]);
+      if (nextCards.length) {
+        setCards((currentCards) => [...nextCards.reverse(), ...currentCards]);
       }
-
-      setBoardNotice("Task replicated successfully.");
+      setBoardNotice(
+        `${repeatCount} task${repeatCount === 1 ? "" : "s"} replicated successfully.`
+      );
       closeReplicateModal();
     } catch (error) {
       setBoardError(error.message || "Failed to replicate task");
@@ -1563,6 +1589,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       value={replicateTimeInput}
                       onChange={(event) => setReplicateTimeInput(event.target.value)}
                       required
+                    />
+                  </label>
+                  <label>
+                    Repeat for next N days (optional)
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      step="1"
+                      value={replicateRepeatDaysInput}
+                      onChange={(event) => setReplicateRepeatDaysInput(event.target.value)}
+                      placeholder="1"
                     />
                   </label>
                   <div className="task-modal-actions">
