@@ -258,7 +258,7 @@ body.morning-background .app__header p {
 }
 
 .analytics-link:hover {
-  color: #1d4ed8;
+  color: #e5e7eb;
   transform: scale(1.03);
 }
 
@@ -477,7 +477,7 @@ body.morning-background .app__header p {
   flex-wrap: wrap;
   align-items: center;
   row-gap: 2px;
-  column-gap: 14px;
+  column-gap: 6px;
   font-size: 0.72rem;
   color: rgba(248, 250, 252, 0.86);
 }
@@ -485,7 +485,7 @@ body.morning-background .app__header p {
 .task-attribute-item {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 1px;
 }
 
 .task-attribute-item strong {
@@ -494,7 +494,7 @@ body.morning-background .app__header p {
 
 .task-attributes-separator {
   opacity: 0.72;
-  margin: 0 4px;
+  margin: 0 1px;
 }
 
 .task-detail-divider {
@@ -1519,7 +1519,7 @@ body:not(.theme-light) .logout-btn:hover {
 }
 
 body:not(.theme-light) .analytics-link:hover {
-  color: #bfdbfe;
+  color: #e5e7eb;
 }
 
 body:not(.theme-light) .inline-edit-actions button {
