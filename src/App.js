@@ -1287,7 +1287,7 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    const isMorning = currentHour >= 5 && currentHour < 12;
+    const isMorning = true;
     document.body.style.setProperty(
       "--morning-background-image",
       `url("${MORNING_BACKGROUND_URL}")`
