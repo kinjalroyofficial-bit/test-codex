@@ -478,7 +478,8 @@ body.theme-light .analytics-placeholder {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .card-actions {
@@ -1064,8 +1065,10 @@ body.theme-light .analytics-placeholder {
   background: #f97316;
   color: #fff;
   font-weight: 700;
-  font-size: 0.75rem;
-  padding: 4px 10px;
+  font-size: 0.68rem;
+  padding: 3px 8px;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1234,11 +1237,13 @@ body.theme-light .analytics-placeholder {
 }
 
 .status-text {
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   font-weight: 700;
   width: fit-content;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .category-filter-row {
