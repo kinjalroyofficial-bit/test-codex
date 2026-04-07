@@ -17,7 +17,7 @@ body.theme-light {
 
 body.morning-background {
   background-image: linear-gradient(rgba(7, 10, 18, 0.28), rgba(7, 10, 18, 0.35)),
-    url("./assets/morning-background.webp");
+    var(--morning-background-image);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

@@ -4,6 +4,7 @@ import "./App.css";
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
+const MORNING_BACKGROUND_URL = `${process.env.PUBLIC_URL || ""}/morning-background.webp`;
 
 const MOOD_OPTIONS = [
   { value: "energetic", label: "Energetic", icon: "🤩" },
@@ -1287,8 +1288,13 @@ function App() {
 
   useEffect(() => {
     const isMorning = currentHour >= 5 && currentHour < 12;
+    document.body.style.setProperty(
+      "--morning-background-image",
+      `url("${MORNING_BACKGROUND_URL}")`
+    );
     document.body.classList.toggle("morning-background", isMorning);
     return () => {
+      document.body.style.removeProperty("--morning-background-image");
       document.body.classList.remove("morning-background");
     };
   }, [currentHour]);
