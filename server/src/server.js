@@ -177,6 +177,75 @@ async function ensureCustomCategoryIds(userId, customCategories) {
   return ids;
 }
 
+function buildAnalyticsRangeClause(range) {
+  if (range === '7d') return " AND created_at >= NOW() - INTERVAL '7 days'";
+  if (range === '30d') return " AND created_at >= NOW() - INTERVAL '30 days'";
+  return '';
+}
+
+function roundNumber(value, precision = 4) {
+  if (!Number.isFinite(Number(value))) return 0;
+  return Number(Number(value).toFixed(precision));
+}
+
+function computeStreakDays(dayRows) {
+  const uniqueDays = [...new Set(dayRows.map((row) => row.day))].sort().reverse();
+  if (!uniqueDays.length) return 0;
+
+  const toDate = (dayString) => new Date(`${dayString}T00:00:00.000Z`);
+  let streak = 1;
+  for (let index = 1; index < uniqueDays.length; index += 1) {
+    const prev = toDate(uniqueDays[index - 1]);
+    const current = toDate(uniqueDays[index]);
+    const diffDays = Math.round((prev - current) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) {
+      streak += 1;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+function buildInsights(payload) {
+  const insights = [];
+  const bestMood = [...(payload.mood.completionRateByMood || [])].sort(
+    (a, b) => b.completionRate - a.completionRate
+  )[0];
+  if (bestMood) {
+    insights.push(`You are most productive when ${bestMood.mood}.`);
+  }
+
+  const stressedMood = (payload.mood.completionRateByMood || []).find(
+    (entry) => entry.mood === 'stressed'
+  );
+  if (stressedMood && stressedMood.completionRate < payload.summary.completionRate) {
+    insights.push('Tasks done in stressed mood have lower completion success than your average.');
+  }
+
+  if (payload.time.estimationAccuracyRatio > 1.1) {
+    const underestimate = Math.round((payload.time.estimationAccuracyRatio - 1) * 100);
+    insights.push(`You underestimate time by about ${underestimate}% on average.`);
+  } else if (payload.time.estimationAccuracyRatio > 0 && payload.time.estimationAccuracyRatio < 0.9) {
+    const overestimate = Math.round((1 - payload.time.estimationAccuracyRatio) * 100);
+    insights.push(`You overestimate time by about ${overestimate}% on average.`);
+  }
+
+  if (
+    payload.intent.highlights.escapism > 0 &&
+    payload.outcome.negativeOutcomeRate > 0.2
+  ) {
+    insights.push('Escapism tasks correlate with negative outcomes in your current trend.');
+  }
+
+  if (!insights.length) {
+    insights.push('Keep logging tasks consistently to unlock stronger insight patterns.');
+  }
+
+  return insights;
+}
+
 app.post('/api/auth/register', loginLimiter, async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -463,6 +532,399 @@ app.post('/api/categories', authRequired, async (req, res) => {
   );
 
   return res.status(201).json({ category: result.rows[0] });
+});
+
+app.get('/api/analytics', authRequired, async (req, res) => {
+  try {
+    const range = ['7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
+    const userId = req.session.userId;
+    const rangeClause = buildAnalyticsRangeClause(range);
+
+    const summaryQuery = await pool.query(
+      `WITH filtered_tasks AS (
+         SELECT *
+         FROM tasks
+         WHERE user_id = $1
+           AND deleted_at IS NULL
+           ${rangeClause}
+       ),
+       daily_done AS (
+         SELECT DATE(created_at) AS day, COUNT(*)::int AS completed
+         FROM filtered_tasks
+         WHERE status = 'done'
+         GROUP BY DATE(created_at)
+       )
+       SELECT
+         (SELECT COUNT(*)::int FROM filtered_tasks) AS total_tasks,
+         (SELECT COUNT(*)::int FROM filtered_tasks WHERE status = 'done') AS completed_tasks,
+         (
+           SELECT COUNT(*)::int
+           FROM filtered_tasks
+           WHERE status = 'done'
+             AND due_date IS NOT NULL
+             AND DATE(updated_at) <= due_date
+         ) AS on_time_completed,
+         (SELECT COUNT(*)::int FROM filtered_tasks WHERE status <> 'done') AS backlog,
+         (
+           SELECT COALESCE(
+             AVG(time_taken_minutes::numeric / NULLIF(estimated_duration_minutes, 0)),
+             0
+           )
+           FROM filtered_tasks
+         ) AS time_efficiency,
+         (SELECT COALESCE(AVG(completed), 0) FROM daily_done) AS daily_task_velocity,
+         (
+           SELECT COALESCE(SUM(time_taken_minutes), 0)::int
+           FROM filtered_tasks
+           WHERE time_taken_minutes IS NOT NULL
+         ) AS total_time_spent_minutes,
+         (
+           SELECT COALESCE(SUM(time_taken_minutes), 0)::int
+           FROM filtered_tasks
+           WHERE intent = 'productive' AND time_taken_minutes IS NOT NULL
+         ) AS productive_time_spent_minutes`,
+      [userId]
+    );
+
+    const summary = summaryQuery.rows[0] || {};
+    const totalTasks = Number(summary.total_tasks || 0);
+    const completedTasks = Number(summary.completed_tasks || 0);
+    const completionRate = totalTasks ? completedTasks / totalTasks : 0;
+    const onTimeCompletionRate = completedTasks
+      ? Number(summary.on_time_completed || 0) / completedTasks
+      : 0;
+
+    const positiveOutcomeQuery = await pool.query(
+      `SELECT
+         COALESCE(
+           COUNT(*) FILTER (WHERE outcome = 'positive')::numeric / NULLIF(COUNT(*), 0),
+           0
+         ) AS positive_rate
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}`,
+      [userId]
+    );
+    const productiveIntentQuery = await pool.query(
+      `SELECT
+         COALESCE(
+           COUNT(*) FILTER (WHERE intent = 'productive')::numeric / NULLIF(COUNT(*), 0),
+           0
+         ) AS productive_ratio
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}`,
+      [userId]
+    );
+
+    const productivityScore =
+      ((completionRate +
+        Number(positiveOutcomeQuery.rows[0]?.positive_rate || 0) +
+        Number(productiveIntentQuery.rows[0]?.productive_ratio || 0)) /
+        3) *
+      100;
+
+    const completedOverTimeQuery = await pool.query(
+      `SELECT DATE(created_at)::text AS day, COUNT(*)::int AS completed
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         AND status = 'done'
+         ${rangeClause}
+       GROUP BY DATE(created_at)
+       ORDER BY DATE(created_at) ASC`,
+      [userId]
+    );
+
+    const estimatedVsActualQuery = await pool.query(
+      `SELECT
+         DATE(created_at)::text AS day,
+         COALESCE(AVG(estimated_duration_minutes), 0)::float AS estimated,
+         COALESCE(AVG(time_taken_minutes), 0)::float AS actual
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY DATE(created_at)
+       ORDER BY DATE(created_at) ASC`,
+      [userId]
+    );
+
+    const estimationAccuracyQuery = await pool.query(
+      `SELECT
+         COALESCE(AVG(time_taken_minutes::numeric / NULLIF(estimated_duration_minutes, 0)), 0) AS ratio
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         AND estimated_duration_minutes IS NOT NULL
+         AND time_taken_minutes IS NOT NULL
+         ${rangeClause}`,
+      [userId]
+    );
+
+    const intentDistributionQuery = await pool.query(
+      `SELECT COALESCE(intent, 'unknown') AS intent, COUNT(*)::int AS count
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY COALESCE(intent, 'unknown')
+       ORDER BY count DESC`,
+      [userId]
+    );
+
+    const moodDistributionQuery = await pool.query(
+      `SELECT COALESCE(mood, 'unknown') AS mood, COUNT(*)::int AS count
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY COALESCE(mood, 'unknown')
+       ORDER BY count DESC`,
+      [userId]
+    );
+
+    const moodCompletionQuery = await pool.query(
+      `SELECT
+         COALESCE(mood, 'unknown') AS mood,
+         COALESCE(
+           COUNT(*) FILTER (WHERE status = 'done')::numeric / NULLIF(COUNT(*), 0),
+           0
+         ) AS completion_rate
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY COALESCE(mood, 'unknown')
+       ORDER BY mood ASC`,
+      [userId]
+    );
+
+    const moodOutcomeHeatmapQuery = await pool.query(
+      `SELECT
+         COALESCE(mood, 'unknown') AS mood,
+         COALESCE(outcome, 'unknown') AS outcome,
+         COUNT(*)::int AS count
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY COALESCE(mood, 'unknown'), COALESCE(outcome, 'unknown')
+       ORDER BY mood, outcome`,
+      [userId]
+    );
+
+    const outcomeDistributionQuery = await pool.query(
+      `SELECT COALESCE(outcome, 'unknown') AS outcome, COUNT(*)::int AS count
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY COALESCE(outcome, 'unknown')
+       ORDER BY count DESC`,
+      [userId]
+    );
+
+    const outcomeRatesQuery = await pool.query(
+      `SELECT
+         COALESCE(
+           COUNT(*) FILTER (WHERE outcome = 'positive')::numeric / NULLIF(COUNT(*), 0),
+           0
+         ) AS positive_rate,
+         COALESCE(
+           COUNT(*) FILTER (WHERE outcome = 'negative')::numeric / NULLIF(COUNT(*), 0),
+           0
+         ) AS negative_rate,
+         COALESCE(
+           COUNT(*) FILTER (WHERE intent = 'productive' AND outcome = 'positive')::numeric
+           / NULLIF(COUNT(*) FILTER (WHERE intent = 'productive'), 0),
+           0
+         ) AS productive_positive_rate
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}`,
+      [userId]
+    );
+
+    const categoryTimeQuery = await pool.query(
+      `SELECT
+         c.name AS category,
+         COALESCE(SUM(t.time_taken_minutes), 0)::int AS minutes
+       FROM tasks t
+       JOIN task_categories tc ON tc.task_id = t.id
+       JOIN categories c ON c.id = tc.category_id
+       WHERE t.user_id = $1
+         AND t.deleted_at IS NULL
+         ${rangeClause.replaceAll('created_at', 't.created_at')}
+       GROUP BY c.name
+       ORDER BY minutes DESC`,
+      [userId]
+    );
+
+    const categoryDistributionQuery = await pool.query(
+      `SELECT
+         c.name AS category,
+         COUNT(DISTINCT t.id)::int AS count
+       FROM tasks t
+       JOIN task_categories tc ON tc.task_id = t.id
+       JOIN categories c ON c.id = tc.category_id
+       WHERE t.user_id = $1
+         AND t.deleted_at IS NULL
+         ${rangeClause.replaceAll('created_at', 't.created_at')}
+       GROUP BY c.name
+       ORDER BY count DESC`,
+      [userId]
+    );
+
+    const productivityByTimeQuery = await pool.query(
+      `SELECT
+         CASE
+           WHEN EXTRACT(HOUR FROM scheduled_for) BETWEEN 5 AND 11 THEN 'morning'
+           WHEN EXTRACT(HOUR FROM scheduled_for) BETWEEN 12 AND 16 THEN 'afternoon'
+           WHEN EXTRACT(HOUR FROM scheduled_for) BETWEEN 17 AND 21 THEN 'evening'
+           ELSE 'night'
+         END AS time_of_day,
+         COUNT(*) FILTER (WHERE status = 'done')::int AS completed
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         AND scheduled_for IS NOT NULL
+         ${rangeClause}
+       GROUP BY time_of_day
+       ORDER BY time_of_day`,
+      [userId]
+    );
+
+    const procrastinationQuery = await pool.query(
+      `SELECT
+         COALESCE(
+           COUNT(*) FILTER (
+             WHERE status = 'done'
+               AND scheduled_for IS NOT NULL
+               AND updated_at > scheduled_for
+           )::numeric
+           / NULLIF(COUNT(*) FILTER (WHERE status = 'done' AND scheduled_for IS NOT NULL), 0),
+           0
+         ) AS procrastination_score
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}`,
+      [userId]
+    );
+
+    const streakSourceQuery = await pool.query(
+      `SELECT DATE(created_at)::text AS day
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY DATE(created_at)
+       ORDER BY DATE(created_at) DESC`,
+      [userId]
+    );
+
+    const intentMap = intentDistributionQuery.rows.reduce((acc, row) => {
+      acc[row.intent] = Number(row.count || 0);
+      return acc;
+    }, {});
+
+    const payload = {
+      summary: {
+        completionRate: roundNumber(completionRate),
+        onTimeCompletionRate: roundNumber(onTimeCompletionRate),
+        productivityScore: roundNumber(productivityScore, 2),
+        timeEfficiency: roundNumber(Number(summary.time_efficiency || 0)),
+        dailyTaskVelocity: roundNumber(Number(summary.daily_task_velocity || 0)),
+        backlog: Number(summary.backlog || 0),
+        completedTasks,
+        totalTasks,
+      },
+      time: {
+        completedOverTime: completedOverTimeQuery.rows.map((row) => ({
+          day: row.day,
+          completed: Number(row.completed || 0),
+        })),
+        estimatedVsActualPerDay: estimatedVsActualQuery.rows.map((row) => ({
+          day: row.day,
+          estimated: roundNumber(Number(row.estimated || 0), 2),
+          actual: roundNumber(Number(row.actual || 0), 2),
+        })),
+        estimationAccuracyRatio: roundNumber(
+          Number(estimationAccuracyQuery.rows[0]?.ratio || 0)
+        ),
+        totalTimeSpentMinutes: Number(summary.total_time_spent_minutes || 0),
+        productiveTimeSpentMinutes: Number(summary.productive_time_spent_minutes || 0),
+      },
+      intent: {
+        distribution: intentDistributionQuery.rows.map((row) => ({
+          intent: row.intent,
+          count: Number(row.count || 0),
+        })),
+        highlights: {
+          productive: totalTasks ? (intentMap.productive || 0) / totalTasks : 0,
+          leisure: totalTasks ? (intentMap.leisure || 0) / totalTasks : 0,
+          escapism: totalTasks ? (intentMap.escapism || 0) / totalTasks : 0,
+          harmful: totalTasks ? (intentMap.harmful || 0) / totalTasks : 0,
+        },
+      },
+      mood: {
+        distribution: moodDistributionQuery.rows.map((row) => ({
+          mood: row.mood,
+          count: Number(row.count || 0),
+        })),
+        completionRateByMood: moodCompletionQuery.rows.map((row) => ({
+          mood: row.mood,
+          completionRate: roundNumber(Number(row.completion_rate || 0)),
+        })),
+        heatmap: moodOutcomeHeatmapQuery.rows.map((row) => ({
+          mood: row.mood,
+          outcome: row.outcome,
+          count: Number(row.count || 0),
+        })),
+      },
+      outcome: {
+        distribution: outcomeDistributionQuery.rows.map((row) => ({
+          outcome: row.outcome,
+          count: Number(row.count || 0),
+        })),
+        positiveOutcomeRate: roundNumber(Number(outcomeRatesQuery.rows[0]?.positive_rate || 0)),
+        negativeOutcomeRate: roundNumber(Number(outcomeRatesQuery.rows[0]?.negative_rate || 0)),
+        productivePositiveRate: roundNumber(
+          Number(outcomeRatesQuery.rows[0]?.productive_positive_rate || 0)
+        ),
+      },
+      category: {
+        timeSpentPerCategory: categoryTimeQuery.rows.map((row) => ({
+          category: row.category,
+          minutes: Number(row.minutes || 0),
+        })),
+        taskDistribution: categoryDistributionQuery.rows.map((row) => ({
+          category: row.category,
+          count: Number(row.count || 0),
+        })),
+      },
+      scheduling: {
+        productivityByTimeOfDay: productivityByTimeQuery.rows.map((row) => ({
+          timeOfDay: row.time_of_day,
+          completed: Number(row.completed || 0),
+        })),
+        procrastinationScore: roundNumber(
+          Number(procrastinationQuery.rows[0]?.procrastination_score || 0)
+        ),
+        streakDays: computeStreakDays(streakSourceQuery.rows),
+      },
+    };
+
+    payload.insights = buildInsights(payload);
+
+    return res.json(payload);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to load analytics' });
+  }
 });
 
 app.get('/api/tasks', authRequired, async (req, res) => {

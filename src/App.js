@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
+import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 
@@ -985,10 +986,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       </header>
 
       {activeView === "analytics" ? (
-        <section className="analytics-placeholder" aria-label="Analytics page placeholder">
-          <h2>Analytics</h2>
-          <p>Coming soon</p>
-        </section>
+        <AnalyticsDashboard onBack={() => setActiveView("board")} />
       ) : (
         <>
           <section className="cards-grid" aria-label="Task cards">
