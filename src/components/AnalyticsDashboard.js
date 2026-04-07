@@ -60,6 +60,13 @@ function pct(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatMinutesLabel(minutesValue) {
+  const minutes = Math.max(0, Number(minutesValue) || 0);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours} hr ${mins} mins`;
+}
+
 export default function AnalyticsDashboard({ onBack }) {
   const [range, setRange] = useState("30d");
   const [isLoading, setIsLoading] = useState(true);
@@ -177,8 +184,8 @@ export default function AnalyticsDashboard({ onBack }) {
 
           <div className="analytics-metric-strip">
             <MetricCard label="Estimation Accuracy Ratio" value={pct(data.time.estimationAccuracyRatio)} tone="neutral" />
-            <MetricCard label="Total Time Spent" value={`${data.time.totalTimeSpentMinutes} min`} tone="neutral" />
-            <MetricCard label="Productive Time" value={`${data.time.productiveTimeSpentMinutes} min`} tone="positive" />
+            <MetricCard label="Total Time Spent" value={formatMinutesLabel(data.time.totalTimeSpentMinutes)} tone="neutral" />
+            <MetricCard label="Productive Time" value={formatMinutesLabel(data.time.productiveTimeSpentMinutes)} tone="positive" />
           </div>
 
           <div className="analytics-grid two-col">

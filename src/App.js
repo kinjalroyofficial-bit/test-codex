@@ -405,6 +405,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       year: "numeric",
     });
 
+  const formatMinutesLabel = (minutesValue) => {
+    const minutes = Math.max(0, Number(minutesValue) || 0);
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours} hr ${mins} mins`;
+  };
+
   const moveSelectedDateByDays = (dayOffset) => {
     setSelectedDate((currentDate) => {
       const [year, month, day] = currentDate.split("-").map(Number);
@@ -1312,7 +1319,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               >
                 <span>All</span>
                 <small>
-                  {cards.length}t · e{totalCategoryEstimatedMinutes}m · a{totalCategoryActualMinutes}m
+                  <span className="category-chip-line">{cards.length} tasks</span>
+                  <span className="category-chip-line">
+                    Est. Duration: {formatMinutesLabel(totalCategoryEstimatedMinutes)}
+                  </span>
+                  <span className="category-chip-line">
+                    Time Spent: {formatMinutesLabel(totalCategoryActualMinutes)}
+                  </span>
                 </small>
               </button>
               {categoryStats.map((category) => (
@@ -1333,7 +1346,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 >
                   <span>{category.name}</span>
                   <small>
-                    {category.cardCount}t · e{category.totalEstimatedMinutes}m · a{category.totalActualMinutes}m
+                    <span className="category-chip-line">{category.cardCount} tasks</span>
+                    <span className="category-chip-line">
+                      Est. Duration: {formatMinutesLabel(category.totalEstimatedMinutes)}
+                    </span>
+                    <span className="category-chip-line">
+                      Time Spent: {formatMinutesLabel(category.totalActualMinutes)}
+                    </span>
                   </small>
                 </button>
               ))}
@@ -1462,11 +1481,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <div className="task-metrics-row">
                   <div className="task-metric-box">
                     <span>Est. duration</span>
-                    <strong>{card.estimatedDurationMinutes ? `${card.estimatedDurationMinutes} min` : "—"}</strong>
+                    <strong>
+                      {card.estimatedDurationMinutes
+                        ? formatMinutesLabel(card.estimatedDurationMinutes)
+                        : "—"}
+                    </strong>
                   </div>
                   <div className="task-metric-box">
                     <span>Completion</span>
-                    <strong>{card.timeTakenMinutes ? `${card.timeTakenMinutes} min` : "—"}</strong>
+                    <strong>
+                      {card.timeTakenMinutes ? formatMinutesLabel(card.timeTakenMinutes) : "—"}
+                    </strong>
                   </div>
                 </div>
               ) : null}

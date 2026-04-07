@@ -1319,6 +1319,11 @@ body.theme-light .analytics-placeholder {
   font-size: 0.64rem;
   opacity: 0.88;
   color: inherit;
+  line-height: 1.15;
+}
+
+.category-chip-line {
+  display: block;
 }
 
 .category-filter-chip.is-active {
