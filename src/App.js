@@ -1024,10 +1024,19 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </div>
               ) : null}
               <p className="task-attributes">
-                Mood: <strong>{card.mood || "neutral"}</strong> · Intent:{" "}
-                <strong>{card.intent || "productive"}</strong> · Outcome:{" "}
-                <strong>{card.outcome || "neutral"}</strong>
+                <span>
+                  Mood: <strong>{card.mood || "neutral"}</strong>
+                </span>
+                <span className="task-attributes-separator">•</span>
+                <span>
+                  Intent: <strong>{card.intent || "productive"}</strong>
+                </span>
+                <span className="task-attributes-separator">•</span>
+                <span>
+                  Outcome: <strong>{card.outcome || "neutral"}</strong>
+                </span>
               </p>
+              {card.scheduledFor ? <div className="task-detail-divider" /> : null}
               {card.scheduledFor ? (
                 <p className="task-schedule">
                   Scheduled: <strong>{formatScheduledDate(card.scheduledFor)}</strong>
