@@ -1013,6 +1013,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                         className="task-card-band-vector"
                         style={{
                           top: `${((index + 1) / (card.categories.length + 1)) * 100}%`,
+                          right: `${2 + (index % 2) * 18}px`,
                           color: softenColor(color, 0.72),
                         }}
                       >
