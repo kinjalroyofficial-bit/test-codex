@@ -826,9 +826,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             <p>Track the latest updates with quick Done/Not Done toggles.</p>
           </div>
           <div className="user-panel">
-            <div className="auth-user-box">
-              <span>{user?.email || "Signed in"}</span>
-              <button type="button" onClick={onLogout}>
+            <div className="header-menu" role="navigation" aria-label="Header actions">
+              <span className="analytics-link">Analytics</span>
+              <button type="button" className="logout-btn" onClick={onLogout}>
                 Logout
               </button>
             </div>

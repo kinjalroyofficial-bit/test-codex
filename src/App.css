@@ -218,14 +218,14 @@ body.morning-background .app__header p {
   font-weight: 700;
 }
 
-.auth-user-box {
+.header-menu {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background: #fff;
   border: 1px solid #cbd5e1;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
 }
 
 .user-panel {
@@ -234,21 +234,55 @@ body.morning-background .app__header p {
   justify-items: end;
 }
 
-.auth-user-box span {
-  font-size: 0.88rem;
+.analytics-link {
+  border: 0;
+  background: transparent;
   color: #334155;
-  max-width: 220px;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: default;
+  padding: 4px 0;
+  position: relative;
+  transition: color 0.25s ease, transform 0.25s ease;
 }
 
-.auth-user-box button {
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+.analytics-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+  opacity: 0.85;
+}
+
+.analytics-link:hover {
+  color: #1d4ed8;
+  transform: scale(1.03);
+}
+
+.analytics-link:hover::after {
+  transform: scaleX(1);
+}
+
+.logout-btn {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 7px 14px;
+  font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
 }
 
 .controls-row {
@@ -1053,7 +1087,7 @@ body.morning-background .app__header p {
     justify-content: space-between;
   }
 
-  .auth-user-box {
+  .header-menu {
     width: 100%;
     justify-content: space-between;
   }
@@ -1345,13 +1379,13 @@ body.morning-background .app__header p {
 body:not(.theme-light) .app__header p,
 body:not(.theme-light) .auth-card p,
 body:not(.theme-light) .task-card p,
-body:not(.theme-light) .auth-user-box span {
+body:not(.theme-light) .analytics-link {
   color: #d1d5db;
 }
 
 body:not(.theme-light) .auth-card,
 body:not(.theme-light) .task-card,
-body:not(.theme-light) .auth-user-box {
+body:not(.theme-light) .header-menu {
   background: #0f172a;
   border: 1px solid #475569;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
@@ -1402,7 +1436,21 @@ body:not(.theme-light) .filter-pill select {
   color: #fff;
 }
 
-body:not(.theme-light) .auth-user-box button,
+body:not(.theme-light) .logout-btn,
+body:not(.theme-light) .inline-edit-actions button {
+  background: #dc2626;
+  color: #fff;
+  border-color: #b91c1c;
+}
+
+body:not(.theme-light) .logout-btn:hover {
+  background: #b91c1c;
+}
+
+body:not(.theme-light) .analytics-link:hover {
+  color: #bfdbfe;
+}
+
 body:not(.theme-light) .inline-edit-actions button {
   background: #1e293b;
   color: #f3f4f6;
