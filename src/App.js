@@ -350,6 +350,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [replicateDateInput, setReplicateDateInput] = useState("");
   const [replicateTimeInput, setReplicateTimeInput] = useState("");
   const [replicateRepeatDaysInput, setReplicateRepeatDaysInput] = useState("");
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+  const [completionTask, setCompletionTask] = useState(null);
+  const [completionMoodInput, setCompletionMoodInput] = useState("neutral");
+  const [completionTimeInput, setCompletionTimeInput] = useState("");
+  const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -473,13 +478,31 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
     const nextDone = !currentCard.done;
     setBoardError("");
+    setBoardNotice("");
+
+    if (nextDone) {
+      setCompletionTask(currentCard);
+      setCompletionMoodInput(currentCard.mood || "neutral");
+      setCompletionTimeInput(
+        currentCard.timeTakenMinutes ? String(currentCard.timeTakenMinutes) : ""
+      );
+      setCompletionOutcomeInput(currentCard.outcome || "");
+      setIsCompletionModalOpen(true);
+      return;
+    }
 
     try {
       const response = await fetch(buildApiUrl(`/api/tasks/${cardId}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ status: nextDone ? "done" : "todo" }),
+        body: JSON.stringify({
+          status: "todo",
+          mood: null,
+          outcome: null,
+          timeTakenMinutes: null,
+          time_taken_minutes: null,
+        }),
       });
       const data = await parseApiResponse(response);
 
@@ -496,13 +519,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 title: updatedTask?.title || card.title,
                 description: updatedTask?.description || "",
                 scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
-                mood: updatedTask?.mood || card.mood || "neutral",
+                mood: updatedTask?.mood || null,
                 intent: updatedTask?.intent || card.intent || "productive",
-                outcome: updatedTask?.outcome || card.outcome || null,
+                outcome: updatedTask?.outcome || null,
                 estimatedDurationMinutes:
                   updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
-                timeTakenMinutes:
-                  updatedTask?.time_taken_minutes || card.timeTakenMinutes || null,
+                timeTakenMinutes: updatedTask?.time_taken_minutes || null,
                 categories: updatedTask?.categories || card.categories || [],
                 done: (updatedTask?.status || "todo") === "done",
               }
@@ -511,6 +533,72 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       );
     } catch (error) {
       setBoardError(error.message || "Failed to update task");
+    }
+  };
+
+  const closeCompletionModal = () => {
+    setIsCompletionModalOpen(false);
+    setCompletionTask(null);
+    setCompletionMoodInput("neutral");
+    setCompletionTimeInput("");
+    setCompletionOutcomeInput("");
+  };
+
+  const submitCompletionUpdate = async (event) => {
+    event.preventDefault();
+    if (!completionTask?.id) return;
+    if (!completionMoodInput || !completionTimeInput || !completionOutcomeInput) {
+      setBoardError("Mood, time taken, and outcome are required to mark a task done.");
+      return;
+    }
+
+    setBoardError("");
+    setBoardNotice("");
+
+    try {
+      const response = await fetch(buildApiUrl(`/api/tasks/${completionTask.id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          status: "done",
+          mood: completionMoodInput,
+          outcome: completionOutcomeInput,
+          timeTakenMinutes: Number(completionTimeInput),
+          time_taken_minutes: Number(completionTimeInput),
+        }),
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to complete task");
+      }
+
+      const updatedTask = data?.task;
+      setCards((currentCards) =>
+        currentCards.map((card) =>
+          card.id === completionTask.id
+            ? {
+                ...card,
+                title: updatedTask?.title || card.title,
+                description: updatedTask?.description || "",
+                scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
+                mood: updatedTask?.mood || completionMoodInput,
+                intent: updatedTask?.intent || card.intent || "productive",
+                outcome: updatedTask?.outcome || completionOutcomeInput,
+                estimatedDurationMinutes:
+                  updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
+                timeTakenMinutes:
+                  updatedTask?.time_taken_minutes || Number(completionTimeInput) || null,
+                categories: updatedTask?.categories || card.categories || [],
+                done: true,
+              }
+            : card
+        )
+      );
+      closeCompletionModal();
+    } catch (error) {
+      setBoardError(error.message || "Failed to complete task");
     }
   };
 
@@ -1100,13 +1188,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               <p>Showing tasks for</p>
               <strong>{formatSelectedDate(selectedDate)}</strong>
             </div>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(event) => setSelectedDate(event.target.value)}
-              className="board-date-input"
-              aria-label="Select task date"
-            />
             <button
               type="button"
               className="date-nav-btn"
@@ -1114,6 +1195,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             >
               Next day
             </button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(event) => setSelectedDate(event.target.value)}
+              className="board-date-input"
+              aria-label="Select task date"
+            />
           </div>
 
           <div className="controls-row">
@@ -1608,6 +1696,73 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       Cancel
                     </button>
                     <button type="submit">Replicate task</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : null}
+
+          {isCompletionModalOpen ? (
+            <div className="task-modal-overlay" role="dialog" aria-modal="true">
+              <div className="task-modal replicate-modal">
+                <button
+                  type="button"
+                  className="task-modal-close"
+                  aria-label="Close completion form"
+                  onClick={closeCompletionModal}
+                >
+                  ×
+                </button>
+                <h3>Mark task as done</h3>
+                <form onSubmit={submitCompletionUpdate} className="replicate-form">
+                  <p className="replicate-source-title">{completionTask?.title}</p>
+                  <label>
+                    Mood during activity
+                    <select
+                      value={completionMoodInput}
+                      onChange={(event) => setCompletionMoodInput(event.target.value)}
+                      required
+                    >
+                      {MOOD_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Time taken to complete (minutes)
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={completionTimeInput}
+                      onChange={(event) => setCompletionTimeInput(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Outcome
+                    <select
+                      value={completionOutcomeInput}
+                      onChange={(event) => setCompletionOutcomeInput(event.target.value)}
+                      required
+                    >
+                      <option value="" disabled>
+                        Select outcome
+                      </option>
+                      {OUTCOME_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="task-modal-actions">
+                    <button type="button" onClick={closeCompletionModal}>
+                      Cancel
+                    </button>
+                    <button type="submit">Save and mark done</button>
                   </div>
                 </form>
               </div>

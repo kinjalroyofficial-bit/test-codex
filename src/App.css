@@ -199,6 +199,8 @@ body.morning-background .app__header p {
 .board-date-controls {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -216,6 +218,10 @@ body.morning-background .app__header p {
 .board-date-display {
   display: grid;
   gap: 2px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.56);
+  text-align: center;
 }
 
 .board-date-display p {
@@ -223,12 +229,14 @@ body.morning-background .app__header p {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .board-date-display strong {
-  color: #fff;
+  color: #ffffff;
   font-size: 0.96rem;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(15, 23, 42, 0.7);
 }
 
 .board-date-input {
@@ -249,6 +257,11 @@ body.theme-light .board-date-input {
 body.theme-light .board-date-display p,
 body.theme-light .board-date-display strong {
   color: #0f172a;
+}
+
+body.theme-light .board-date-display {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
 .task-form label {
@@ -1101,6 +1114,12 @@ body.theme-light .analytics-placeholder {
   padding: 10px;
 }
 
+.replicate-form select {
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  padding: 10px;
+}
+
 /* From Uiverse.io by csemszepp */
 .container {
   display: flex;
@@ -1740,6 +1759,12 @@ body:not(.theme-light) .inline-modal input {
 }
 
 body:not(.theme-light) .replicate-form input {
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #64748b;
+}
+
+body:not(.theme-light) .replicate-form select {
   background: #111827;
   color: #f3f4f6;
   border-color: #64748b;

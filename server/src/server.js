@@ -1039,19 +1039,24 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
   const normalizedEstimatedDuration =
     estimatedDurationMinutes ?? estimatedDurationMinutesSnake ?? null;
   const normalizedTimeTaken = timeTakenMinutes ?? timeTakenMinutesSnake ?? null;
+  const hasMood = Object.prototype.hasOwnProperty.call(req.body, 'mood');
+  const hasOutcome = Object.prototype.hasOwnProperty.call(req.body, 'outcome');
+  const hasTimeTaken =
+    Object.prototype.hasOwnProperty.call(req.body, 'timeTakenMinutes') ||
+    Object.prototype.hasOwnProperty.call(req.body, 'time_taken_minutes');
 
   const result = await pool.query(
     `UPDATE tasks
      SET title = COALESCE($1, title),
          description = COALESCE($2, description),
          status = COALESCE($3, status),
-         mood = COALESCE($4, mood),
+         mood = CASE WHEN $13 THEN $4 ELSE mood END,
          intent = COALESCE($5, intent),
-         outcome = COALESCE($6, outcome),
+         outcome = CASE WHEN $14 THEN $6 ELSE outcome END,
          due_date = COALESCE($7, due_date),
          scheduled_for = COALESCE($8, scheduled_for),
          estimated_duration_minutes = COALESCE($9, estimated_duration_minutes),
-         time_taken_minutes = COALESCE($10, time_taken_minutes),
+         time_taken_minutes = CASE WHEN $15 THEN $10 ELSE time_taken_minutes END,
          updated_at = NOW()
      WHERE id = $11 AND user_id = $12 AND deleted_at IS NULL
      RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
@@ -1069,6 +1074,9 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
       normalizedTimeTaken,
       taskId,
       req.session.userId,
+      hasMood,
+      hasOutcome,
+      hasTimeTaken,
     ]
   );
 
