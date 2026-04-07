@@ -539,7 +539,8 @@ app.get('/api/analytics', authRequired, async (req, res) => {
     const range = ['7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
     const userId = req.session.userId;
     const rangeClause = buildAnalyticsRangeClause(range);
-    const completionRangeClause = buildAnalyticsRangeClause(range, 'updated_at');
+    const completionDateExpression = 'COALESCE(scheduled_for, updated_at)';
+    const completionRangeClause = buildAnalyticsRangeClause(range, completionDateExpression);
 
     const summaryQuery = await pool.query(
       `WITH filtered_tasks AS (
@@ -550,13 +551,13 @@ app.get('/api/analytics', authRequired, async (req, res) => {
            ${rangeClause}
        ),
        daily_done AS (
-         SELECT DATE(updated_at) AS day, COUNT(*)::int AS completed
+         SELECT DATE(COALESCE(scheduled_for, updated_at)) AS day, COUNT(*)::int AS completed
          FROM tasks
          WHERE user_id = $1
            AND deleted_at IS NULL
            AND status = 'done'
            ${completionRangeClause}
-         GROUP BY DATE(updated_at)
+         GROUP BY DATE(COALESCE(scheduled_for, updated_at))
        )
        SELECT
          (SELECT COUNT(*)::int FROM filtered_tasks) AS total_tasks,
@@ -631,14 +632,14 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       100;
 
     const completedOverTimeQuery = await pool.query(
-      `SELECT DATE(updated_at)::text AS day, COUNT(*)::int AS completed
+      `SELECT DATE(COALESCE(scheduled_for, updated_at))::text AS day, COUNT(*)::int AS completed
        FROM tasks
        WHERE user_id = $1
          AND deleted_at IS NULL
          AND status = 'done'
          ${completionRangeClause}
-       GROUP BY DATE(updated_at)
-       ORDER BY DATE(updated_at) ASC`,
+       GROUP BY DATE(COALESCE(scheduled_for, updated_at))
+       ORDER BY DATE(COALESCE(scheduled_for, updated_at)) ASC`,
       [userId]
     );
 
