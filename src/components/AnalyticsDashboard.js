@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -140,8 +141,9 @@ export default function AnalyticsDashboard({ onBack }) {
                 <XAxis dataKey="day" />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Line type="monotone" dataKey="completed" stroke={COLORS.positive} strokeWidth={2.5} />
-                <Line type="monotone" dataKey="registered" stroke={COLORS.neutral} strokeWidth={2.5} />
+                <Legend />
+                <Line type="monotone" dataKey="completed" name="Completed Tasks" stroke={COLORS.positive} strokeWidth={2.5} />
+                <Line type="monotone" dataKey="registered" name="Registered Tasks" stroke={COLORS.neutral} strokeWidth={2.5} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>

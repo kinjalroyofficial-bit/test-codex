@@ -550,12 +550,12 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       range === 'today'
         ? ` AND DATE(${completionDateExpression}) = DATE((NOW() AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))`
         : buildAnalyticsRangeClause(range, completionDateExpression);
-    const createdDateExpression =
-      "((created_at AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))";
-    const createdTimelineRangeClause =
+    const registeredDateExpression =
+      "((COALESCE(scheduled_for, created_at) AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))";
+    const registeredTimelineRangeClause =
       range === 'today'
-        ? ` AND DATE(${createdDateExpression}) = DATE((NOW() AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))`
-        : buildAnalyticsRangeClause(range, createdDateExpression);
+        ? ` AND DATE(${registeredDateExpression}) = DATE((NOW() AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))`
+        : buildAnalyticsRangeClause(range, registeredDateExpression);
 
     const summaryQuery = await pool.query(
       `WITH filtered_tasks AS (
@@ -659,13 +659,13 @@ app.get('/api/analytics', authRequired, async (req, res) => {
     );
 
     const registeredOverTimeQuery = await pool.query(
-      `SELECT DATE(${createdDateExpression})::text AS day, COUNT(*)::int AS registered
+      `SELECT DATE(${registeredDateExpression})::text AS day, COUNT(*)::int AS registered
        FROM tasks
        WHERE user_id = $1
          AND deleted_at IS NULL
-         ${createdTimelineRangeClause}
-       GROUP BY DATE(${createdDateExpression})
-       ORDER BY DATE(${createdDateExpression}) ASC`,
+         ${registeredTimelineRangeClause}
+       GROUP BY DATE(${registeredDateExpression})
+       ORDER BY DATE(${registeredDateExpression}) ASC`,
       [userId, timezoneOffsetMinutes]
     );
 
