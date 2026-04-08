@@ -1393,7 +1393,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     Previous day
                   </button>
                   <div className="board-date-display">
-                    <p>Showing tasks for</p>
                     <button
                       type="button"
                       className="board-date-display-trigger"
@@ -1590,17 +1589,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               ) : null}
               <p className="task-attributes">
                 <span className="task-attribute-item">
-                  <strong>Mood:</strong> {card.mood || "neutral"}
+                  Mood: {card.mood || "neutral"}
                 </span>
                 <span className="task-attributes-separator">•</span>
                 <span className="task-attribute-item">
-                  <strong>Intent:</strong> {card.intent || "productive"}
+                  Intent: {card.intent || "productive"}
                 </span>
               </p>
               {card.scheduledFor ? <div className="task-detail-divider" /> : null}
               {card.scheduledFor ? (
                 <p className="task-schedule">
-                  Scheduled: <strong>{formatScheduledDate(card.scheduledFor)}</strong>
+                  Scheduled: {formatScheduledDate(card.scheduledFor)}
                 </p>
               ) : null}
               {card.estimatedDurationMinutes || card.timeTakenMinutes ? (
