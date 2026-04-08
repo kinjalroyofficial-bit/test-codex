@@ -2043,9 +2043,18 @@ body:not(.theme-light) .theme-slider {
 .analytics-back-btn {
   border: 0;
   padding: 8px 14px;
+  min-height: 38px;
   background: rgba(15, 23, 42, 0.65);
   color: #fff;
   cursor: pointer;
+}
+
+.analytics-filter-group input {
+  border: 0;
+  padding: 8px 14px;
+  min-height: 38px;
+  background: rgba(15, 23, 42, 0.65);
+  color: #fff;
 }
 
 .analytics-filter-group button.is-active {
@@ -2181,6 +2190,10 @@ body:not(.theme-light) .theme-slider {
 }
 
 body.theme-light .analytics-head h2,
+body.theme-light .analytics-head p {
+  color: #06b6d4;
+}
+
 body.theme-light .analytics-card h3,
 body.theme-light .analytics-metric-card h3,
 body.theme-light .analytics-highlight-list p,
@@ -2188,8 +2201,7 @@ body.theme-light .analytics-inline-insight,
 body.theme-light .analytics-insights-list li,
 body.theme-light .analytics-heatmap-row,
 body.theme-light .analytics-metric-card small,
-body.theme-light .analytics-metric-card p,
-body.theme-light .analytics-head p {
+body.theme-light .analytics-metric-card p {
   color: #0f172a;
 }
 
@@ -2202,6 +2214,7 @@ body.theme-light .analytics-skeleton {
 
 body.theme-light .analytics-filter-group,
 body.theme-light .analytics-filter-group button,
+body.theme-light .analytics-filter-group input,
 body.theme-light .analytics-back-btn {
   border-color: rgba(15, 23, 42, 0.22);
   color: #0f172a;
