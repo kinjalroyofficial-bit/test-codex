@@ -357,6 +357,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionTimeInput, setCompletionTimeInput] = useState("");
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
   const [isDescriptionVoiceActive, setIsDescriptionVoiceActive] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
   const dateInputRef = useRef(null);
   const descriptionTextareaRef = useRef(null);
   const touchDropTargetIdRef = useRef(null);
@@ -368,6 +371,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const updateViewportMode = () => setIsMobileViewport(window.innerWidth <= 768);
+    window.addEventListener("resize", updateViewportMode);
+    return () => window.removeEventListener("resize", updateViewportMode);
   }, []);
 
   useEffect(() => {
@@ -725,6 +735,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   };
 
   const handleDescriptionVoiceInput = () => {
+    if (isMobileViewport) return;
     if (isDescriptionVoiceActive) {
       stopDescriptionVoiceInput();
       return;
@@ -796,6 +807,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     descriptionTextareaRef.current?.focus();
     recognition.start();
   };
+
+  useEffect(() => {
+    if (isMobileViewport) {
+      stopDescriptionVoiceInput();
+    }
+  }, [isMobileViewport]);
 
   const openCreateTaskModal = () => {
     setTaskModalMode("create");
@@ -1888,23 +1905,25 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       placeholder="Optional description"
                       rows={2}
                     />
-                    <button
-                      type="button"
-                      className={`description-voice-btn ${isDescriptionVoiceActive ? "is-active" : ""}`}
-                      onClick={handleDescriptionVoiceInput}
-                      aria-label={
-                        isDescriptionVoiceActive
-                          ? "Stop voice input for description"
-                          : "Start voice input for description"
-                      }
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zm0-8a1 1 0 0 0 0 2 6 6 0 0 1 0 12 1 1 0 1 0 0 2 8 8 0 0 0 0-16z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
+                    {!isMobileViewport ? (
+                      <button
+                        type="button"
+                        className={`description-voice-btn ${isDescriptionVoiceActive ? "is-active" : ""}`}
+                        onClick={handleDescriptionVoiceInput}
+                        aria-label={
+                          isDescriptionVoiceActive
+                            ? "Stop voice input for description"
+                            : "Start voice input for description"
+                        }
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M14.5 3.75a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.28.53l-4.72-4.78H5.5a1.75 1.75 0 0 1-1.75-1.75v-3.5A1.75 1.75 0 0 1 5.5 8.25h3.75l4.72-4.78a.75.75 0 0 1 .53-.22ZM17.78 8.45a.75.75 0 0 1 1.05.11 5.5 5.5 0 0 1 0 6.88.75.75 0 0 1-1.16-.95 4 4 0 0 0 0-4.98.75.75 0 0 1 .11-1.06Zm2.77-2.93a.75.75 0 0 1 1.05.11 10 10 0 0 1 0 12.74.75.75 0 1 1-1.16-.95 8.5 8.5 0 0 0 0-10.84.75.75 0 0 1 .11-1.06Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                    ) : null}
                   </div>
                 </label>
               </section>

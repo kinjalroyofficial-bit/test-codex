@@ -939,29 +939,29 @@ body.theme-light .analytics-placeholder {
 .task-description-input-wrap {
   position: relative;
   width: 100%;
-  overflow: visible;
 }
 
 .task-description-input-wrap textarea {
   width: 100%;
-  padding-right: 50px;
+  padding-right: 46px;
   box-sizing: border-box;
 }
 
 .description-voice-btn {
   position: absolute;
-  top: 0;
-  right: -34px;
-  width: 26px;
-  height: 26px;
+  top: 7px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
   border: 0;
-  border-radius: 0;
-  background: transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #334155;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
 }
 
 .description-voice-btn svg {
@@ -971,12 +971,7 @@ body.theme-light .analytics-placeholder {
 
 .description-voice-btn.is-active {
   color: #16a34a;
-}
-
-@media (max-width: 768px) {
-  .description-voice-btn {
-    right: -30px;
-  }
+  background: #dcfce7;
 }
 
 .category-chip-picker {
@@ -1873,12 +1868,13 @@ body:not(.theme-light) .task-modal-form select {
 }
 
 body:not(.theme-light) .description-voice-btn {
-  background: transparent;
+  background: rgba(15, 23, 42, 0.88);
   color: #f8fafc;
 }
 
 body:not(.theme-light) .description-voice-btn.is-active {
   color: #22c55e;
+  background: rgba(34, 197, 94, 0.2);
 }
 
 body:not(.theme-light) .filter-pill {
