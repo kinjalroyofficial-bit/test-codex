@@ -363,6 +363,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const speechRecognitionRef = useRef(null);
   const speechBaseDescriptionRef = useRef("");
   const speechCommittedTranscriptRef = useRef("");
+  const shouldKeepListeningRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -715,6 +716,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   };
 
   const stopDescriptionVoiceInput = () => {
+    shouldKeepListeningRef.current = false;
     if (speechRecognitionRef.current) {
       speechRecognitionRef.current.stop();
       speechRecognitionRef.current = null;
@@ -739,6 +741,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     }
 
     const recognition = new SpeechRecognition();
+    shouldKeepListeningRef.current = true;
     speechBaseDescriptionRef.current = taskDescriptionInput.trim();
     speechCommittedTranscriptRef.current = "";
     recognition.lang = "en-US";
@@ -762,12 +765,27 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       setTaskDescriptionInput(`${baseText}${spacer}${fullTranscript}`.trim());
     };
 
-    recognition.onerror = () => {
-      setBoardError("Unable to capture voice input. Please try again.");
+    recognition.onerror = (event) => {
+      if (event?.error === "not-allowed" || event?.error === "service-not-allowed") {
+        setBoardError("Microphone permission is blocked. Please allow microphone access.");
+      } else if (event?.error === "no-speech") {
+        setBoardError("No speech detected. Please try again.");
+      } else {
+        setBoardError("Unable to capture voice input. Please try again.");
+      }
       stopDescriptionVoiceInput();
     };
 
     recognition.onend = () => {
+      if (shouldKeepListeningRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch (error) {
+          setBoardError("Voice input stopped. Please tap the speaker to start again.");
+        }
+      }
+      shouldKeepListeningRef.current = false;
       setIsDescriptionVoiceActive(false);
       speechRecognitionRef.current = null;
     };

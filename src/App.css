@@ -939,6 +939,7 @@ body.theme-light .analytics-placeholder {
 .task-description-input-wrap {
   position: relative;
   width: 100%;
+  overflow: visible;
 }
 
 .task-description-input-wrap textarea {
@@ -949,17 +950,18 @@ body.theme-light .analytics-placeholder {
 
 .description-voice-btn {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  bottom: 1px;
-  width: 40px;
-  border: 1px solid #94a3b8;
-  border-radius: 0 8px 8px 0;
-  background: #fff;
+  top: 0;
+  right: -34px;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: #334155;
 }
 
 .description-voice-btn svg {
@@ -968,14 +970,12 @@ body.theme-light .analytics-placeholder {
 }
 
 .description-voice-btn.is-active {
-  border-color: #16a34a;
-  background: #dcfce7;
+  color: #16a34a;
 }
 
 @media (max-width: 768px) {
   .description-voice-btn {
-    width: 42px;
-    right: 0;
+    right: -30px;
   }
 }
 
@@ -1873,14 +1873,12 @@ body:not(.theme-light) .task-modal-form select {
 }
 
 body:not(.theme-light) .description-voice-btn {
-  background: #0f172a;
-  border-color: #64748b;
+  background: transparent;
   color: #f8fafc;
 }
 
 body:not(.theme-light) .description-voice-btn.is-active {
-  background: rgba(34, 197, 94, 0.22);
-  border-color: #22c55e;
+  color: #22c55e;
 }
 
 body:not(.theme-light) .filter-pill {
