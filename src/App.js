@@ -1338,6 +1338,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         const durationMinutes = Math.max(15, Math.min(totalDurationMinutes, 1440 - startMinutes));
         return {
           ...card,
+          sourceTaskId: card.id,
           startMinutes,
           durationMinutes,
           startTimeLabel: `${String(scheduledDate.getHours()).padStart(2, "0")}:${String(
@@ -1361,6 +1362,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         return {
           ...card,
           id: `${card.id}-carryover`,
+          sourceTaskId: card.id,
           startMinutes: 0,
           durationMinutes: Math.min(overflowMinutes, 1440),
           startTimeLabel: "00:00",
@@ -1851,6 +1853,27 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   <article
                     key={`timeline-${task.id}`}
                     className="timeline-task-block"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      const editableTask =
+                        cards.find((item) => item.id === task.sourceTaskId) ||
+                        previousDayCards.find((item) => item.id === task.sourceTaskId);
+                      if (editableTask) {
+                        openEditTaskModal(editableTask);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        const editableTask =
+                          cards.find((item) => item.id === task.sourceTaskId) ||
+                          previousDayCards.find((item) => item.id === task.sourceTaskId);
+                        if (editableTask) {
+                          openEditTaskModal(editableTask);
+                        }
+                      }
+                    }}
                     style={{
                       top: `${task.startMinutes}px`,
                       minHeight: `${task.durationMinutes}px`,
