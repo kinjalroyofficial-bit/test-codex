@@ -29,9 +29,6 @@ const getDayPartGreeting = (dayPart) => {
 
 const getDayPartBackgroundUrl = (dayPart) =>
   `${process.env.PUBLIC_URL || ""}/${DAY_PART_BACKGROUND_IMAGE_NAMES[dayPart]}`;
-const CREATE_TASK_MODAL_BACKGROUND_URL = `${
-  process.env.PUBLIC_URL || ""
-}/create-task-bg.webp`;
 
 const getOutcomeCue = (outcome) => {
   if (outcome === "positive") return "🙂";
@@ -1255,9 +1252,53 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       })
       .filter(Boolean);
 
-    return [...currentDaySegments, ...carryOverSegments].sort(
+    const sortedSegments = [...currentDaySegments, ...carryOverSegments].sort(
       (a, b) => a.startMinutes - b.startMinutes
     );
+
+    const activeSegments = [];
+    const groupColumnCounts = new Map();
+    let nextGroupId = 0;
+
+    const positionedSegments = sortedSegments.map((task) => {
+      const taskStart = task.startMinutes;
+      const taskEnd = task.startMinutes + task.durationMinutes;
+
+      for (let index = activeSegments.length - 1; index >= 0; index -= 1) {
+        if (activeSegments[index].endMinutes <= taskStart) {
+          activeSegments.splice(index, 1);
+        }
+      }
+
+      const occupiedColumns = new Set(activeSegments.map((segment) => segment.columnIndex));
+      let columnIndex = 0;
+      while (occupiedColumns.has(columnIndex)) {
+        columnIndex += 1;
+      }
+
+      const groupId = activeSegments.length ? activeSegments[0].groupId : nextGroupId++;
+      activeSegments.push({ endMinutes: taskEnd, columnIndex, groupId });
+
+      const maxColumns = groupColumnCounts.get(groupId) || 0;
+      groupColumnCounts.set(groupId, Math.max(maxColumns, columnIndex + 1));
+
+      return {
+        ...task,
+        endMinutes: taskEnd,
+        columnIndex,
+        groupId,
+      };
+    });
+
+    return positionedSegments.map((task) => {
+      const columns = groupColumnCounts.get(task.groupId) || 1;
+      const widthPercent = 100 / columns;
+      return {
+        ...task,
+        widthPercent,
+        leftPercent: task.columnIndex * widthPercent,
+      };
+    });
   }, [visibleCards, previousDayCards, statusFilter, categoryFilter]);
 
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
@@ -1683,6 +1724,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     style={{
                       top: `${task.startMinutes}px`,
                       minHeight: `${task.durationMinutes}px`,
+                      left: `calc(8px + ${task.leftPercent}%)`,
+                      width: `calc(${task.widthPercent}% - 10px)`,
                       borderColor: getCardStyle(task).borderColor,
                       background: getCardStyle(task).background,
                       opacity: task.done ? 1 : 0.58,
@@ -1693,10 +1736,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       {task.startTimeLabel} · {formatMinutesLabel(task.durationMinutes)}
                       {task.carriesOver ? " · continues" : ""}
                     </small>
-                    {task.mood || task.intent ? (
+                    {task.mood || task.outcome || task.intent ? (
                       <small className="timeline-task-meta">
                         {task.mood ? `Mood: ${task.mood}` : ""}
-                        {task.mood && task.intent ? " · " : ""}
+                        {task.mood && (task.outcome || task.intent) ? " · " : ""}
+                        {task.outcome ? `Outcome: ${task.outcome}` : ""}
+                        {task.outcome && task.intent ? " · " : ""}
                         {task.intent ? `Intent: ${task.intent}` : ""}
                       </small>
                     ) : null}
@@ -1708,12 +1753,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
           {isTaskModalOpen ? (
             <div className="task-modal-overlay" role="dialog" aria-modal="true">
-          <div
-            className={`task-modal ${taskModalMode === "create" ? "task-modal-create" : "task-modal-edit"}`}
-            style={{
-              "--task-modal-background-image": `url("${CREATE_TASK_MODAL_BACKGROUND_URL}")`,
-            }}
-          >
+          <div className="task-modal">
             <button
               type="button"
               className="task-modal-close"
