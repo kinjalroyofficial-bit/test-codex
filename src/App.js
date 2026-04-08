@@ -744,6 +744,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     recognition.lang = "en-US";
     recognition.interimResults = true;
     recognition.continuous = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
       let interimTranscript = "";
@@ -1872,8 +1873,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     <button
                       type="button"
                       className={`description-voice-btn ${isDescriptionVoiceActive ? "is-active" : ""}`}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onTouchStart={(event) => event.preventDefault()}
                       onClick={handleDescriptionVoiceInput}
                       aria-label={
                         isDescriptionVoiceActive

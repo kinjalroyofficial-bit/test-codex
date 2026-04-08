@@ -938,17 +938,20 @@ body.theme-light .analytics-placeholder {
 
 .task-description-input-wrap {
   position: relative;
+  width: 100%;
 }
 
 .task-description-input-wrap textarea {
+  width: 100%;
   padding-right: 50px;
+  box-sizing: border-box;
 }
 
 .description-voice-btn {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  bottom: 3px;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
   width: 40px;
   border: 1px solid #94a3b8;
   border-radius: 0 8px 8px 0;
@@ -967,6 +970,13 @@ body.theme-light .analytics-placeholder {
 .description-voice-btn.is-active {
   border-color: #16a34a;
   background: #dcfce7;
+}
+
+@media (max-width: 768px) {
+  .description-voice-btn {
+    width: 42px;
+    right: 0;
+  }
 }
 
 .category-chip-picker {
