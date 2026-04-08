@@ -178,6 +178,7 @@ async function ensureCustomCategoryIds(userId, customCategories) {
 }
 
 function buildAnalyticsRangeClause(range, column = 'created_at') {
+  if (range === 'today') return ` AND DATE(${column}) = DATE(NOW())`;
   if (range === '7d') return ` AND ${column} >= NOW() - INTERVAL '7 days'`;
   if (range === '30d') return ` AND ${column} >= NOW() - INTERVAL '30 days'`;
   return '';
@@ -536,7 +537,7 @@ app.post('/api/categories', authRequired, async (req, res) => {
 
 app.get('/api/analytics', authRequired, async (req, res) => {
   try {
-    const range = ['7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
+    const range = ['today', '7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
     const userId = req.session.userId;
     const rawTimezoneOffsetMinutes = Number.parseInt(`${req.query?.tzOffsetMinutes ?? 0}`, 10);
     const timezoneOffsetMinutes = Number.isFinite(rawTimezoneOffsetMinutes)
@@ -545,7 +546,16 @@ app.get('/api/analytics', authRequired, async (req, res) => {
     const rangeClause = buildAnalyticsRangeClause(range);
     const completionDateExpression =
       "((COALESCE(scheduled_for, updated_at) AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))";
-    const completionRangeClause = buildAnalyticsRangeClause(range, completionDateExpression);
+    const completionRangeClause =
+      range === 'today'
+        ? ` AND DATE(${completionDateExpression}) = DATE((NOW() AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))`
+        : buildAnalyticsRangeClause(range, completionDateExpression);
+    const createdDateExpression =
+      "((created_at AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))";
+    const createdTimelineRangeClause =
+      range === 'today'
+        ? ` AND DATE(${createdDateExpression}) = DATE((NOW() AT TIME ZONE 'UTC') - ($2::int * INTERVAL '1 minute'))`
+        : buildAnalyticsRangeClause(range, createdDateExpression);
 
     const summaryQuery = await pool.query(
       `WITH filtered_tasks AS (
@@ -645,6 +655,17 @@ app.get('/api/analytics', authRequired, async (req, res) => {
          ${completionRangeClause}
        GROUP BY DATE(${completionDateExpression})
        ORDER BY DATE(${completionDateExpression}) ASC`,
+      [userId, timezoneOffsetMinutes]
+    );
+
+    const registeredOverTimeQuery = await pool.query(
+      `SELECT DATE(${createdDateExpression})::text AS day, COUNT(*)::int AS registered
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${createdTimelineRangeClause}
+       GROUP BY DATE(${createdDateExpression})
+       ORDER BY DATE(${createdDateExpression}) ASC`,
       [userId, timezoneOffsetMinutes]
     );
 
@@ -842,6 +863,19 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       return acc;
     }, {});
 
+    const completedByDay = completedOverTimeQuery.rows.reduce((acc, row) => {
+      acc[row.day] = Number(row.completed || 0);
+      return acc;
+    }, {});
+    const registeredByDay = registeredOverTimeQuery.rows.reduce((acc, row) => {
+      acc[row.day] = Number(row.registered || 0);
+      return acc;
+    }, {});
+    const allTimelineDays = [...new Set([
+      ...Object.keys(completedByDay),
+      ...Object.keys(registeredByDay),
+    ])].sort();
+
     const payload = {
       summary: {
         completionRate: roundNumber(completionRate),
@@ -854,9 +888,10 @@ app.get('/api/analytics', authRequired, async (req, res) => {
         totalTasks,
       },
       time: {
-        completedOverTime: completedOverTimeQuery.rows.map((row) => ({
-          day: row.day,
-          completed: Number(row.completed || 0),
+        completedOverTime: allTimelineDays.map((day) => ({
+          day,
+          completed: completedByDay[day] || 0,
+          registered: registeredByDay[day] || 0,
         })),
         estimatedVsActualPerDay: estimatedVsActualQuery.rows.map((row) => ({
           day: row.day,

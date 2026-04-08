@@ -114,6 +114,7 @@ export default function AnalyticsDashboard({ onBack }) {
         </div>
         <div className="analytics-head-actions">
           <div className="analytics-filter-group">
+            <button type="button" onClick={() => setRange("today")} className={range === "today" ? "is-active" : ""}>Today</button>
             <button type="button" onClick={() => setRange("7d")} className={range === "7d" ? "is-active" : ""}>7 Days</button>
             <button type="button" onClick={() => setRange("30d")} className={range === "30d" ? "is-active" : ""}>30 Days</button>
             <button type="button" onClick={() => setRange("all")} className={range === "all" ? "is-active" : ""}>All Time</button>
@@ -140,6 +141,7 @@ export default function AnalyticsDashboard({ onBack }) {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Line type="monotone" dataKey="completed" stroke={COLORS.positive} strokeWidth={2.5} />
+                <Line type="monotone" dataKey="registered" stroke={COLORS.neutral} strokeWidth={2.5} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
