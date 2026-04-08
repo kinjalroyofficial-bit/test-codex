@@ -58,9 +58,16 @@ function pct(value) {
 export default function AnalyticsDashboard({ onBack }) {
   const [range, setRange] = useState("30d");
   const [analyticsMode, setAnalyticsMode] = useState("trends");
+  const [snapshotDate, setSnapshotDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
+  const [snapshotMetrics, setSnapshotMetrics] = useState(null);
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -68,12 +75,35 @@ export default function AnalyticsDashboard({ onBack }) {
       setError("");
 
       try {
-        const effectiveRange = analyticsMode === "snapshot" ? "today" : range;
         const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+        if (analyticsMode === "snapshot") {
+          const response = await fetch(
+            buildApiUrl(
+              `/api/tasks?date=${snapshotDate}&tzOffsetMinutes=${timezoneOffsetMinutes}`
+            ),
+            { credentials: "include" }
+          );
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload?.error || "Failed to load snapshot");
+          }
+          const tasks = payload?.tasks || [];
+          const registered = tasks.length;
+          const completed = tasks.filter((task) => task.status === "done").length;
+          const backlog = Math.max(0, registered - completed);
+          setSnapshotMetrics({
+            registered,
+            completed,
+            backlog,
+            completionRate: registered ? completed / registered : 0,
+            dailyTaskVelocity: completed,
+          });
+          setData(null);
+          return;
+        }
+
         const response = await fetch(
-          buildApiUrl(
-            `/api/analytics?range=${effectiveRange}&tzOffsetMinutes=${timezoneOffsetMinutes}`
-          ),
+          buildApiUrl(`/api/analytics?range=${range}&tzOffsetMinutes=${timezoneOffsetMinutes}`),
           {
             credentials: "include",
           }
@@ -85,6 +115,7 @@ export default function AnalyticsDashboard({ onBack }) {
         }
 
         setData(payload);
+        setSnapshotMetrics(null);
       } catch (fetchError) {
         setError(fetchError.message || "Failed to load analytics");
       } finally {
@@ -93,14 +124,14 @@ export default function AnalyticsDashboard({ onBack }) {
     };
 
     loadAnalytics();
-  }, [range, analyticsMode]);
+  }, [range, analyticsMode, snapshotDate]);
 
-  const snapshotBars = data
+  const snapshotBars = snapshotMetrics
     ? [
         {
-          day: "Today",
-          registered: Number(data.summary.totalTasks || 0),
-          completed: Number(data.summary.completedTasks || 0),
+          day: snapshotDate,
+          registered: Number(snapshotMetrics.registered || 0),
+          completed: Number(snapshotMetrics.completed || 0),
         },
       ]
     : [];
@@ -132,9 +163,18 @@ export default function AnalyticsDashboard({ onBack }) {
             <button type="button" onClick={() => setAnalyticsMode("snapshot")} className={analyticsMode === "snapshot" ? "is-active" : ""}>Snapshot</button>
             <button type="button" onClick={() => setAnalyticsMode("trends")} className={analyticsMode === "trends" ? "is-active" : ""}>Trends</button>
           </div>
+          {analyticsMode === "snapshot" ? (
+            <div className="analytics-filter-group">
+              <input
+                type="date"
+                value={snapshotDate}
+                onChange={(event) => setSnapshotDate(event.target.value)}
+                aria-label="Select snapshot date"
+              />
+            </div>
+          ) : null}
           {analyticsMode === "trends" ? (
             <div className="analytics-filter-group">
-              <button type="button" onClick={() => setRange("today")} className={range === "today" ? "is-active" : ""}>Today</button>
               <button type="button" onClick={() => setRange("7d")} className={range === "7d" ? "is-active" : ""}>7 Days</button>
               <button type="button" onClick={() => setRange("30d")} className={range === "30d" ? "is-active" : ""}>30 Days</button>
               <button type="button" onClick={() => setRange("all")} className={range === "all" ? "is-active" : ""}>All Time</button>
@@ -146,12 +186,41 @@ export default function AnalyticsDashboard({ onBack }) {
 
       {error ? <p className="auth-error">{error}</p> : null}
 
-      {data ? (
+      {(analyticsMode === "snapshot" ? snapshotMetrics : data) ? (
         <>
           <div className="analytics-kpis">
-            <MetricCard label="Task Completion Rate" value={pct(data.summary.completionRate)} subtitle={`${data.summary.completedTasks}/${data.summary.totalTasks}`} tone="positive" />
-            <MetricCard label="Daily Task Velocity" value={data.summary.dailyTaskVelocity.toFixed(2)} subtitle="completed tasks/day" tone="neutral" />
-            <MetricCard label="Backlog" value={`${data.summary.backlog}`} subtitle="pending tasks" tone="negative" />
+            <MetricCard
+              label="Task Completion Rate"
+              value={pct(
+                analyticsMode === "snapshot"
+                  ? snapshotMetrics.completionRate
+                  : data.summary.completionRate
+              )}
+              subtitle={
+                analyticsMode === "snapshot"
+                  ? `${snapshotMetrics.completed}/${snapshotMetrics.registered}`
+                  : `${data.summary.completedTasks}/${data.summary.totalTasks}`
+              }
+              tone="positive"
+            />
+            <MetricCard
+              label="Daily Task Velocity"
+              value={
+                analyticsMode === "snapshot"
+                  ? Number(snapshotMetrics.dailyTaskVelocity || 0).toFixed(2)
+                  : data.summary.dailyTaskVelocity.toFixed(2)
+              }
+              subtitle="completed tasks/day"
+              tone="neutral"
+            />
+            <MetricCard
+              label="Backlog"
+              value={`${
+                analyticsMode === "snapshot" ? snapshotMetrics.backlog : data.summary.backlog
+              }`}
+              subtitle="pending tasks"
+              tone="negative"
+            />
           </div>
 
           {analyticsMode === "snapshot" ? (
