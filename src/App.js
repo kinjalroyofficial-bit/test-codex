@@ -1433,6 +1433,52 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   )}-${String(todayDate.getDate()).padStart(2, "0")}`;
   const isSelectedDateToday = selectedDate === todayKey;
   const currentMinuteMarker = localHour * 60 + localMinute;
+  const renderCategoryFilterChips = (isGhost = false) => (
+    <>
+      <button
+        type="button"
+        className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
+        onClick={isGhost ? undefined : () => setCategoryFilter("all")}
+        tabIndex={isGhost ? -1 : 0}
+        aria-hidden={isGhost ? "true" : undefined}
+      >
+        <small>
+          <span className="category-chip-line">{cards.length} All Tasks</span>
+          <span className="category-chip-line">
+            Time Spent: {formatMinutesLabel(totalCategoryActualMinutes)}
+          </span>
+        </small>
+      </button>
+      {categoryStats.map((category) => (
+        <button
+          key={`${isGhost ? "ghost-" : ""}${category.id}`}
+          type="button"
+          className={
+            categoryFilter === category.id
+              ? "category-filter-chip is-active"
+              : "category-filter-chip"
+          }
+          style={{
+            borderColor: category.color,
+            backgroundColor: category.color,
+            color: getReadableTextColor(category.color),
+          }}
+          onClick={isGhost ? undefined : () => setCategoryFilter(category.id)}
+          tabIndex={isGhost ? -1 : 0}
+          aria-hidden={isGhost ? "true" : undefined}
+        >
+          <small>
+            <span className="category-chip-line">
+              {category.cardCount} {category.name} Tasks
+            </span>
+            <span className="category-chip-line">
+              Time Spent: {formatMinutesLabel(category.totalActualMinutes)}
+            </span>
+          </small>
+        </button>
+      ))}
+    </>
+  );
 
   return (
     <main className="app">
@@ -1604,44 +1650,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </div>
             </div>
             <div className="category-filter-row" aria-label="Category filters">
-              <button
-                type="button"
-                className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
-                onClick={() => setCategoryFilter("all")}
-              >
-                <small>
-                  <span className="category-chip-line">{cards.length} All Tasks</span>
-                  <span className="category-chip-line">
-                    Time Spent: {formatMinutesLabel(totalCategoryActualMinutes)}
-                  </span>
-                </small>
-              </button>
-              {categoryStats.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={
-                    categoryFilter === category.id
-                      ? "category-filter-chip is-active"
-                      : "category-filter-chip"
-                  }
-                  style={{
-                    borderColor: category.color,
-                    backgroundColor: category.color,
-                    color: getReadableTextColor(category.color),
-                  }}
-                  onClick={() => setCategoryFilter(category.id)}
-                >
-                  <small>
-                    <span className="category-chip-line">
-                      {category.cardCount} {category.name} Tasks
-                    </span>
-                    <span className="category-chip-line">
-                      Time Spent: {formatMinutesLabel(category.totalActualMinutes)}
-                    </span>
-                  </small>
-                </button>
-              ))}
+              <div className="category-filter-track">{renderCategoryFilterChips(false)}</div>
+              <div className="category-filter-track is-ghost" aria-hidden="true">
+                {renderCategoryFilterChips(true)}
+              </div>
             </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
         {boardNotice ? <p className="board-success">{boardNotice}</p> : null}
