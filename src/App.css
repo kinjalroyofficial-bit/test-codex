@@ -941,22 +941,27 @@ body.theme-light .analytics-placeholder {
 }
 
 .task-description-input-wrap textarea {
-  padding-right: 42px;
+  padding-right: 50px;
 }
 
 .description-voice-btn {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  width: 28px;
-  height: 28px;
+  top: 3px;
+  right: 3px;
+  bottom: 3px;
+  width: 40px;
   border: 1px solid #94a3b8;
-  border-radius: 999px;
+  border-radius: 0 8px 8px 0;
   background: #fff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.description-voice-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .description-voice-btn.is-active {

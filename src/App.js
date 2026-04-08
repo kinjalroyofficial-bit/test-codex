@@ -358,9 +358,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
   const [isDescriptionVoiceActive, setIsDescriptionVoiceActive] = useState(false);
   const dateInputRef = useRef(null);
+  const descriptionTextareaRef = useRef(null);
   const touchDropTargetIdRef = useRef(null);
   const speechRecognitionRef = useRef(null);
   const speechBaseDescriptionRef = useRef("");
+  const speechCommittedTranscriptRef = useRef("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -738,18 +740,25 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
     const recognition = new SpeechRecognition();
     speechBaseDescriptionRef.current = taskDescriptionInput.trim();
+    speechCommittedTranscriptRef.current = "";
     recognition.lang = "en-US";
     recognition.interimResults = true;
     recognition.continuous = true;
 
     recognition.onresult = (event) => {
-      let transcript = "";
+      let interimTranscript = "";
       for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        transcript += event.results[index][0].transcript;
+        const segment = event.results[index][0].transcript || "";
+        if (event.results[index].isFinal) {
+          speechCommittedTranscriptRef.current += `${segment} `;
+        } else {
+          interimTranscript += segment;
+        }
       }
       const baseText = speechBaseDescriptionRef.current;
-      const spacer = baseText && transcript ? " " : "";
-      setTaskDescriptionInput(`${baseText}${spacer}${transcript}`.trim());
+      const fullTranscript = `${speechCommittedTranscriptRef.current}${interimTranscript}`.trim();
+      const spacer = baseText && fullTranscript ? " " : "";
+      setTaskDescriptionInput(`${baseText}${spacer}${fullTranscript}`.trim());
     };
 
     recognition.onerror = () => {
@@ -765,6 +774,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     speechRecognitionRef.current = recognition;
     setBoardError("");
     setIsDescriptionVoiceActive(true);
+    descriptionTextareaRef.current?.focus();
     recognition.start();
   };
 
@@ -1853,6 +1863,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   Task description
                   <div className="task-description-input-wrap">
                     <textarea
+                      ref={descriptionTextareaRef}
                       value={taskDescriptionInput}
                       onChange={(event) => setTaskDescriptionInput(event.target.value)}
                       placeholder="Optional description"
@@ -1861,6 +1872,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     <button
                       type="button"
                       className={`description-voice-btn ${isDescriptionVoiceActive ? "is-active" : ""}`}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onTouchStart={(event) => event.preventDefault()}
                       onClick={handleDescriptionVoiceInput}
                       aria-label={
                         isDescriptionVoiceActive
@@ -1868,7 +1881,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                           : "Start voice input for description"
                       }
                     >
-                      🔊
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zm0-8a1 1 0 0 0 0 2 6 6 0 0 1 0 12 1 1 0 1 0 0 2 8 8 0 0 0 0-16z"
+                          fill="currentColor"
+                        />
+                      </svg>
                     </button>
                   </div>
                 </label>
