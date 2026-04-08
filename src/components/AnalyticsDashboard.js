@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
   Legend,
   Line,
@@ -55,6 +57,7 @@ function pct(value) {
 
 export default function AnalyticsDashboard({ onBack }) {
   const [range, setRange] = useState("30d");
+  const [analyticsMode, setAnalyticsMode] = useState("trends");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
@@ -65,10 +68,11 @@ export default function AnalyticsDashboard({ onBack }) {
       setError("");
 
       try {
+        const effectiveRange = analyticsMode === "snapshot" ? "today" : range;
         const timezoneOffsetMinutes = new Date().getTimezoneOffset();
         const response = await fetch(
           buildApiUrl(
-            `/api/analytics?range=${range}&tzOffsetMinutes=${timezoneOffsetMinutes}`
+            `/api/analytics?range=${effectiveRange}&tzOffsetMinutes=${timezoneOffsetMinutes}`
           ),
           {
             credentials: "include",
@@ -89,7 +93,17 @@ export default function AnalyticsDashboard({ onBack }) {
     };
 
     loadAnalytics();
-  }, [range]);
+  }, [range, analyticsMode]);
+
+  const snapshotBars = data
+    ? [
+        {
+          day: "Today",
+          registered: Number(data.summary.totalTasks || 0),
+          completed: Number(data.summary.completedTasks || 0),
+        },
+      ]
+    : [];
 
   if (isLoading) {
     return (
@@ -115,11 +129,17 @@ export default function AnalyticsDashboard({ onBack }) {
         </div>
         <div className="analytics-head-actions">
           <div className="analytics-filter-group">
-            <button type="button" onClick={() => setRange("today")} className={range === "today" ? "is-active" : ""}>Today</button>
-            <button type="button" onClick={() => setRange("7d")} className={range === "7d" ? "is-active" : ""}>7 Days</button>
-            <button type="button" onClick={() => setRange("30d")} className={range === "30d" ? "is-active" : ""}>30 Days</button>
-            <button type="button" onClick={() => setRange("all")} className={range === "all" ? "is-active" : ""}>All Time</button>
+            <button type="button" onClick={() => setAnalyticsMode("snapshot")} className={analyticsMode === "snapshot" ? "is-active" : ""}>Snapshot</button>
+            <button type="button" onClick={() => setAnalyticsMode("trends")} className={analyticsMode === "trends" ? "is-active" : ""}>Trends</button>
           </div>
+          {analyticsMode === "trends" ? (
+            <div className="analytics-filter-group">
+              <button type="button" onClick={() => setRange("today")} className={range === "today" ? "is-active" : ""}>Today</button>
+              <button type="button" onClick={() => setRange("7d")} className={range === "7d" ? "is-active" : ""}>7 Days</button>
+              <button type="button" onClick={() => setRange("30d")} className={range === "30d" ? "is-active" : ""}>30 Days</button>
+              <button type="button" onClick={() => setRange("all")} className={range === "all" ? "is-active" : ""}>All Time</button>
+            </div>
+          ) : null}
           <button type="button" className="analytics-back-btn" onClick={onBack}>Back to board</button>
         </div>
       </div>
@@ -134,19 +154,35 @@ export default function AnalyticsDashboard({ onBack }) {
             <MetricCard label="Backlog" value={`${data.summary.backlog}`} subtitle="pending tasks" tone="negative" />
           </div>
 
-          <ChartCard title="Tasks Completed Over Time">
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={data.time.completedOverTime}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="completed" name="Completed Tasks" stroke={COLORS.positive} strokeWidth={2.5} />
-                <Line type="monotone" dataKey="registered" name="Registered Tasks" stroke={COLORS.neutral} strokeWidth={2.5} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
+          {analyticsMode === "snapshot" ? (
+            <ChartCard title="Today's Registered vs Completed">
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={snapshotBars}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="registered" name="Registered Tasks" fill={COLORS.neutral} radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="completed" name="Completed Tasks" fill={COLORS.positive} radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          ) : (
+            <ChartCard title="Tasks Completed Over Time">
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={data.time.completedOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="completed" name="Completed Tasks" stroke={COLORS.positive} strokeWidth={2.5} />
+                  <Line type="monotone" dataKey="registered" name="Registered Tasks" stroke={COLORS.neutral} strokeWidth={2.5} />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          )}
         </>
       ) : null}
     </section>
