@@ -338,6 +338,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     return `${year}-${month}-${day}`;
   });
   const [taskMoodInput, setTaskMoodInput] = useState("neutral");
+  const [isTaskMoodTouched, setIsTaskMoodTouched] = useState(false);
   const [taskIntentInput, setTaskIntentInput] = useState("productive");
   const [taskOutcomeInput, setTaskOutcomeInput] = useState("");
   const [taskEstimatedDurationInput, setTaskEstimatedDurationInput] = useState("");
@@ -475,7 +476,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: task.title,
           description: task.description || "",
           scheduledFor: task.scheduled_for || null,
-          mood: task.mood || "neutral",
+          mood: task.mood || null,
           intent: task.intent || "productive",
           outcome: task.outcome || null,
           estimatedDurationMinutes: task.estimated_duration_minutes || null,
@@ -517,7 +518,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: task.title,
           description: task.description || "",
           scheduledFor: task.scheduled_for || null,
-          mood: task.mood || "neutral",
+          mood: task.mood || null,
           intent: task.intent || "productive",
           outcome: task.outcome || null,
           estimatedDurationMinutes: task.estimated_duration_minutes || null,
@@ -709,6 +710,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskDescriptionInput("");
     setTaskScheduledInput("");
     setTaskMoodInput("neutral");
+    setIsTaskMoodTouched(false);
     setTaskIntentInput("productive");
     setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
@@ -728,6 +730,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskDescriptionInput(card.description || "");
     setTaskScheduledInput(toDateTimeInputValue(card.scheduledFor));
     setTaskMoodInput(card.mood || "neutral");
+    setIsTaskMoodTouched(Boolean(card.mood));
     setTaskIntentInput(card.intent || "productive");
     setTaskOutcomeInput(card.outcome || "");
     setTaskEstimatedDurationInput(
@@ -749,6 +752,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskDescriptionInput("");
     setTaskScheduledInput("");
     setTaskMoodInput("neutral");
+    setIsTaskMoodTouched(false);
     setTaskIntentInput("productive");
     setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
@@ -959,7 +963,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: trimmedTitle,
             description: trimmedDescription || null,
             status: "todo",
-            mood: taskMoodInput,
+            mood: isTaskMoodTouched ? taskMoodInput : null,
             intent: taskIntentInput,
             outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
@@ -988,7 +992,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: createdTask?.title || trimmedTitle,
           description: createdTask?.description || "",
           scheduledFor: createdTask?.scheduled_for || scheduledForValue,
-          mood: createdTask?.mood || taskMoodInput,
+          mood: createdTask?.mood || null,
           intent: createdTask?.intent || taskIntentInput,
           outcome: createdTask?.outcome || taskOutcomeInput || null,
           estimatedDurationMinutes:
@@ -1007,7 +1011,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           body: JSON.stringify({
             title: trimmedTitle,
             description: trimmedDescription,
-            mood: taskMoodInput,
+            mood: isTaskMoodTouched ? taskMoodInput : null,
             intent: taskIntentInput,
             outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
@@ -1036,7 +1040,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   title: updatedTask?.title || trimmedTitle,
                   description: updatedTask?.description || "",
                   scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
-                  mood: updatedTask?.mood || taskMoodInput,
+                  mood: updatedTask?.mood || null,
                   intent: updatedTask?.intent || taskIntentInput,
                   outcome: updatedTask?.outcome || taskOutcomeInput || null,
                   estimatedDurationMinutes:
@@ -1587,15 +1591,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   ))}
                 </div>
               ) : null}
-              <p className="task-attributes">
-                <span className="task-attribute-item">
-                  Mood: {card.mood || "neutral"}
-                </span>
-                <span className="task-attributes-separator">•</span>
-                <span className="task-attribute-item">
-                  Intent: {card.intent || "productive"}
-                </span>
-              </p>
+              {card.mood || card.intent ? (
+                <p className="task-attributes">
+                  {card.mood ? (
+                    <span className="task-attribute-item">Mood: {card.mood}</span>
+                  ) : null}
+                  {card.mood && card.intent ? <span className="task-attributes-separator">•</span> : null}
+                  {card.intent ? (
+                    <span className="task-attribute-item">Intent: {card.intent}</span>
+                  ) : null}
+                </p>
+              ) : null}
               {card.scheduledFor ? <div className="task-detail-divider" /> : null}
               {card.scheduledFor ? (
                 <p className="task-schedule">
@@ -1687,9 +1693,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       {task.startTimeLabel} · {formatMinutesLabel(task.durationMinutes)}
                       {task.carriesOver ? " · continues" : ""}
                     </small>
-                    <small className="timeline-task-meta">
-                      Mood: {task.mood || "neutral"} · Intent: {task.intent || "productive"}
-                    </small>
+                    {task.mood || task.intent ? (
+                      <small className="timeline-task-meta">
+                        {task.mood ? `Mood: ${task.mood}` : ""}
+                        {task.mood && task.intent ? " · " : ""}
+                        {task.intent ? `Intent: ${task.intent}` : ""}
+                      </small>
+                    ) : null}
                   </article>
                 ))}
               </div>
@@ -1699,7 +1709,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           {isTaskModalOpen ? (
             <div className="task-modal-overlay" role="dialog" aria-modal="true">
           <div
-            className="task-modal"
+            className={`task-modal ${taskModalMode === "create" ? "task-modal-create" : "task-modal-edit"}`}
             style={{
               "--task-modal-background-image": `url("${CREATE_TASK_MODAL_BACKGROUND_URL}")`,
             }}
@@ -1829,6 +1839,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       onChange={(event) => {
                         const moodIndex = Number(event.target.value);
                         setTaskMoodInput(MOOD_OPTIONS[moodIndex]?.value || "neutral");
+                        setIsTaskMoodTouched(true);
                       }}
                       aria-label="Mood"
                     />
@@ -1876,7 +1887,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                               ? "outcome-option is-selected"
                               : "outcome-option"
                           }
-                          onClick={() => setTaskOutcomeInput(option.value)}
+                          onClick={() =>
+                            setTaskOutcomeInput((currentValue) =>
+                              currentValue === option.value ? "" : option.value
+                            )
+                          }
                         >
                           {option.label}
                         </button>

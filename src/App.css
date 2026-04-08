@@ -831,6 +831,10 @@ body.theme-light .analytics-placeholder {
   overflow-x: clip;
 }
 
+.task-modal.task-modal-create {
+  background-image: var(--task-modal-background-image);
+}
+
 .task-modal-close {
   position: absolute;
   top: 10px;
@@ -1846,6 +1850,10 @@ body:not(.theme-light) .task-modal {
   background-size: cover;
   background-position: center;
   border: 1px solid #475569;
+}
+
+body:not(.theme-light) .task-modal.task-modal-create {
+  background-image: var(--task-modal-background-image);
 }
 
 body:not(.theme-light) .task-modal-close {
