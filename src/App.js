@@ -356,8 +356,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionMoodInput, setCompletionMoodInput] = useState("neutral");
   const [completionTimeInput, setCompletionTimeInput] = useState("");
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
+  const [isDescriptionVoiceActive, setIsDescriptionVoiceActive] = useState(false);
   const dateInputRef = useRef(null);
   const touchDropTargetIdRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
+  const speechBaseDescriptionRef = useRef("");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -372,6 +375,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [isTaskModalOpen]);
+
+  useEffect(
+    () => () => {
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
+      }
+    },
+    []
+  );
 
   const formatTimeAgo = (timestamp) => {
     const diffMs = now - (timestamp || now);
@@ -700,6 +712,62 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
   };
 
+  const stopDescriptionVoiceInput = () => {
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current = null;
+    }
+    setIsDescriptionVoiceActive(false);
+  };
+
+  const handleDescriptionVoiceInput = () => {
+    if (isDescriptionVoiceActive) {
+      stopDescriptionVoiceInput();
+      return;
+    }
+
+    const SpeechRecognition =
+      typeof window !== "undefined"
+        ? window.SpeechRecognition || window.webkitSpeechRecognition
+        : null;
+
+    if (!SpeechRecognition) {
+      setBoardError("Voice input is not supported on this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    speechBaseDescriptionRef.current = taskDescriptionInput.trim();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        transcript += event.results[index][0].transcript;
+      }
+      const baseText = speechBaseDescriptionRef.current;
+      const spacer = baseText && transcript ? " " : "";
+      setTaskDescriptionInput(`${baseText}${spacer}${transcript}`.trim());
+    };
+
+    recognition.onerror = () => {
+      setBoardError("Unable to capture voice input. Please try again.");
+      stopDescriptionVoiceInput();
+    };
+
+    recognition.onend = () => {
+      setIsDescriptionVoiceActive(false);
+      speechRecognitionRef.current = null;
+    };
+
+    speechRecognitionRef.current = recognition;
+    setBoardError("");
+    setIsDescriptionVoiceActive(true);
+    recognition.start();
+  };
+
   const openCreateTaskModal = () => {
     setTaskModalMode("create");
     setActiveTaskId(null);
@@ -716,6 +784,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+    stopDescriptionVoiceInput();
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -738,6 +807,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+    stopDescriptionVoiceInput();
     setBoardError("");
     setIsTaskModalOpen(true);
   };
@@ -758,6 +828,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+    stopDescriptionVoiceInput();
   };
 
   const toDateInputValue = (timestamp) => {
@@ -1563,6 +1634,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <div className="card-title-group">
                   <h2>{card.title}</h2>
                   <div className="card-meta-row">
+                    {card.done ? <span className="task-done-indicator" aria-hidden="true">✓</span> : null}
                     <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
                       {card.done ? "Done" : "Not Done"}
                     </span>
@@ -1731,6 +1803,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       opacity: task.done ? 1 : 0.58,
                     }}
                   >
+                    {task.done ? <span className="timeline-done-indicator" aria-hidden="true">✓</span> : null}
                     <strong>{task.title}</strong>
                     <small>
                       {task.startTimeLabel} · {formatMinutesLabel(task.durationMinutes)}
@@ -1778,12 +1851,26 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 </label>
                 <label>
                   Task description
-                  <textarea
-                    value={taskDescriptionInput}
-                    onChange={(event) => setTaskDescriptionInput(event.target.value)}
-                    placeholder="Optional description"
-                    rows={2}
-                  />
+                  <div className="task-description-input-wrap">
+                    <textarea
+                      value={taskDescriptionInput}
+                      onChange={(event) => setTaskDescriptionInput(event.target.value)}
+                      placeholder="Optional description"
+                      rows={2}
+                    />
+                    <button
+                      type="button"
+                      className={`description-voice-btn ${isDescriptionVoiceActive ? "is-active" : ""}`}
+                      onClick={handleDescriptionVoiceInput}
+                      aria-label={
+                        isDescriptionVoiceActive
+                          ? "Stop voice input for description"
+                          : "Start voice input for description"
+                      }
+                    >
+                      🔊
+                    </button>
+                  </div>
                 </label>
               </section>
               <section className="task-form-section">
