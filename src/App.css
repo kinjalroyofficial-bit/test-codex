@@ -1386,8 +1386,22 @@ body.theme-light .analytics-placeholder {
   align-items: center;
   gap: 8px;
   width: 100%;
+}
+
+.category-filter-ticker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   overflow: hidden;
-  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.category-filter-divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
 }
 
 .category-filter-track {
@@ -1402,7 +1416,7 @@ body.theme-light .analytics-placeholder {
   pointer-events: none;
 }
 
-.category-filter-row:hover .category-filter-track {
+.category-filter-ticker:hover .category-filter-track {
   animation-play-state: paused;
 }
 
@@ -1427,6 +1441,10 @@ body.theme-light .analytics-placeholder {
   gap: 2px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.category-filter-row > .category-filter-chip {
+  flex-shrink: 0;
 }
 
 .category-filter-chip span {

@@ -1435,22 +1435,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   )}-${String(todayDate.getDate()).padStart(2, "0")}`;
   const isSelectedDateToday = selectedDate === todayKey;
   const currentMinuteMarker = localHour * 60 + localMinute;
-  const renderCategoryFilterChips = (isGhost = false) => (
+  const renderCategoryTickerChips = (isGhost = false) => (
     <>
-      <button
-        type="button"
-        className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
-        onClick={isGhost ? undefined : () => setCategoryFilter("all")}
-        tabIndex={isGhost ? -1 : 0}
-        aria-hidden={isGhost ? "true" : undefined}
-      >
-        <small>
-          <span className="category-chip-line">{cards.length} All Tasks</span>
-          <span className="category-chip-line">
-            Time Spent: {formatMinutesLabel(totalCategoryActualMinutes)}
-          </span>
-        </small>
-      </button>
       {categoryStats.map((category) => (
         <button
           key={`${isGhost ? "ghost-" : ""}${category.id}`}
@@ -1652,10 +1638,27 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </div>
             </div>
             <div className="category-filter-row" aria-label="Category filters">
-              <div className="category-filter-track">{renderCategoryFilterChips(false)}</div>
-              <div className="category-filter-track is-ghost" aria-hidden="true">
-                {renderCategoryFilterChips(true)}
-              </div>
+              <button
+                type="button"
+                className={categoryFilter === "all" ? "category-filter-chip is-active" : "category-filter-chip"}
+                onClick={() => setCategoryFilter("all")}
+              >
+                <small>
+                  <span className="category-chip-line">{cards.length} All Tasks</span>
+                  <span className="category-chip-line">
+                    Time Spent: {formatMinutesLabel(totalCategoryActualMinutes)}
+                  </span>
+                </small>
+              </button>
+              {categoryStats.length ? <span className="category-filter-divider" aria-hidden="true" /> : null}
+              {categoryStats.length ? (
+                <div className="category-filter-ticker">
+                  <div className="category-filter-track">{renderCategoryTickerChips(false)}</div>
+                  <div className="category-filter-track is-ghost" aria-hidden="true">
+                    {renderCategoryTickerChips(true)}
+                  </div>
+                </div>
+              ) : null}
             </div>
         {boardError ? <p className="auth-error">{boardError}</p> : null}
         {boardNotice ? <p className="board-success">{boardNotice}</p> : null}
