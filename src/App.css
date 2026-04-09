@@ -949,7 +949,7 @@ body.theme-light .analytics-placeholder {
 .task-voice-input-wrap input,
 .task-voice-input-wrap textarea {
   width: 100%;
-  padding-right: 46px;
+  padding-right: 44px;
   box-sizing: border-box;
 }
 
@@ -959,10 +959,9 @@ body.theme-light .analytics-placeholder {
 
 .description-voice-btn {
   position: absolute;
-  top: 7px;
-  right: 8px;
-  width: 30px;
-  height: 30px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.94);
@@ -974,9 +973,18 @@ body.theme-light .analytics-placeholder {
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
 }
 
+.description-voice-btn--title {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.description-voice-btn--description {
+  top: 8px;
+}
+
 .description-voice-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .description-voice-btn.is-active {

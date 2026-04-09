@@ -2123,7 +2123,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     {!isMobileViewport ? (
                       <button
                         type="button"
-                        className={`description-voice-btn ${isTitleVoiceActive ? "is-active" : ""}`}
+                        className={`description-voice-btn description-voice-btn--title ${
+                          isTitleVoiceActive ? "is-active" : ""
+                        }`}
                         onClick={handleTitleVoiceInput}
                         aria-label={
                           isTitleVoiceActive
@@ -2154,7 +2156,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     {!isMobileViewport ? (
                       <button
                         type="button"
-                        className={`description-voice-btn ${isDescriptionVoiceActive ? "is-active" : ""}`}
+                        className={`description-voice-btn description-voice-btn--description ${
+                          isDescriptionVoiceActive ? "is-active" : ""
+                        }`}
                         onClick={handleDescriptionVoiceInput}
                         aria-label={
                           isDescriptionVoiceActive
