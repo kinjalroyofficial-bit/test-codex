@@ -102,6 +102,22 @@ const CATEGORY_VECTORS = {
 };
 
 const normalizeCategoryName = (name) => `${name || ""}`.trim().toLowerCase();
+const getCategoryIdentityKey = (category) => {
+  if (category?.id !== undefined && category?.id !== null) return `id:${category.id}`;
+  const normalizedName = normalizeCategoryName(category?.name);
+  return normalizedName ? `name:${normalizedName}` : "";
+};
+const dedupeCategories = (categories = []) => {
+  const seenKeys = new Set();
+  const deduped = [];
+  categories.forEach((category) => {
+    const key = getCategoryIdentityKey(category);
+    if (!key || seenKeys.has(key)) return;
+    seenKeys.add(key);
+    deduped.push(category);
+  });
+  return deduped;
+};
 
 const hexToRgb = (hex) => {
   const normalized = `${hex}`.replace("#", "");
@@ -503,7 +519,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           outcome: task.outcome || null,
           estimatedDurationMinutes: task.estimated_duration_minutes || null,
           timeTakenMinutes: task.time_taken_minutes || null,
-          categories: task.categories || [],
+          categories: dedupeCategories(task.categories || []),
           done: task.status === "done",
         }));
 
@@ -545,7 +561,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           outcome: task.outcome || null,
           estimatedDurationMinutes: task.estimated_duration_minutes || null,
           timeTakenMinutes: task.time_taken_minutes || null,
-          categories: task.categories || [],
+          categories: dedupeCategories(task.categories || []),
           done: task.status === "done",
         }));
         setPreviousDayCards(mappedCards);
@@ -627,7 +643,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 estimatedDurationMinutes:
                   updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
                 timeTakenMinutes: updatedTask?.time_taken_minutes || null,
-                categories: updatedTask?.categories || card.categories || [],
+                categories: dedupeCategories(updatedTask?.categories || card.categories || []),
                 done: (updatedTask?.status || "todo") === "done",
               }
             : card
@@ -692,7 +708,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
                 timeTakenMinutes:
                   updatedTask?.time_taken_minutes || Number(completionTimeInput) || null,
-                categories: updatedTask?.categories || card.categories || [],
+                categories: dedupeCategories(updatedTask?.categories || card.categories || []),
                 done: true,
               }
             : card
@@ -999,7 +1015,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               replicateSourceTask.estimatedDurationMinutes ||
               null,
             timeTakenMinutes: null,
-            categories: replicatedTask?.categories || replicateSourceTask.categories || [],
+            categories: dedupeCategories(
+              replicatedTask?.categories || replicateSourceTask.categories || []
+            ),
             done: false,
           });
         }
@@ -1119,7 +1137,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           estimatedDurationMinutes:
             createdTask?.estimated_duration_minutes || estimatedDurationValue || null,
           timeTakenMinutes: createdTask?.time_taken_minutes || timeTakenValue || null,
-          categories: createdTask?.categories || [],
+          categories: dedupeCategories(createdTask?.categories || []),
           done: (createdTask?.status || "todo") === "done",
         };
 
@@ -1167,7 +1185,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   estimatedDurationMinutes:
                     updatedTask?.estimated_duration_minutes || estimatedDurationValue || null,
                   timeTakenMinutes: updatedTask?.time_taken_minutes || timeTakenValue || null,
-                  categories: updatedTask?.categories || card.categories || [],
+                  categories: dedupeCategories(updatedTask?.categories || card.categories || []),
                   done: (updatedTask?.status || "todo") === "done",
                 }
               : card
@@ -1191,9 +1209,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       categoryFilter === "all"
         ? filteredCards
         : filteredCards.filter((card) =>
-            (card.categories || []).some(
-              (category) => normalizeCategoryName(category.name) === categoryFilter
-            )
+            (card.categories || []).some((category) => category.id === categoryFilter)
           );
 
     const sortedCards = [...categoryFilteredCards];
@@ -1224,24 +1240,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const categoryStats = useMemo(() => {
     const stats = {};
     cards.forEach((card) => {
-      const seenCategoryKeys = new Set();
       (card.categories || []).forEach((category) => {
-        const categoryKey = normalizeCategoryName(category.name);
-        if (!categoryKey || seenCategoryKeys.has(categoryKey)) return;
-        seenCategoryKeys.add(categoryKey);
-
-        if (!stats[categoryKey]) {
-          stats[categoryKey] = {
+        if (!stats[category.id]) {
+          stats[category.id] = {
             id: category.id,
-            filterKey: categoryKey,
             name: category.name,
             color: getCategoryColor(category.name),
             cardCount: 0,
             totalActualMinutes: 0,
           };
         }
-        stats[categoryKey].cardCount += 1;
-        stats[categoryKey].totalActualMinutes += Number(card.timeTakenMinutes || 0);
+        stats[category.id].cardCount += 1;
+        stats[category.id].totalActualMinutes += Number(card.timeTakenMinutes || 0);
       });
     });
     return Object.values(stats).sort((a, b) => a.name.localeCompare(b.name));
@@ -1336,9 +1346,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       if (statusFilter === "completed" && !card.done) return false;
       if (statusFilter === "pending" && card.done) return false;
       if (categoryFilter !== "all") {
-        return (card.categories || []).some(
-          (category) => normalizeCategoryName(category.name) === categoryFilter
-        );
+        return (card.categories || []).some((category) => category.id === categoryFilter);
       }
       return true;
     };
@@ -1456,10 +1464,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     <>
       {categoryStats.map((category) => (
         <button
-          key={`${isGhost ? "ghost-" : ""}${category.filterKey}`}
+          key={`${isGhost ? "ghost-" : ""}${category.id}`}
           type="button"
           className={
-            categoryFilter === category.filterKey
+            categoryFilter === category.id
               ? "category-filter-chip is-active"
               : "category-filter-chip"
           }
@@ -1468,7 +1476,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             backgroundColor: category.color,
             color: getReadableTextColor(category.color),
           }}
-          onClick={isGhost ? undefined : () => setCategoryFilter(category.filterKey)}
+          onClick={isGhost ? undefined : () => setCategoryFilter(category.id)}
           tabIndex={isGhost ? -1 : 0}
           aria-hidden={isGhost ? "true" : undefined}
         >
