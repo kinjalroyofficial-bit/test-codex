@@ -2073,8 +2073,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   Scheduled: {formatScheduledDate(card.scheduledFor)}
                 </p>
               ) : null}
-              {card.estimatedDurationMinutes || card.timeTakenMinutes ? (
-                <div className="task-metrics-row">
+              {(card.taskType === "normal"
+                ? card.estimatedDurationMinutes || card.timeTakenMinutes
+                : card.estimatedDurationMinutes) ? (
+                <div
+                  className={`task-metrics-row ${
+                    card.taskType === "normal" ? "" : "task-metrics-row-single"
+                  }`}
+                >
                   <div className="task-metric-box">
                     <span>Est. duration</span>
                     <strong>
@@ -2083,12 +2089,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                         : "—"}
                     </strong>
                   </div>
-                  <div className="task-metric-box">
-                    <span>Completion</span>
-                    <strong>
-                      {card.timeTakenMinutes ? formatMinutesLabel(card.timeTakenMinutes) : "—"}
-                    </strong>
-                  </div>
+                  {card.taskType === "normal" ? (
+                    <div className="task-metric-box">
+                      <span>Completion</span>
+                      <strong>
+                        {card.timeTakenMinutes ? formatMinutesLabel(card.timeTakenMinutes) : "—"}
+                      </strong>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 

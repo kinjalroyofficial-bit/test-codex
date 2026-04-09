@@ -635,6 +635,10 @@ body.theme-light .analytics-placeholder {
   gap: 6px;
 }
 
+.task-metrics-row.task-metrics-row-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .task-metric-box {
   border: 1px solid rgba(15, 23, 42, 0.15);
   background: rgba(255, 255, 255, 0.78);
