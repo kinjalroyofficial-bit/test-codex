@@ -1129,6 +1129,9 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
   const hasTimeTaken =
     Object.prototype.hasOwnProperty.call(req.body, 'timeTakenMinutes') ||
     Object.prototype.hasOwnProperty.call(req.body, 'time_taken_minutes');
+  const hasEstimatedDuration =
+    Object.prototype.hasOwnProperty.call(req.body, 'estimatedDurationMinutes') ||
+    Object.prototype.hasOwnProperty.call(req.body, 'estimated_duration_minutes');
 
   const result = await pool.query(
     `UPDATE tasks
@@ -1140,7 +1143,7 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
          outcome = CASE WHEN $15 THEN $6 ELSE outcome END,
          due_date = COALESCE($7, due_date),
          scheduled_for = COALESCE($8, scheduled_for),
-         estimated_duration_minutes = COALESCE($9, estimated_duration_minutes),
+         estimated_duration_minutes = CASE WHEN $17 THEN $9 ELSE estimated_duration_minutes END,
          time_taken_minutes = CASE WHEN $16 THEN $10 ELSE time_taken_minutes END,
          task_type = COALESCE($11, task_type),
          updated_at = NOW()
@@ -1164,6 +1167,7 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
       hasMood,
       hasOutcome,
       hasTimeTaken,
+      hasEstimatedDuration,
     ]
   );
 

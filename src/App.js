@@ -131,6 +131,59 @@ const dedupeCategories = (categories = []) => {
   return deduped;
 };
 
+const hslToHex = (h, s, l) => {
+  const saturation = Math.max(0, Math.min(100, s)) / 100;
+  const lightness = Math.max(0, Math.min(100, l)) / 100;
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const huePrime = ((h % 360) + 360) % 360 / 60;
+  const x = chroma * (1 - Math.abs((huePrime % 2) - 1));
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (huePrime >= 0 && huePrime < 1) {
+    r = chroma;
+    g = x;
+  } else if (huePrime < 2) {
+    r = x;
+    g = chroma;
+  } else if (huePrime < 3) {
+    g = chroma;
+    b = x;
+  } else if (huePrime < 4) {
+    g = x;
+    b = chroma;
+  } else if (huePrime < 5) {
+    r = x;
+    b = chroma;
+  } else {
+    r = chroma;
+    b = x;
+  }
+
+  const match = lightness - chroma / 2;
+  const toHex = (channel) =>
+    Math.round((channel + match) * 255)
+      .toString(16)
+      .padStart(2, "0");
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+const getGeneratedCategoryColor = (name) => {
+  const normalizedName = normalizeCategoryName(name);
+  if (!normalizedName) return DEFAULT_CATEGORY_COLOR;
+
+  let hash = 0;
+  for (let index = 0; index < normalizedName.length; index += 1) {
+    hash = (hash << 5) - hash + normalizedName.charCodeAt(index);
+    hash |= 0;
+  }
+
+  const hue = Math.abs(hash) % 360;
+  return hslToHex(hue, 70, 52);
+};
+
 const hexToRgb = (hex) => {
   const normalized = `${hex}`.replace("#", "");
   const fullHex =
@@ -155,8 +208,10 @@ const rgbToHex = ({ r, g, b }) =>
     )
     .join("")}`;
 
-const getCategoryColor = (name) =>
-  CATEGORY_COLORS[normalizeCategoryName(name)] || DEFAULT_CATEGORY_COLOR;
+const getCategoryColor = (name) => {
+  const normalizedName = normalizeCategoryName(name);
+  return CATEGORY_COLORS[normalizedName] || getGeneratedCategoryColor(normalizedName);
+};
 
 const blendCategoryColors = (colors) => {
   if (!colors.length) return DEFAULT_CATEGORY_COLOR;
@@ -1114,8 +1169,14 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             categoryIds: (replicateSourceTask.categories || []).map((category) => category.id),
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
-            estimatedDurationMinutes: replicateSourceTask.estimatedDurationMinutes || null,
-            estimated_duration_minutes: replicateSourceTask.estimatedDurationMinutes || null,
+            estimatedDurationMinutes:
+              (replicateSourceTask.taskType || "normal") === "normal"
+                ? replicateSourceTask.estimatedDurationMinutes || null
+                : null,
+            estimated_duration_minutes:
+              (replicateSourceTask.taskType || "normal") === "normal"
+                ? replicateSourceTask.estimatedDurationMinutes || null
+                : null,
             timeTakenMinutes: null,
             time_taken_minutes: null,
           }),
@@ -1143,8 +1204,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             outcome: null,
             estimatedDurationMinutes:
               replicatedTask?.estimated_duration_minutes ||
-              replicateSourceTask.estimatedDurationMinutes ||
-              null,
+              ((replicateSourceTask.taskType || "normal") === "normal"
+                ? replicateSourceTask.estimatedDurationMinutes || null
+                : null),
             timeTakenMinutes: null,
             categories: dedupeCategories(
               replicatedTask?.categories || replicateSourceTask.categories || []
@@ -1193,6 +1255,16 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames((current) => current.filter((item) => item !== name));
   };
 
+  const handleTaskTypeChange = (nextTaskType) => {
+    setTaskTypeInput(nextTaskType);
+    if (nextTaskType !== "normal") {
+      setTaskEstimatedDurationInput("");
+      setTaskTimeTakenInput("");
+      setTaskMoodInput("neutral");
+      setIsTaskMoodTouched(false);
+    }
+  };
+
   const mergeAvailableCategories = (categories) => {
     setAvailableCategories((currentCategories) => {
       const nextMap = new Map(currentCategories.map((item) => [item.id, item]));
@@ -1216,6 +1288,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       ? Number(taskEstimatedDurationInput)
       : null;
     const timeTakenValue = taskTimeTakenInput ? Number(taskTimeTakenInput) : null;
+    const isActivityMetaLocked = taskTypeInput !== "normal";
+    const moodValue = isActivityMetaLocked ? null : isTaskMoodTouched ? taskMoodInput : null;
+    const normalizedEstimatedDuration = isActivityMetaLocked ? null : estimatedDurationValue;
+    const normalizedTimeTaken = isActivityMetaLocked ? null : timeTakenValue;
 
     if (!trimmedTitle) return;
 
@@ -1233,7 +1309,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: trimmedTitle,
             description: trimmedDescription || null,
             status: "todo",
-            mood: isTaskMoodTouched ? taskMoodInput : null,
+            mood: moodValue,
             intent: taskIntentInput,
             taskType: taskTypeInput,
             task_type: taskTypeInput,
@@ -1242,10 +1318,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
-            estimatedDurationMinutes: estimatedDurationValue,
-            estimated_duration_minutes: estimatedDurationValue,
-            timeTakenMinutes: timeTakenValue,
-            time_taken_minutes: timeTakenValue,
+            estimatedDurationMinutes: normalizedEstimatedDuration,
+            estimated_duration_minutes: normalizedEstimatedDuration,
+            timeTakenMinutes: normalizedTimeTaken,
+            time_taken_minutes: normalizedTimeTaken,
           }),
         });
         const data = await parseApiResponse(response);
@@ -1265,12 +1341,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           description: createdTask?.description || "",
           scheduledFor: createdTask?.scheduled_for || scheduledForValue,
           taskType: createdTask?.task_type || taskTypeInput,
-          mood: createdTask?.mood || null,
+          mood: createdTask?.mood || moodValue,
           intent: createdTask?.intent || taskIntentInput,
           outcome: createdTask?.outcome || taskOutcomeInput || null,
           estimatedDurationMinutes:
-            createdTask?.estimated_duration_minutes || estimatedDurationValue || null,
-          timeTakenMinutes: createdTask?.time_taken_minutes || timeTakenValue || null,
+            createdTask?.estimated_duration_minutes || normalizedEstimatedDuration || null,
+          timeTakenMinutes: createdTask?.time_taken_minutes || normalizedTimeTaken || null,
           categories: dedupeCategories(createdTask?.categories || []),
           done: (createdTask?.status || "todo") === "done",
         };
@@ -1284,7 +1360,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           body: JSON.stringify({
             title: trimmedTitle,
             description: trimmedDescription,
-            mood: isTaskMoodTouched ? taskMoodInput : null,
+            mood: moodValue,
             intent: taskIntentInput,
             taskType: taskTypeInput,
             task_type: taskTypeInput,
@@ -1293,10 +1369,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
-            estimatedDurationMinutes: estimatedDurationValue,
-            estimated_duration_minutes: estimatedDurationValue,
-            timeTakenMinutes: timeTakenValue,
-            time_taken_minutes: timeTakenValue,
+            estimatedDurationMinutes: normalizedEstimatedDuration,
+            estimated_duration_minutes: normalizedEstimatedDuration,
+            timeTakenMinutes: normalizedTimeTaken,
+            time_taken_minutes: normalizedTimeTaken,
           }),
         });
         const data = await parseApiResponse(response);
@@ -1316,12 +1392,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   description: updatedTask?.description || "",
                   scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
                   taskType: updatedTask?.task_type || taskTypeInput,
-                  mood: updatedTask?.mood || null,
+                  mood: updatedTask?.mood || moodValue,
                   intent: updatedTask?.intent || taskIntentInput,
                   outcome: updatedTask?.outcome || taskOutcomeInput || null,
                   estimatedDurationMinutes:
-                    updatedTask?.estimated_duration_minutes || estimatedDurationValue || null,
-                  timeTakenMinutes: updatedTask?.time_taken_minutes || timeTakenValue || null,
+                    updatedTask?.estimated_duration_minutes || normalizedEstimatedDuration || null,
+                  timeTakenMinutes: updatedTask?.time_taken_minutes || normalizedTimeTaken || null,
                   categories: dedupeCategories(updatedTask?.categories || card.categories || []),
                   done: (updatedTask?.status || "todo") === "done",
                 }
@@ -1335,6 +1411,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       setBoardError(error.message || "Failed to save task");
     }
   };
+
+  const isActivityMetaLocked = taskTypeInput !== "normal";
 
   const visibleCards = useMemo(() => {
     const filteredCards = cards.filter((card) => {
@@ -2278,7 +2356,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                             ? "outcome-option is-selected"
                             : "outcome-option"
                         }
-                        onClick={() => setTaskTypeInput(option.value)}
+                        onClick={() => handleTaskTypeChange(option.value)}
                       >
                         {option.label}
                       </button>
@@ -2305,6 +2383,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       min="1"
                       step="1"
                       value={taskEstimatedDurationInput}
+                      disabled={isActivityMetaLocked}
                       onChange={(event) => setTaskEstimatedDurationInput(event.target.value)}
                       placeholder="e.g. 90"
                     />
@@ -2322,6 +2401,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       max={MOOD_OPTIONS.length - 1}
                       step="1"
                       value={selectedMoodIndex}
+                      disabled={isActivityMetaLocked}
                       onChange={(event) => {
                         const moodIndex = Number(event.target.value);
                         setTaskMoodInput(MOOD_OPTIONS[moodIndex]?.value || "neutral");
@@ -2357,6 +2437,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       min="1"
                       step="1"
                       value={taskTimeTakenInput}
+                      disabled={isActivityMetaLocked}
                       onChange={(event) => setTaskTimeTakenInput(event.target.value)}
                       placeholder="e.g. 120"
                     />

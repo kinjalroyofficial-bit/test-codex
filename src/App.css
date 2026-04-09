@@ -1127,6 +1127,12 @@ body.theme-light .analytics-placeholder {
   max-width: 92%;
 }
 
+.task-attributes-row input:disabled,
+.mood-simple-slider input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .calendar-utility-input {
   border: 1px solid #64748b !important;
   background: #f8fafc !important;
