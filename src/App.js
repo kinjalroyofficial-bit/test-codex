@@ -37,6 +37,12 @@ const getOutcomeCue = (outcome) => {
   return null;
 };
 
+const formatTaskTypeLabel = (taskType) => {
+  if (taskType === "eventful") return "Eventful";
+  if (taskType === "continuous") return "Continuous";
+  return "Normal";
+};
+
 const getSeededUnit = (seed) => {
   let hash = 0;
   for (let index = 0; index < seed.length; index += 1) {
@@ -1906,17 +1912,13 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <div className="card-title-group">
                   <h2>{card.title}</h2>
                   <div className="card-meta-row">
+                    <span className="task-type-label">
+                      Type: {formatTaskTypeLabel(card.taskType)}
+                    </span>
                     {card.done ? <span className="task-done-indicator" aria-hidden="true">✓</span> : null}
                     <span className={`status-text ${card.done ? "is-done" : "not-done"}`}>
                       {card.done ? "Done" : "Not Done"}
                     </span>
-                    <button
-                      type="button"
-                      className="replicate-btn"
-                      onClick={() => openReplicateModal(card)}
-                    >
-                      Replicate
-                    </button>
                   </div>
                 </div>
                 <div className="card-actions">
@@ -2026,14 +2028,22 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     <div className="button" />
                   </label>
                 </div>
-
-                <button
-                  type="button"
-                  className="edit-btn card-edit-btn"
-                  onClick={() => openEditTaskModal(card)}
-                >
-                  Edit task
-                </button>
+                <div className="status-row-actions">
+                  <button
+                    type="button"
+                    className="card-action-btn card-action-btn-replicate"
+                    onClick={() => openReplicateModal(card)}
+                  >
+                    Replicate
+                  </button>
+                  <button
+                    type="button"
+                    className="card-action-btn card-action-btn-edit"
+                    onClick={() => openEditTaskModal(card)}
+                  >
+                    Edit
+                  </button>
+                </div>
               </div>
               {getOutcomeCue(card.outcome) ? (
                 <span className="task-outcome-emoji" aria-hidden="true">

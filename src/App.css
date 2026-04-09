@@ -557,7 +557,17 @@ body.theme-light .analytics-placeholder {
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+}
+
+.task-type-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
 }
 
 .task-done-indicator,
@@ -760,10 +770,38 @@ body.theme-light .analytics-placeholder {
 
 .status-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin-top: auto;
+}
+
+.status-row-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-action-btn {
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.74rem;
+  line-height: 1;
+  padding: 7px 10px;
+  min-height: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.card-action-btn-replicate {
+  background: #f97316;
+}
+
+.card-action-btn-edit {
+  background: #4f46e5;
 }
 
 
@@ -1207,26 +1245,6 @@ body.theme-light .analytics-placeholder {
   background: #4f46e5;
   color: #fff;
   border-color: #4f46e5;
-}
-
-.card-edit-btn {
-  padding: 8px 12px;
-  font-size: 0.82rem;
-  cursor: pointer;
-  margin-left: auto;
-}
-
-.replicate-btn {
-  border: 0;
-  border-radius: 999px;
-  background: #f97316;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.62rem;
-  padding: 2px 7px;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
 }
 
 .replicate-modal {
