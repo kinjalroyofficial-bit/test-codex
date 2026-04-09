@@ -91,12 +91,25 @@ export default function AnalyticsDashboard({ onBack }) {
           const registered = tasks.length;
           const completed = tasks.filter((task) => task.status === "done").length;
           const backlog = Math.max(0, registered - completed);
+          const taskTypeCounts = tasks.reduce(
+            (acc, task) => {
+              const taskType = `${task?.task_type || "normal"}`.toLowerCase();
+              if (taskType === "continuous" || taskType === "eventful") {
+                acc[taskType] += 1;
+              } else {
+                acc.normal += 1;
+              }
+              return acc;
+            },
+            { normal: 0, continuous: 0, eventful: 0 }
+          );
           setSnapshotMetrics({
             registered,
             completed,
             backlog,
             completionRate: registered ? completed / registered : 0,
             dailyTaskVelocity: completed,
+            taskTypeCounts,
           });
           setData(null);
           return;
@@ -135,6 +148,10 @@ export default function AnalyticsDashboard({ onBack }) {
         },
       ]
     : [];
+  const taskTypeCounts =
+    analyticsMode === "snapshot"
+      ? snapshotMetrics?.taskTypeCounts || { normal: 0, continuous: 0, eventful: 0 }
+      : data?.taskType?.counts || { normal: 0, continuous: 0, eventful: 0 };
 
   if (isLoading) {
     return (
@@ -220,6 +237,12 @@ export default function AnalyticsDashboard({ onBack }) {
               }`}
               subtitle="pending tasks"
               tone="negative"
+            />
+            <MetricCard
+              label="Task Type Breakdown"
+              value={`${taskTypeCounts.normal + taskTypeCounts.continuous + taskTypeCounts.eventful}`}
+              subtitle={`N ${taskTypeCounts.normal} · C ${taskTypeCounts.continuous} · E ${taskTypeCounts.eventful}`}
+              tone="neutral"
             />
           </div>
 

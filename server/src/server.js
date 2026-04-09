@@ -781,6 +781,17 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       [userId]
     );
 
+    const taskTypeDistributionQuery = await pool.query(
+      `SELECT COALESCE(task_type, 'normal') AS task_type, COUNT(*)::int AS count
+       FROM tasks
+       WHERE user_id = $1
+         AND deleted_at IS NULL
+         ${rangeClause}
+       GROUP BY COALESCE(task_type, 'normal')
+       ORDER BY task_type ASC`,
+      [userId]
+    );
+
     const outcomeRatesQuery = await pool.query(
       `SELECT
          COALESCE(
@@ -964,6 +975,23 @@ app.get('/api/analytics', authRequired, async (req, res) => {
         productivePositiveRate: roundNumber(
           Number(outcomeRatesQuery.rows[0]?.productive_positive_rate || 0)
         ),
+      },
+      taskType: {
+        distribution: taskTypeDistributionQuery.rows.map((row) => ({
+          taskType: row.task_type,
+          count: Number(row.count || 0),
+        })),
+        counts: {
+          normal: Number(
+            taskTypeDistributionQuery.rows.find((row) => row.task_type === 'normal')?.count || 0
+          ),
+          continuous: Number(
+            taskTypeDistributionQuery.rows.find((row) => row.task_type === 'continuous')?.count || 0
+          ),
+          eventful: Number(
+            taskTypeDistributionQuery.rows.find((row) => row.task_type === 'eventful')?.count || 0
+          ),
+        },
       },
       category: {
         timeSpentPerCategory: categoryTimeQuery.rows.map((row) => ({
