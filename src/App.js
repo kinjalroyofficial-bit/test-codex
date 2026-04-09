@@ -2095,7 +2095,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       value={taskDescriptionInput}
                       onChange={(event) => setTaskDescriptionInput(event.target.value)}
                       placeholder="Optional description"
-                      rows={2}
+                      rows={3}
                     />
                     {!isMobileViewport ? (
                       <button

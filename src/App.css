@@ -941,11 +941,20 @@ body.theme-light .analytics-placeholder {
   width: 100%;
 }
 
+.task-voice-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
 .task-voice-input-wrap input,
 .task-voice-input-wrap textarea {
   width: 100%;
   padding-right: 46px;
   box-sizing: border-box;
+}
+
+.task-description-input-wrap textarea {
+  min-height: 92px;
 }
 
 .description-voice-btn {
