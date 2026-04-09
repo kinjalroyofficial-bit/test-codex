@@ -2619,20 +2619,23 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   ) : null}
                   <label>
                     Outcome
-                    <select
-                      value={completionOutcomeInput}
-                      onChange={(event) => setCompletionOutcomeInput(event.target.value)}
-                      required
-                    >
-                      <option value="" disabled>
-                        Select outcome
-                      </option>
+                    <div className="outcome-options" role="radiogroup" aria-label="Outcome">
                       {OUTCOME_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
+                        <button
+                          key={option.value}
+                          type="button"
+                          aria-pressed={completionOutcomeInput === option.value}
+                          className={
+                            completionOutcomeInput === option.value
+                              ? "outcome-option is-selected"
+                              : "outcome-option"
+                          }
+                          onClick={() => setCompletionOutcomeInput(option.value)}
+                        >
                           {option.label}
-                        </option>
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </label>
                   <div className="task-modal-actions">
                     <button type="button" onClick={closeCompletionModal}>
