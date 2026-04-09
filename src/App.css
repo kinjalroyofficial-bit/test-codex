@@ -1396,6 +1396,7 @@ body.theme-light .analytics-placeholder {
   align-items: center;
   gap: 8px;
   width: 100%;
+  flex-wrap: nowrap;
 }
 
 .category-filter-nav {
@@ -1404,6 +1405,7 @@ body.theme-light .analytics-placeholder {
   gap: 8px;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .category-filter-divider {
@@ -1447,6 +1449,11 @@ body.theme-light .analytics-placeholder {
   flex-shrink: 0;
   font-size: 0.95rem;
   line-height: 1;
+}
+
+.category-filter-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .category-filter-chip {

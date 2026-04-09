@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
@@ -374,6 +374,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
   const [isDescriptionVoiceActive, setIsDescriptionVoiceActive] = useState(false);
   const [isTitleVoiceActive, setIsTitleVoiceActive] = useState(false);
+  const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
+  const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
@@ -1572,6 +1574,38 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     scrollContainer.scrollBy({ left: direction * 240, behavior: "smooth" });
   };
 
+  const updateCategoryScrollButtons = useCallback(() => {
+    const scrollContainer = categoryFilterScrollRef.current;
+    if (!scrollContainer) {
+      setCanScrollCategoriesLeft(false);
+      setCanScrollCategoriesRight(false);
+      return;
+    }
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
+    const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
+    setCanScrollCategoriesLeft(scrollLeft > 1);
+    setCanScrollCategoriesRight(scrollLeft < maxScrollLeft - 1);
+  }, []);
+
+  useEffect(() => {
+    updateCategoryScrollButtons();
+  }, [categoryStats, updateCategoryScrollButtons]);
+
+  useEffect(() => {
+    const scrollContainer = categoryFilterScrollRef.current;
+    if (!scrollContainer) return undefined;
+
+    const onScroll = () => updateCategoryScrollButtons();
+    const onResize = () => updateCategoryScrollButtons();
+
+    scrollContainer.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      scrollContainer.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [updateCategoryScrollButtons]);
+
   const renderCategoryChips = () => (
     <>
       {categoryStats.map((category) => (
@@ -1793,6 +1827,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     className="category-filter-arrow"
                     aria-label="Scroll categories left"
                     onClick={() => scrollCategoryFilters(-1)}
+                    disabled={!canScrollCategoriesLeft}
                   >
                     ←
                   </button>
@@ -1804,6 +1839,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     className="category-filter-arrow"
                     aria-label="Scroll categories right"
                     onClick={() => scrollCategoryFilters(1)}
+                    disabled={!canScrollCategoriesRight}
                   >
                     →
                   </button>
