@@ -380,6 +380,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const dateInputRef = useRef(null);
   const titleInputRef = useRef(null);
   const descriptionTextareaRef = useRef(null);
+  const categoryFilterScrollRef = useRef(null);
   const touchDropTargetIdRef = useRef(null);
   const speechRecognitionRef = useRef(null);
   const speechBaseDescriptionRef = useRef("");
@@ -1565,11 +1566,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   )}-${String(todayDate.getDate()).padStart(2, "0")}`;
   const isSelectedDateToday = selectedDate === todayKey;
   const currentMinuteMarker = localHour * 60 + localMinute;
-  const renderCategoryTickerChips = (isGhost = false) => (
+  const scrollCategoryFilters = (direction) => {
+    const scrollContainer = categoryFilterScrollRef.current;
+    if (!scrollContainer) return;
+    scrollContainer.scrollBy({ left: direction * 240, behavior: "smooth" });
+  };
+
+  const renderCategoryChips = () => (
     <>
       {categoryStats.map((category) => (
         <button
-          key={`${isGhost ? "ghost-" : ""}${category.id}`}
+          key={category.id}
           type="button"
           className={
             categoryFilter === category.id
@@ -1581,9 +1588,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             backgroundColor: category.color,
             color: getReadableTextColor(category.color),
           }}
-          onClick={isGhost ? undefined : () => setCategoryFilter(category.id)}
-          tabIndex={isGhost ? -1 : 0}
-          aria-hidden={isGhost ? "true" : undefined}
+          onClick={() => setCategoryFilter(category.id)}
         >
           <small>
             <span className="category-chip-line">
@@ -1782,13 +1787,26 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               </button>
               {categoryStats.length ? <span className="category-filter-divider" aria-hidden="true" /> : null}
               {categoryStats.length ? (
-                <div className="category-filter-ticker">
-                  <div className="category-filter-track">{renderCategoryTickerChips(false)}</div>
-                  {categoryStats.length > 1 ? (
-                    <div className="category-filter-track is-ghost" aria-hidden="true">
-                      {renderCategoryTickerChips(true)}
-                    </div>
-                  ) : null}
+                <div className="category-filter-nav">
+                  <button
+                    type="button"
+                    className="category-filter-arrow"
+                    aria-label="Scroll categories left"
+                    onClick={() => scrollCategoryFilters(-1)}
+                  >
+                    ←
+                  </button>
+                  <div className="category-filter-scroll" ref={categoryFilterScrollRef}>
+                    {renderCategoryChips()}
+                  </div>
+                  <button
+                    type="button"
+                    className="category-filter-arrow"
+                    aria-label="Scroll categories right"
+                    onClick={() => scrollCategoryFilters(1)}
+                  >
+                    →
+                  </button>
                 </div>
               ) : null}
             </div>

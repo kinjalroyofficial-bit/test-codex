@@ -1398,13 +1398,12 @@ body.theme-light .analytics-placeholder {
   width: 100%;
 }
 
-.category-filter-ticker {
+.category-filter-nav {
   display: flex;
   align-items: center;
   gap: 8px;
-  overflow: hidden;
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .category-filter-divider {
@@ -1414,29 +1413,40 @@ body.theme-light .analytics-placeholder {
   border-radius: 999px;
 }
 
-.category-filter-track {
-  display: inline-flex;
+.category-filter-scroll {
+  display: flex;
   align-items: stretch;
   gap: 8px;
-  min-width: max-content;
-  animation: categoryTicker 60s linear infinite;
+  overflow-x: auto;
+  min-width: 0;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
 }
 
-.category-filter-track.is-ghost {
-  pointer-events: none;
+.category-filter-scroll::-webkit-scrollbar {
+  display: none;
 }
 
-.category-filter-ticker:hover .category-filter-track {
-  animation-play-state: paused;
+.category-filter-scroll .category-filter-chip {
+  flex-shrink: 0;
 }
 
-@keyframes categoryTicker {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-100% - 8px));
-  }
+.category-filter-arrow {
+  border: 1px solid #475569;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .category-filter-chip {
@@ -1477,12 +1487,6 @@ body.theme-light .analytics-placeholder {
 
 .category-filter-chip.is-active {
   box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.35) inset;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .category-filter-track {
-    animation: none;
-  }
 }
 
 .status-text.is-done {
@@ -2066,6 +2070,12 @@ body:not(.theme-light) .category-chip.is-selected {
   background: #1e3a8a;
   border-color: #60a5fa;
   color: #dbeafe;
+}
+
+body:not(.theme-light) .category-filter-arrow {
+  background: #111827;
+  color: #f3f4f6;
+  border-color: #64748b;
 }
 
 body:not(.theme-light) .outcome-option {
