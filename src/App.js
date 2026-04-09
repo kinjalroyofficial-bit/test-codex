@@ -373,16 +373,22 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const [completionTimeInput, setCompletionTimeInput] = useState("");
   const [completionOutcomeInput, setCompletionOutcomeInput] = useState("");
   const [isDescriptionVoiceActive, setIsDescriptionVoiceActive] = useState(false);
+  const [isTitleVoiceActive, setIsTitleVoiceActive] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
   const dateInputRef = useRef(null);
+  const titleInputRef = useRef(null);
   const descriptionTextareaRef = useRef(null);
   const touchDropTargetIdRef = useRef(null);
   const speechRecognitionRef = useRef(null);
   const speechBaseDescriptionRef = useRef("");
   const speechCommittedTranscriptRef = useRef("");
   const shouldKeepListeningRef = useRef(false);
+  const titleSpeechRecognitionRef = useRef(null);
+  const titleSpeechBaseRef = useRef("");
+  const titleSpeechCommittedRef = useRef("");
+  const titleShouldKeepListeningRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000);
@@ -409,6 +415,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     () => () => {
       if (speechRecognitionRef.current) {
         speechRecognitionRef.current.stop();
+      }
+      if (titleSpeechRecognitionRef.current) {
+        titleSpeechRecognitionRef.current.stop();
       }
     },
     []
@@ -750,12 +759,22 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setIsDescriptionVoiceActive(false);
   };
 
+  const stopTitleVoiceInput = () => {
+    titleShouldKeepListeningRef.current = false;
+    if (titleSpeechRecognitionRef.current) {
+      titleSpeechRecognitionRef.current.stop();
+      titleSpeechRecognitionRef.current = null;
+    }
+    setIsTitleVoiceActive(false);
+  };
+
   const handleDescriptionVoiceInput = () => {
     if (isMobileViewport) return;
     if (isDescriptionVoiceActive) {
       stopDescriptionVoiceInput();
       return;
     }
+    stopTitleVoiceInput();
 
     const SpeechRecognition =
       typeof window !== "undefined"
@@ -831,9 +850,92 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     }
   };
 
+  const handleTitleVoiceInput = () => {
+    if (isMobileViewport) return;
+    if (isTitleVoiceActive) {
+      stopTitleVoiceInput();
+      return;
+    }
+    stopDescriptionVoiceInput();
+
+    const SpeechRecognition =
+      typeof window !== "undefined"
+        ? window.SpeechRecognition || window.webkitSpeechRecognition
+        : null;
+
+    if (!SpeechRecognition) {
+      setBoardError("Voice input is not supported on this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    titleShouldKeepListeningRef.current = true;
+    titleSpeechBaseRef.current = taskTitleInput.trim();
+    titleSpeechCommittedRef.current = "";
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      let committedTranscript = "";
+      let interimTranscript = "";
+      for (let index = 0; index < event.results.length; index += 1) {
+        const segment = event.results[index]?.[0]?.transcript || "";
+        if (event.results[index].isFinal) {
+          committedTranscript += `${segment} `;
+        } else {
+          interimTranscript += segment;
+        }
+      }
+      titleSpeechCommittedRef.current = committedTranscript;
+      const baseText = titleSpeechBaseRef.current;
+      const fullTranscript = `${committedTranscript}${interimTranscript}`.trim();
+      const spacer = baseText && fullTranscript ? " " : "";
+      setTaskTitleInput(`${baseText}${spacer}${fullTranscript}`.trim());
+    };
+
+    recognition.onerror = (event) => {
+      if (event?.error === "not-allowed" || event?.error === "service-not-allowed") {
+        setBoardError("Microphone permission is blocked. Please allow microphone access.");
+      } else if (event?.error === "no-speech") {
+        setBoardError("No speech detected. Please try again.");
+      } else {
+        setBoardError("Unable to capture voice input. Please try again.");
+      }
+      stopTitleVoiceInput();
+    };
+
+    recognition.onend = () => {
+      if (titleShouldKeepListeningRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch (error) {
+          setBoardError("Voice input stopped. Please tap the speaker to start again.");
+        }
+      }
+      titleShouldKeepListeningRef.current = false;
+      setIsTitleVoiceActive(false);
+      titleSpeechRecognitionRef.current = null;
+    };
+
+    titleSpeechRecognitionRef.current = recognition;
+    setBoardError("");
+    setIsTitleVoiceActive(true);
+    titleInputRef.current?.focus();
+    try {
+      recognition.start();
+    } catch (error) {
+      setBoardError("Unable to start voice input. Please tap the speaker and try again.");
+      stopTitleVoiceInput();
+    }
+  };
+
   useEffect(() => {
     if (isMobileViewport) {
       stopDescriptionVoiceInput();
+      stopTitleVoiceInput();
     }
   }, [isMobileViewport]);
 
@@ -853,6 +955,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+    stopTitleVoiceInput();
     stopDescriptionVoiceInput();
     setBoardError("");
     setIsTaskModalOpen(true);
@@ -876,6 +979,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+    stopTitleVoiceInput();
     stopDescriptionVoiceInput();
     setBoardError("");
     setIsTaskModalOpen(true);
@@ -897,6 +1001,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
     setCustomCategoryNameInput("");
+    stopTitleVoiceInput();
     stopDescriptionVoiceInput();
   };
 
@@ -1952,17 +2057,39 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <h4>Basic Details</h4>
                 <label>
                   Task title
-                  <input
-                    type="text"
-                    value={taskTitleInput}
-                    onChange={(event) => setTaskTitleInput(event.target.value)}
-                    placeholder="Enter task title"
-                    required
-                  />
+                  <div className="task-voice-input-wrap">
+                    <input
+                      ref={titleInputRef}
+                      type="text"
+                      value={taskTitleInput}
+                      onChange={(event) => setTaskTitleInput(event.target.value)}
+                      placeholder="Enter task title"
+                      required
+                    />
+                    {!isMobileViewport ? (
+                      <button
+                        type="button"
+                        className={`description-voice-btn ${isTitleVoiceActive ? "is-active" : ""}`}
+                        onClick={handleTitleVoiceInput}
+                        aria-label={
+                          isTitleVoiceActive
+                            ? "Stop voice input for title"
+                            : "Start voice input for title"
+                        }
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M14.5 3.75a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.28.53l-4.72-4.78H5.5a1.75 1.75 0 0 1-1.75-1.75v-3.5A1.75 1.75 0 0 1 5.5 8.25h3.75l4.72-4.78a.75.75 0 0 1 .53-.22ZM17.78 8.45a.75.75 0 0 1 1.05.11 5.5 5.5 0 0 1 0 6.88.75.75 0 0 1-1.16-.95 4 4 0 0 0 0-4.98.75.75 0 0 1 .11-1.06Zm2.77-2.93a.75.75 0 0 1 1.05.11 10 10 0 0 1 0 12.74.75.75 0 1 1-1.16-.95 8.5 8.5 0 0 0 0-10.84.75.75 0 0 1 .11-1.06Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                    ) : null}
+                  </div>
                 </label>
                 <label>
                   Task description
-                  <div className="task-description-input-wrap">
+                  <div className="task-description-input-wrap task-voice-input-wrap">
                     <textarea
                       ref={descriptionTextareaRef}
                       value={taskDescriptionInput}
