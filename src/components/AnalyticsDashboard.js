@@ -38,6 +38,51 @@ function MetricCard({ label, value, subtitle, tone = "neutral" }) {
   );
 }
 
+function TaskTypeBreakdownCard({ counts }) {
+  const safeCounts = {
+    normal: Number(counts?.normal || 0),
+    continuous: Number(counts?.continuous || 0),
+    eventful: Number(counts?.eventful || 0),
+  };
+  const total = safeCounts.normal + safeCounts.continuous + safeCounts.eventful;
+  const segments = [
+    { key: "normal", label: "Normal", color: "#2563eb", count: safeCounts.normal },
+    { key: "continuous", label: "Continuous", color: "#16a34a", count: safeCounts.continuous },
+    { key: "eventful", label: "Eventful", color: "#f97316", count: safeCounts.eventful },
+  ];
+
+  return (
+    <article className="analytics-metric-card task-type-breakdown-card">
+      <p>Task Type Breakdown</p>
+      <h3>{total}</h3>
+      <div className="task-type-segment-bar" aria-hidden="true">
+        {segments.map((segment) => (
+          <span
+            key={segment.key}
+            className="task-type-segment"
+            style={{
+              background: segment.color,
+              width: `${total ? (segment.count / total) * 100 : 0}%`,
+            }}
+          />
+        ))}
+      </div>
+      <div className="task-type-legend">
+        {segments.map((segment) => (
+          <span key={`legend-${segment.key}`} className="task-type-legend-item">
+            <span
+              className="task-type-legend-dot"
+              style={{ background: segment.color }}
+              aria-hidden="true"
+            />
+            {segment.label}: {segment.count}
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
 function ChartCard({ title, children, rightNode }) {
   return (
     <section className="analytics-card">
@@ -238,12 +283,7 @@ export default function AnalyticsDashboard({ onBack }) {
               subtitle="pending tasks"
               tone="negative"
             />
-            <MetricCard
-              label="Task Type Breakdown"
-              value={`${taskTypeCounts.normal + taskTypeCounts.continuous + taskTypeCounts.eventful}`}
-              subtitle={`N ${taskTypeCounts.normal} · C ${taskTypeCounts.continuous} · E ${taskTypeCounts.eventful}`}
-              tone="neutral"
-            />
+            <TaskTypeBreakdownCard counts={taskTypeCounts} />
           </div>
 
           {analyticsMode === "snapshot" ? (
