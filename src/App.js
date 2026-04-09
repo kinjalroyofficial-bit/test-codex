@@ -1679,9 +1679,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               {categoryStats.length ? (
                 <div className="category-filter-ticker">
                   <div className="category-filter-track">{renderCategoryTickerChips(false)}</div>
-                  <div className="category-filter-track is-ghost" aria-hidden="true">
-                    {renderCategoryTickerChips(true)}
-                  </div>
+                  {categoryStats.length > 1 ? (
+                    <div className="category-filter-track is-ghost" aria-hidden="true">
+                      {renderCategoryTickerChips(true)}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
