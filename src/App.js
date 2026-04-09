@@ -761,17 +761,19 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
+      let committedTranscript = "";
       let interimTranscript = "";
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const segment = event.results[index][0].transcript || "";
+      for (let index = 0; index < event.results.length; index += 1) {
+        const segment = event.results[index]?.[0]?.transcript || "";
         if (event.results[index].isFinal) {
-          speechCommittedTranscriptRef.current += `${segment} `;
+          committedTranscript += `${segment} `;
         } else {
           interimTranscript += segment;
         }
       }
+      speechCommittedTranscriptRef.current = committedTranscript;
       const baseText = speechBaseDescriptionRef.current;
-      const fullTranscript = `${speechCommittedTranscriptRef.current}${interimTranscript}`.trim();
+      const fullTranscript = `${committedTranscript}${interimTranscript}`.trim();
       const spacer = baseText && fullTranscript ? " " : "";
       setTaskDescriptionInput(`${baseText}${spacer}${fullTranscript}`.trim());
     };
@@ -805,7 +807,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setBoardError("");
     setIsDescriptionVoiceActive(true);
     descriptionTextareaRef.current?.focus();
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (error) {
+      setBoardError("Unable to start voice input. Please tap the speaker and try again.");
+      stopDescriptionVoiceInput();
+    }
   };
 
   useEffect(() => {
@@ -1184,7 +1191,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       categoryFilter === "all"
         ? filteredCards
         : filteredCards.filter((card) =>
-            (card.categories || []).some((category) => category.id === categoryFilter)
+            (card.categories || []).some(
+              (category) => normalizeCategoryName(category.name) === categoryFilter
+            )
           );
 
     const sortedCards = [...categoryFilteredCards];
@@ -1215,18 +1224,24 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const categoryStats = useMemo(() => {
     const stats = {};
     cards.forEach((card) => {
+      const seenCategoryKeys = new Set();
       (card.categories || []).forEach((category) => {
-        if (!stats[category.id]) {
-          stats[category.id] = {
+        const categoryKey = normalizeCategoryName(category.name);
+        if (!categoryKey || seenCategoryKeys.has(categoryKey)) return;
+        seenCategoryKeys.add(categoryKey);
+
+        if (!stats[categoryKey]) {
+          stats[categoryKey] = {
             id: category.id,
+            filterKey: categoryKey,
             name: category.name,
             color: getCategoryColor(category.name),
             cardCount: 0,
             totalActualMinutes: 0,
           };
         }
-        stats[category.id].cardCount += 1;
-        stats[category.id].totalActualMinutes += Number(card.timeTakenMinutes || 0);
+        stats[categoryKey].cardCount += 1;
+        stats[categoryKey].totalActualMinutes += Number(card.timeTakenMinutes || 0);
       });
     });
     return Object.values(stats).sort((a, b) => a.name.localeCompare(b.name));
@@ -1321,7 +1336,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       if (statusFilter === "completed" && !card.done) return false;
       if (statusFilter === "pending" && card.done) return false;
       if (categoryFilter !== "all") {
-        return (card.categories || []).some((category) => category.id === categoryFilter);
+        return (card.categories || []).some(
+          (category) => normalizeCategoryName(category.name) === categoryFilter
+        );
       }
       return true;
     };
@@ -1439,10 +1456,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     <>
       {categoryStats.map((category) => (
         <button
-          key={`${isGhost ? "ghost-" : ""}${category.id}`}
+          key={`${isGhost ? "ghost-" : ""}${category.filterKey}`}
           type="button"
           className={
-            categoryFilter === category.id
+            categoryFilter === category.filterKey
               ? "category-filter-chip is-active"
               : "category-filter-chip"
           }
@@ -1451,7 +1468,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             backgroundColor: category.color,
             color: getReadableTextColor(category.color),
           }}
-          onClick={isGhost ? undefined : () => setCategoryFilter(category.id)}
+          onClick={isGhost ? undefined : () => setCategoryFilter(category.filterKey)}
           tabIndex={isGhost ? -1 : 0}
           aria-hidden={isGhost ? "true" : undefined}
         >
