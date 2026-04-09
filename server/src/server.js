@@ -1009,7 +1009,7 @@ app.get('/api/tasks', authRequired, async (req, res) => {
   }
 
   const result = await pool.query(
-    `SELECT id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+    `SELECT id, title, description, status, task_type, mood, intent, outcome, due_date, scheduled_for,
             estimated_duration_minutes, time_taken_minutes, created_at, updated_at
      FROM tasks
      WHERE user_id = $1 AND deleted_at IS NULL
@@ -1038,6 +1038,8 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     title,
     description = null,
     status = 'todo',
+    taskType = 'normal',
+    task_type: taskTypeSnake = 'normal',
     mood = null,
     intent = null,
     outcome = null,
@@ -1052,6 +1054,7 @@ app.post('/api/tasks', authRequired, async (req, res) => {
     customCategories = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
+  const normalizedTaskType = taskType || taskTypeSnake || 'normal';
   const normalizedEstimatedDuration =
     estimatedDurationMinutes ?? estimatedDurationMinutesSnake ?? null;
   const normalizedTimeTaken = timeTakenMinutes ?? timeTakenMinutesSnake ?? null;
@@ -1061,16 +1064,17 @@ app.post('/api/tasks', authRequired, async (req, res) => {
   }
 
   const result = await pool.query(
-    `INSERT INTO tasks (user_id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+    `INSERT INTO tasks (user_id, title, description, status, task_type, mood, intent, outcome, due_date, scheduled_for,
                         estimated_duration_minutes, time_taken_minutes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     RETURNING id, title, description, status, task_type, mood, intent, outcome, due_date, scheduled_for,
                estimated_duration_minutes, time_taken_minutes, created_at, updated_at`,
     [
       req.session.userId,
       title,
       description,
       status,
+      normalizedTaskType,
       mood,
       intent,
       outcome,
@@ -1100,6 +1104,8 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
     title,
     description,
     status,
+    taskType,
+    task_type: taskTypeSnake,
     mood,
     intent,
     outcome,
@@ -1114,6 +1120,7 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
     customCategories = [],
   } = req.body;
   const normalizedScheduledFor = scheduledFor || scheduledForSnake || null;
+  const normalizedTaskType = taskType ?? taskTypeSnake ?? null;
   const normalizedEstimatedDuration =
     estimatedDurationMinutes ?? estimatedDurationMinutesSnake ?? null;
   const normalizedTimeTaken = timeTakenMinutes ?? timeTakenMinutesSnake ?? null;
@@ -1128,16 +1135,17 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
      SET title = COALESCE($1, title),
          description = COALESCE($2, description),
          status = COALESCE($3, status),
-         mood = CASE WHEN $13 THEN $4 ELSE mood END,
+         mood = CASE WHEN $14 THEN $4 ELSE mood END,
          intent = COALESCE($5, intent),
-         outcome = CASE WHEN $14 THEN $6 ELSE outcome END,
+         outcome = CASE WHEN $15 THEN $6 ELSE outcome END,
          due_date = COALESCE($7, due_date),
          scheduled_for = COALESCE($8, scheduled_for),
          estimated_duration_minutes = COALESCE($9, estimated_duration_minutes),
-         time_taken_minutes = CASE WHEN $15 THEN $10 ELSE time_taken_minutes END,
+         time_taken_minutes = CASE WHEN $16 THEN $10 ELSE time_taken_minutes END,
+         task_type = COALESCE($11, task_type),
          updated_at = NOW()
-     WHERE id = $11 AND user_id = $12 AND deleted_at IS NULL
-     RETURNING id, title, description, status, mood, intent, outcome, due_date, scheduled_for,
+     WHERE id = $12 AND user_id = $13 AND deleted_at IS NULL
+     RETURNING id, title, description, status, task_type, mood, intent, outcome, due_date, scheduled_for,
                estimated_duration_minutes, time_taken_minutes, created_at, updated_at`,
     [
       title,
@@ -1150,6 +1158,7 @@ app.patch('/api/tasks/:taskId', authRequired, async (req, res) => {
       normalizedScheduledFor,
       normalizedEstimatedDuration,
       normalizedTimeTaken,
+      normalizedTaskType,
       taskId,
       req.session.userId,
       hasMood,

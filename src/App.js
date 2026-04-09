@@ -70,6 +70,12 @@ const OUTCOME_OPTIONS = [
   { value: "negative", label: "👎" },
 ];
 
+const TASK_TYPE_OPTIONS = [
+  { value: "normal", label: "Normal" },
+  { value: "eventful", label: "Eventful" },
+  { value: "continuous", label: "Continuous" },
+];
+
 const CATEGORY_COLORS = {
   entertainment: "#2563eb",
   "financial enrichment": "#16a34a",
@@ -352,6 +358,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   });
   const [taskMoodInput, setTaskMoodInput] = useState("neutral");
   const [isTaskMoodTouched, setIsTaskMoodTouched] = useState(false);
+  const [taskTypeInput, setTaskTypeInput] = useState("normal");
   const [taskIntentInput, setTaskIntentInput] = useState("productive");
   const [taskOutcomeInput, setTaskOutcomeInput] = useState("");
   const [taskEstimatedDurationInput, setTaskEstimatedDurationInput] = useState("");
@@ -526,6 +533,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: task.title,
           description: task.description || "",
           scheduledFor: task.scheduled_for || null,
+          taskType: task.task_type || "normal",
           mood: task.mood || null,
           intent: task.intent || "productive",
           outcome: task.outcome || null,
@@ -568,6 +576,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: task.title,
           description: task.description || "",
           scheduledFor: task.scheduled_for || null,
+          taskType: task.task_type || "normal",
           mood: task.mood || null,
           intent: task.intent || "productive",
           outcome: task.outcome || null,
@@ -649,6 +658,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 title: updatedTask?.title || card.title,
                 description: updatedTask?.description || "",
                 scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
+                taskType: updatedTask?.task_type || card.taskType || "normal",
                 mood: updatedTask?.mood || null,
                 intent: updatedTask?.intent || card.intent || "productive",
                 outcome: updatedTask?.outcome || null,
@@ -713,6 +723,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 title: updatedTask?.title || card.title,
                 description: updatedTask?.description || "",
                 scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
+                taskType: updatedTask?.task_type || card.taskType || "normal",
                 mood: updatedTask?.mood || completionMoodInput,
                 intent: updatedTask?.intent || card.intent || "productive",
                 outcome: updatedTask?.outcome || completionOutcomeInput,
@@ -950,6 +961,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskScheduledInput("");
     setTaskMoodInput("neutral");
     setIsTaskMoodTouched(false);
+    setTaskTypeInput("normal");
     setTaskIntentInput("productive");
     setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
@@ -972,6 +984,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskScheduledInput(toDateTimeInputValue(card.scheduledFor));
     setTaskMoodInput(card.mood || "neutral");
     setIsTaskMoodTouched(Boolean(card.mood));
+    setTaskTypeInput(card.taskType || "normal");
     setTaskIntentInput(card.intent || "productive");
     setTaskOutcomeInput(card.outcome || "");
     setTaskEstimatedDurationInput(
@@ -996,6 +1009,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskScheduledInput("");
     setTaskMoodInput("neutral");
     setIsTaskMoodTouched(false);
+    setTaskTypeInput("normal");
     setTaskIntentInput("productive");
     setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
@@ -1088,6 +1102,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             status: "todo",
             mood: null,
             intent: replicateSourceTask.intent || "productive",
+            taskType: replicateSourceTask.taskType || "normal",
+            task_type: replicateSourceTask.taskType || "normal",
             outcome: null,
             categoryIds: (replicateSourceTask.categories || []).map((category) => category.id),
             scheduledFor: scheduledForValue,
@@ -1115,6 +1131,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: replicatedTask?.title || replicateSourceTask.title,
             description: replicatedTask?.description || "",
             scheduledFor: replicatedTask?.scheduled_for || scheduledForValue,
+            taskType: replicatedTask?.task_type || replicateSourceTask.taskType || "normal",
             mood: null,
             intent: replicatedTask?.intent || replicateSourceTask.intent || "productive",
             outcome: null,
@@ -1212,6 +1229,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             status: "todo",
             mood: isTaskMoodTouched ? taskMoodInput : null,
             intent: taskIntentInput,
+            taskType: taskTypeInput,
+            task_type: taskTypeInput,
             outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
             customCategories: customNames,
@@ -1239,6 +1258,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           title: createdTask?.title || trimmedTitle,
           description: createdTask?.description || "",
           scheduledFor: createdTask?.scheduled_for || scheduledForValue,
+          taskType: createdTask?.task_type || taskTypeInput,
           mood: createdTask?.mood || null,
           intent: createdTask?.intent || taskIntentInput,
           outcome: createdTask?.outcome || taskOutcomeInput || null,
@@ -1260,6 +1280,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             description: trimmedDescription,
             mood: isTaskMoodTouched ? taskMoodInput : null,
             intent: taskIntentInput,
+            taskType: taskTypeInput,
+            task_type: taskTypeInput,
             outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
             customCategories: customNames,
@@ -1287,6 +1309,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   title: updatedTask?.title || trimmedTitle,
                   description: updatedTask?.description || "",
                   scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
+                  taskType: updatedTask?.task_type || taskTypeInput,
                   mood: updatedTask?.mood || null,
                   intent: updatedTask?.intent || taskIntentInput,
                   outcome: updatedTask?.outcome || taskOutcomeInput || null,
@@ -2230,6 +2253,27 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       </option>
                     ))}
                   </select>
+                </label>
+                <label>
+                  Task type
+                  <div className="outcome-options" role="radiogroup" aria-label="Task type">
+                    {TASK_TYPE_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={taskTypeInput === option.value}
+                        className={
+                          taskTypeInput === option.value
+                            ? "outcome-option is-selected"
+                            : "outcome-option"
+                        }
+                        onClick={() => setTaskTypeInput(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </label>
               </section>
               <section className="task-form-section">
