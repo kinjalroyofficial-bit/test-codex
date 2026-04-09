@@ -748,8 +748,18 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const submitCompletionUpdate = async (event) => {
     event.preventDefault();
     if (!completionTask?.id) return;
-    if (!completionMoodInput || !completionTimeInput || !completionOutcomeInput) {
-      setBoardError("Mood, time taken, and outcome are required to mark a task done.");
+
+    const isOutcomeOnlyTask = ["eventful", "continuous"].includes(
+      completionTask.taskType || "normal"
+    );
+
+    if (!completionOutcomeInput) {
+      setBoardError("Outcome is required to mark a task done.");
+      return;
+    }
+
+    if (!isOutcomeOnlyTask && (!completionMoodInput || !completionTimeInput)) {
+      setBoardError("Mood and time taken are required for normal tasks.");
       return;
     }
 
@@ -763,10 +773,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         credentials: "include",
         body: JSON.stringify({
           status: "done",
-          mood: completionMoodInput,
+          mood: isOutcomeOnlyTask ? null : completionMoodInput,
           outcome: completionOutcomeInput,
-          timeTakenMinutes: Number(completionTimeInput),
-          time_taken_minutes: Number(completionTimeInput),
+          timeTakenMinutes: isOutcomeOnlyTask ? null : Number(completionTimeInput),
+          time_taken_minutes: isOutcomeOnlyTask ? null : Number(completionTimeInput),
         }),
       });
       const data = await parseApiResponse(response);
@@ -785,13 +795,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 description: updatedTask?.description || "",
                 scheduledFor: updatedTask?.scheduled_for || card.scheduledFor || null,
                 taskType: updatedTask?.task_type || card.taskType || "normal",
-                mood: updatedTask?.mood || completionMoodInput,
+                mood: updatedTask?.mood || (isOutcomeOnlyTask ? null : completionMoodInput),
                 intent: updatedTask?.intent || card.intent || "productive",
                 outcome: updatedTask?.outcome || completionOutcomeInput,
                 estimatedDurationMinutes:
                   updatedTask?.estimated_duration_minutes || card.estimatedDurationMinutes || null,
                 timeTakenMinutes:
-                  updatedTask?.time_taken_minutes || Number(completionTimeInput) || null,
+                  updatedTask?.time_taken_minutes ||
+                  (isOutcomeOnlyTask ? null : Number(completionTimeInput)) ||
+                  null,
                 categories: dedupeCategories(updatedTask?.categories || card.categories || []),
                 done: true,
               }
@@ -2576,31 +2588,35 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <h3>Mark task as done</h3>
                 <form onSubmit={submitCompletionUpdate} className="replicate-form">
                   <p className="replicate-source-title">{completionTask?.title}</p>
-                  <label>
-                    Mood during activity
-                    <select
-                      value={completionMoodInput}
-                      onChange={(event) => setCompletionMoodInput(event.target.value)}
-                      required
-                    >
-                      {MOOD_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Time taken to complete (minutes)
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={completionTimeInput}
-                      onChange={(event) => setCompletionTimeInput(event.target.value)}
-                      required
-                    />
-                  </label>
+                  {!["eventful", "continuous"].includes(completionTask?.taskType || "normal") ? (
+                    <>
+                      <label>
+                        Mood during activity
+                        <select
+                          value={completionMoodInput}
+                          onChange={(event) => setCompletionMoodInput(event.target.value)}
+                          required
+                        >
+                          {MOOD_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Time taken to complete (minutes)
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={completionTimeInput}
+                          onChange={(event) => setCompletionTimeInput(event.target.value)}
+                          required
+                        />
+                      </label>
+                    </>
+                  ) : null}
                   <label>
                     Outcome
                     <select
