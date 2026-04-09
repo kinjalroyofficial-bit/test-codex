@@ -2238,6 +2238,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   <label>
                     Scheduled
                     <input
+                      className="calendar-utility-input"
                       type="datetime-local"
                       value={taskScheduledInput}
                       onChange={(event) => setTaskScheduledInput(event.target.value)}
