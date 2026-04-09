@@ -109,17 +109,26 @@ async function getCategoriesByTaskIds(taskIds, userId) {
   if (!taskIds.length) return {};
 
   const result = await pool.query(
-    `SELECT tc.task_id, c.id, c.name
+    `SELECT tc.task_id, c.id, c.name, c.user_id
      FROM task_categories tc
      JOIN categories c ON c.id = tc.category_id
      WHERE tc.task_id = ANY($1::uuid[])
        AND (c.user_id IS NULL OR c.user_id = $2)
-     ORDER BY c.name ASC`,
+     ORDER BY tc.task_id ASC, LOWER(c.name) ASC,
+       CASE WHEN c.user_id = $2 THEN 0 ELSE 1 END ASC,
+       c.name ASC`,
     [taskIds, userId]
   );
 
   return result.rows.reduce((acc, row) => {
     if (!acc[row.task_id]) acc[row.task_id] = [];
+    const normalizedName = `${row.name || ''}`.trim().toLowerCase();
+    if (
+      normalizedName &&
+      acc[row.task_id].some((category) => `${category.name || ''}`.trim().toLowerCase() === normalizedName)
+    ) {
+      return acc;
+    }
     acc[row.task_id].push({ id: row.id, name: row.name });
     return acc;
   }, {});
@@ -131,9 +140,13 @@ async function syncTaskCategories(taskId, categoryIds, userId) {
   if (!categoryIds?.length) return;
 
   const validCategories = await pool.query(
-    `SELECT id FROM categories
+    `SELECT DISTINCT ON (LOWER(name)) id
+     FROM categories
      WHERE id = ANY($1::uuid[])
-       AND (user_id IS NULL OR user_id = $2)`,
+       AND (user_id IS NULL OR user_id = $2)
+     ORDER BY LOWER(name) ASC,
+       CASE WHEN user_id = $2 THEN 0 ELSE 1 END ASC,
+       id ASC`,
     [categoryIds, userId]
   );
 
@@ -155,7 +168,9 @@ async function ensureCustomCategoryIds(userId, customCategories) {
   for (const name of cleanedNames) {
     const existing = await pool.query(
       `SELECT id FROM categories
-       WHERE user_id = $1 AND LOWER(name) = LOWER($2)
+       WHERE (user_id = $1 OR user_id IS NULL)
+         AND LOWER(name) = LOWER($2)
+       ORDER BY CASE WHEN user_id = $1 THEN 0 ELSE 1 END ASC
        LIMIT 1`,
       [userId, name]
     );
@@ -497,8 +512,14 @@ app.post('/api/auth/password-reset/confirm', async (req, res) => {
 app.get('/api/categories', authRequired, async (req, res) => {
   const result = await pool.query(
     `SELECT id, name
-     FROM categories
-     WHERE user_id IS NULL OR user_id = $1
+     FROM (
+       SELECT DISTINCT ON (LOWER(name)) id, name
+       FROM categories
+       WHERE user_id IS NULL OR user_id = $1
+       ORDER BY LOWER(name) ASC,
+         CASE WHEN user_id = $1 THEN 0 ELSE 1 END ASC,
+         name ASC
+     ) deduped_categories
      ORDER BY name ASC`,
     [req.session.userId]
   );
@@ -516,7 +537,9 @@ app.post('/api/categories', authRequired, async (req, res) => {
   const existing = await pool.query(
     `SELECT id, name
      FROM categories
-     WHERE user_id = $1 AND LOWER(name) = LOWER($2)
+     WHERE (user_id = $1 OR user_id IS NULL)
+       AND LOWER(name) = LOWER($2)
+     ORDER BY CASE WHEN user_id = $1 THEN 0 ELSE 1 END ASC
      LIMIT 1`,
     [req.session.userId, name]
   );
