@@ -1133,8 +1133,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const handleReplicateSubmit = async (event) => {
     event.preventDefault();
     if (!replicateSourceTask) return;
-    if (!replicateDateInput || !replicateTimeInput) {
-      setBoardError("Target date and time are required for replication.");
+    const isReplicateTimeRequired = !["eventful", "continuous"].includes(
+      replicateSourceTask.taskType || "normal"
+    );
+    if (!replicateDateInput || (isReplicateTimeRequired && !replicateTimeInput)) {
+      setBoardError(
+        isReplicateTimeRequired
+          ? "Target date and time are required for replication."
+          : "Target date is required for replication."
+      );
       return;
     }
     const repeatDaysValue = replicateRepeatDaysInput.trim();
@@ -1161,8 +1168,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         const nextMonth = String(scheduledDate.getMonth() + 1).padStart(2, "0");
         const nextDay = String(scheduledDate.getDate()).padStart(2, "0");
         const replicatedDate = `${nextYear}-${nextMonth}-${nextDay}`;
+        const scheduledTime = isReplicateTimeRequired ? replicateTimeInput : "00:00";
         const scheduledForValue = new Date(
-          `${replicatedDate}T${replicateTimeInput}:00`
+          `${replicatedDate}T${scheduledTime}:00`
         ).toISOString();
 
         const response = await fetch(buildApiUrl("/api/tasks"), {
@@ -2533,6 +2541,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <h3>Replicate task</h3>
                 <form onSubmit={handleReplicateSubmit} className="replicate-form">
                   <p className="replicate-source-title">{replicateSourceTask?.title}</p>
+                  {(() => {
+                    const isReplicateTimeRequired = !["eventful", "continuous"].includes(
+                      replicateSourceTask?.taskType || "normal"
+                    );
+                    return (
+                      <>
                   <label>
                     Target Date
                     <input
@@ -2542,6 +2556,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       required
                     />
                   </label>
+                        {isReplicateTimeRequired ? (
                   <label>
                     Target Time
                     <input
@@ -2551,6 +2566,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       required
                     />
                   </label>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                   <label>
                     Repeat for next N days (optional)
                     <input
