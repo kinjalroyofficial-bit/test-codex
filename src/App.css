@@ -2135,11 +2135,13 @@ body:not(.theme-light) .category-filter-arrow {
 body:not(.theme-light) .outcome-option {
   background: #1e293b;
   border-color: #64748b;
+  color: #f8fafc;
 }
 
 body:not(.theme-light) .outcome-option.is-selected {
   background: #312e81;
   border-color: #818cf8;
+  color: #ffffff;
 }
 
 body:not(.theme-light) .mood-simple-label {
