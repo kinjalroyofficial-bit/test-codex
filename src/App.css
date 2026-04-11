@@ -121,6 +121,50 @@ body.morning-background {
   cursor: not-allowed;
 }
 
+.auth-divider {
+  position: relative;
+  text-align: center;
+  margin: 4px 0;
+}
+
+.auth-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.auth-divider span {
+  position: relative;
+  background: #ffffff;
+  color: #64748b;
+  padding: 0 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.auth-google-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.auth-google-button {
+  min-height: 40px;
+}
+
+.auth-google-status,
+.auth-google-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #475569;
+  text-align: center;
+}
+
 .app {
   min-height: 100vh;
   padding: 28px 20px 32px;
@@ -1950,6 +1994,20 @@ body:not(.theme-light) .app__header p,
 body:not(.theme-light) .auth-card p,
 body:not(.theme-light) .task-card p {
   color: #d1d5db;
+}
+
+body:not(.theme-light) .auth-divider::before {
+  background: #334155;
+}
+
+body:not(.theme-light) .auth-divider span {
+  background: #0f172a;
+  color: #cbd5e1;
+}
+
+body:not(.theme-light) .auth-google-status,
+body:not(.theme-light) .auth-google-hint {
+  color: #cbd5e1;
 }
 
 body:not(.theme-light) .auth-card,

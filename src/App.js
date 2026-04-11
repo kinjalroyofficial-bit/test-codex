@@ -3,6 +3,7 @@ import "./App.css";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
 const DAY_PART_BACKGROUND_IMAGE_NAMES = {
@@ -279,9 +280,97 @@ function LoginScreen({ onAuthSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
   const [error, setError] = useState("");
+  const googleButtonRef = useRef(null);
 
   const submitLabel = mode === "login" ? "Sign in" : "Create account";
+
+  const handleGoogleAuth = useCallback(
+    async (idToken) => {
+      if (!idToken) {
+        setError("Google sign-in did not return a valid token");
+        return;
+      }
+
+      setError("");
+      setIsGoogleSubmitting(true);
+      try {
+        const response = await fetch(buildApiUrl("/api/auth/google"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken }),
+        });
+        const data = await parseApiResponse(response);
+        if (!response.ok) {
+          throw new Error(data?.error || "Google authentication failed");
+        }
+        onAuthSuccess(data.user);
+      } catch (submitError) {
+        setError(submitError.message || "Google sign-in failed");
+      } finally {
+        setIsGoogleSubmitting(false);
+      }
+    },
+    [onAuthSuccess]
+  );
+
+  useEffect(() => {
+    if (mode !== "login" || !GOOGLE_CLIENT_ID || !googleButtonRef.current) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const mountGoogleButton = () => {
+      if (cancelled || !window.google?.accounts?.id || !googleButtonRef.current) {
+        return;
+      }
+
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: ({ credential }) => handleGoogleAuth(credential),
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "pill",
+        width: 260,
+      });
+      setIsGoogleReady(true);
+    };
+
+    if (window.google?.accounts?.id) {
+      mountGoogleButton();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const scriptId = "google-identity-services";
+    let script = document.getElementById(scriptId);
+    const handleLoad = () => mountGoogleButton();
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = handleLoad;
+      document.head.appendChild(script);
+    } else {
+      script.addEventListener("load", handleLoad);
+    }
+
+    return () => {
+      cancelled = true;
+      script?.removeEventListener("load", handleLoad);
+    };
+  }, [mode, handleGoogleAuth]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -386,6 +475,29 @@ function LoginScreen({ onAuthSuccess }) {
           <button type="submit" className="auth-submit" disabled={isSubmitting}>
             {isSubmitting ? "Please wait..." : submitLabel}
           </button>
+
+          {mode === "login" ? (
+            <>
+              <div className="auth-divider" role="presentation">
+                <span>or</span>
+              </div>
+              {GOOGLE_CLIENT_ID ? (
+                <div className="auth-google-wrap">
+                  <div ref={googleButtonRef} className="auth-google-button" />
+                  {isGoogleSubmitting ? (
+                    <p className="auth-google-status">Completing Google sign-in…</p>
+                  ) : null}
+                  {!isGoogleReady ? (
+                    <p className="auth-google-status">Loading Google sign-in…</p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="auth-google-hint">
+                  Google sign-in is unavailable. Set <code>REACT_APP_GOOGLE_CLIENT_ID</code>.
+                </p>
+              )}
+            </>
+          ) : null}
         </form>
       </section>
     </main>
