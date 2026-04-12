@@ -1,4 +1,6 @@
+const path = require('path');
 require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const crypto = require('crypto');
 const express = require('express');
@@ -385,7 +387,21 @@ app.post('/api/auth/google', loginLimiter, async (req, res) => {
     req.session.userId = user.id;
     return res.json({ user, message: 'Google login successful' });
   } catch (error) {
-    return res.status(401).json({ error: 'Google authentication failed' });
+    const errorMessage = error?.message || 'Google authentication failed';
+    const normalizedMessage = errorMessage.toLowerCase();
+
+    console.error('Google authentication failed:', errorMessage);
+
+    if (
+      normalizedMessage.includes('audience') ||
+      normalizedMessage.includes('wrong recipient') ||
+      normalizedMessage.includes('token used too late') ||
+      normalizedMessage.includes('expired')
+    ) {
+      return res.status(401).json({ error: `Google token verification failed: ${errorMessage}` });
+    }
+
+    return res.status(500).json({ error: `Google login server error: ${errorMessage}` });
   }
 });
 
