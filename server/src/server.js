@@ -13,11 +13,19 @@ const { pool } = require('./db');
 
 const app = express();
 const PORT = process.env.API_PORT || 4000;
-const GOOGLE_CLIENT_ID =
-  process.env.GOOGLE_CLIENT_ID ||
-  '128837075351-jaq0sp1rflhpl7ncemtk3m50tb0leee1.apps.googleusercontent.com';
+const GOOGLE_CLIENT_IDS = Array.from(
+  new Set(
+    [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      '128837075351-jaq0sp1rflhpl7ncemtk3m50tb0leee1.apps.googleusercontent.com',
+    ]
+      .filter(Boolean)
+      .map((clientId) => clientId.trim())
+  )
+);
 
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_IDS[0]);
 
 app.set('trust proxy', 1);
 app.use(express.json());
@@ -354,14 +362,14 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 app.post('/api/auth/google', loginLimiter, async (req, res) => {
   const { idToken } = req.body;
 
-  if (!idToken || !GOOGLE_CLIENT_ID) {
-    return res.status(400).json({ error: 'idToken and GOOGLE_CLIENT_ID are required' });
+  if (!idToken || !GOOGLE_CLIENT_IDS.length) {
+    return res.status(400).json({ error: 'idToken and at least one GOOGLE_CLIENT_ID are required' });
   }
 
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken,
-      audience: GOOGLE_CLIENT_ID,
+      audience: GOOGLE_CLIENT_IDS,
     });
 
     const payload = ticket.getPayload();
