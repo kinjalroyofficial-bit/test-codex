@@ -3,7 +3,9 @@ import "./App.css";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_ID =
+  process.env.REACT_APP_GOOGLE_CLIENT_ID ||
+  "128837075351-jaq0sp1rflhpl7ncemtk3m50tb0leee1.apps.googleusercontent.com";
 
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
 const DAY_PART_BACKGROUND_IMAGE_NAMES = {

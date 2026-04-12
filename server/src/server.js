@@ -11,7 +11,9 @@ const { pool } = require('./db');
 
 const app = express();
 const PORT = process.env.API_PORT || 4000;
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID =
+  process.env.GOOGLE_CLIENT_ID ||
+  '128837075351-jaq0sp1rflhpl7ncemtk3m50tb0leee1.apps.googleusercontent.com';
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
