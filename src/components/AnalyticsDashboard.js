@@ -283,6 +283,18 @@ export default function AnalyticsDashboard({ onBack }) {
               subtitle="pending tasks"
               tone="negative"
             />
+            <MetricCard
+              label="No Registration Days"
+              value={`${
+                analyticsMode === "snapshot"
+                  ? snapshotMetrics.registered === 0
+                    ? 1
+                    : 0
+                  : data.summary.noRegistrationDays || 0
+              }`}
+              subtitle="days without any registered tasks"
+              tone="warning"
+            />
             <TaskTypeBreakdownCard counts={taskTypeCounts} />
           </div>
 

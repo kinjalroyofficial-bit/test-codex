@@ -216,6 +216,36 @@ function roundNumber(value, precision = 4) {
   return Number(Number(value).toFixed(precision));
 }
 
+function toIsoDateString(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function buildContinuousTimelineDays({ range, dayKeys, timezoneOffsetMinutes }) {
+  const uniqueDayKeys = [...new Set((dayKeys || []).filter(Boolean))].sort();
+  if (!uniqueDayKeys.length) return [];
+
+  const endDate = new Date(Date.now() - timezoneOffsetMinutes * 60 * 1000);
+  endDate.setUTCHours(0, 0, 0, 0);
+
+  const startDate = new Date(endDate);
+  if (range === 'today') {
+    startDate.setUTCDate(endDate.getUTCDate());
+  } else if (range === '7d') {
+    startDate.setUTCDate(endDate.getUTCDate() - 6);
+  } else if (range === '30d') {
+    startDate.setUTCDate(endDate.getUTCDate() - 29);
+  } else {
+    startDate.setTime(Date.parse(`${uniqueDayKeys[0]}T00:00:00.000Z`));
+  }
+
+  const timelineDays = [];
+  for (const cursor = new Date(startDate); cursor <= endDate; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    timelineDays.push(toIsoDateString(cursor));
+  }
+
+  return timelineDays;
+}
+
 function computeStreakDays(dayRows) {
   const uniqueDays = [...new Set(dayRows.map((row) => row.day))].sort().reverse();
   if (!uniqueDays.length) return 0;
@@ -931,10 +961,15 @@ app.get('/api/analytics', authRequired, async (req, res) => {
       acc[row.day] = Number(row.registered || 0);
       return acc;
     }, {});
-    const allTimelineDays = [...new Set([
-      ...Object.keys(completedByDay),
-      ...Object.keys(registeredByDay),
-    ])].sort();
+    const allTimelineDays = buildContinuousTimelineDays({
+      range,
+      timezoneOffsetMinutes,
+      dayKeys: [...Object.keys(completedByDay), ...Object.keys(registeredByDay)],
+    });
+    const noRegistrationDays = allTimelineDays.reduce(
+      (count, day) => count + (registeredByDay[day] ? 0 : 1),
+      0
+    );
 
     const payload = {
       summary: {
@@ -946,6 +981,7 @@ app.get('/api/analytics', authRequired, async (req, res) => {
         backlog: Number(summary.backlog || 0),
         completedTasks,
         totalTasks,
+        noRegistrationDays,
       },
       time: {
         completedOverTime: allTimelineDays.map((day) => ({
