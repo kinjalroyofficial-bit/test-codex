@@ -295,6 +295,12 @@ body.morning-background .app__header p {
   cursor: pointer;
 }
 
+.date-nav-btn:disabled,
+.board-date-display-trigger:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .board-date-display {
   position: relative;
   display: inline-flex;
@@ -345,6 +351,15 @@ body.morning-background .app__header p {
   pointer-events: none;
 }
 
+.board-date-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
 body.theme-light .date-nav-btn {
   border-color: rgba(15, 23, 42, 0.22);
   background: rgba(255, 255, 255, 0.92);
@@ -368,6 +383,10 @@ body.theme-light .board-date-display-trigger {
 body.theme-light .board-date-display {
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+body.theme-light .board-date-loading {
+  color: #1e293b;
 }
 
 .task-form label {
@@ -531,6 +550,54 @@ body.theme-light .board-date-display {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.board-loading-state,
+.board-empty-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  background: rgba(15, 23, 42, 0.45);
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.board-loading-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.board-loading-state-timeline {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+}
+
+.board-empty-state-timeline {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  max-width: calc(100% - 24px);
+}
+
+.board-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  animation: board-spin 0.85s linear infinite;
+}
+
+@keyframes board-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .analytics-placeholder {
   max-width: 1200px;
   margin: 0 auto;
@@ -549,6 +616,18 @@ body.theme-light .analytics-placeholder {
   border-color: rgba(15, 23, 42, 0.2);
   background: rgba(255, 255, 255, 0.78);
   color: #0f172a;
+}
+
+body.theme-light .board-loading-state,
+body.theme-light .board-empty-state {
+  border-color: rgba(15, 23, 42, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+}
+
+body.theme-light .board-spinner {
+  border-color: rgba(15, 23, 42, 0.2);
+  border-top-color: #1d4ed8;
 }
 
 .task-card {

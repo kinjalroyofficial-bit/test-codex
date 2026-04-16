@@ -1997,6 +1997,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     type="button"
                     className="date-nav-btn"
                     onClick={() => moveSelectedDateByDays(-1)}
+                    disabled={isLoadingTasks}
                   >
                     Previous day
                   </button>
@@ -2006,6 +2007,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                       className="board-date-display-trigger"
                       onClick={openInlineDatePicker}
                       aria-label="Select task date"
+                      disabled={isLoadingTasks}
                     >
                       {formatSelectedDate(selectedDate)}
                     </button>
@@ -2023,9 +2025,16 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     type="button"
                     className="date-nav-btn"
                     onClick={() => moveSelectedDateByDays(1)}
+                    disabled={isLoadingTasks}
                   >
                     Next day
                   </button>
+                  {isLoadingTasks ? (
+                    <div className="board-date-loading" role="status" aria-live="polite">
+                      <span className="board-spinner" aria-hidden="true" />
+                      Loading tasks...
+                    </div>
+                  ) : null}
                 </div>
                 <div className="board-view-toggle" role="tablist" aria-label="Board layout">
                   <button
@@ -2101,7 +2110,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
         <>
           {boardLayoutMode === "board" ? (
             <section className="cards-grid" aria-label="Task cards">
-              {isLoadingTasks ? <p>Loading tasks...</p> : null}
+              {isLoadingTasks ? (
+                <div className="board-loading-state" role="status" aria-live="polite">
+                  <span className="board-spinner" aria-hidden="true" />
+                  Loading tasks for {formatSelectedDate(selectedDate)}...
+                </div>
+              ) : null}
+              {!isLoadingTasks && !visibleCards.length ? (
+                <p className="board-empty-state">No task has been registered yet for this date.</p>
+              ) : null}
               {visibleCards.map((card) => {
                 return (
             <article
@@ -2286,6 +2303,17 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 ))}
               </div>
               <div className="timeline-canvas">
+                {isLoadingTasks ? (
+                  <div className="board-loading-state board-loading-state-timeline" role="status" aria-live="polite">
+                    <span className="board-spinner" aria-hidden="true" />
+                    Loading tasks for {formatSelectedDate(selectedDate)}...
+                  </div>
+                ) : null}
+                {!isLoadingTasks && !timelineTasks.length ? (
+                  <p className="board-empty-state board-empty-state-timeline">
+                    No task has been registered yet for this date.
+                  </p>
+                ) : null}
                 {isSelectedDateToday ? (
                   <div
                     className="timeline-now-line"
