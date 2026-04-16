@@ -87,12 +87,14 @@ const TASK_TYPE_OPTIONS = [
 
 const CATEGORY_COLORS = {
   entertainment: "#2563eb",
-  "financial enrichment": "#16a34a",
+  "financial enrichment": "#d97706",
   "mental enrichment": "#dc2626",
-  operational: "#5b21b6",
-  "self developement": "#166534",
+  operational: "#7c3aed",
+  "self development": "#14b8a6",
+  "self-development": "#14b8a6",
+  "self developement": "#14b8a6",
   "social enrichment": "#db2777",
-  wellness: "#06b6d4",
+  wellness: "#0ea5e9",
   custom: "#64748b",
 };
 
