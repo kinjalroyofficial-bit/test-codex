@@ -1672,16 +1672,21 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       return true;
     };
 
+    const resolveTimelineDurationMinutes = (card) => {
+      const parsedDuration = Number(card.estimatedDurationMinutes ?? card.timeTakenMinutes ?? 30);
+      const fallbackDuration = 30;
+      return Number.isFinite(parsedDuration) && parsedDuration > 0
+        ? parsedDuration
+        : fallbackDuration;
+    };
+
     const currentDaySegments = [...visibleCards]
       .filter((card) => card.scheduledFor)
       .map((card) => {
         const scheduledDate = new Date(card.scheduledFor);
         const startMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
-        const totalDurationMinutes = Math.max(
-          15,
-          Number(card.estimatedDurationMinutes || card.timeTakenMinutes || 30)
-        );
-        const durationMinutes = Math.max(15, Math.min(totalDurationMinutes, 1440 - startMinutes));
+        const totalDurationMinutes = resolveTimelineDurationMinutes(card);
+        const durationMinutes = Math.max(1, Math.min(totalDurationMinutes, 1440 - startMinutes));
         return {
           ...card,
           sourceTaskId: card.id,
@@ -1699,10 +1704,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       .map((card) => {
         const scheduledDate = new Date(card.scheduledFor);
         const startMinutes = scheduledDate.getHours() * 60 + scheduledDate.getMinutes();
-        const totalDurationMinutes = Math.max(
-          15,
-          Number(card.estimatedDurationMinutes || card.timeTakenMinutes || 30)
-        );
+        const totalDurationMinutes = resolveTimelineDurationMinutes(card);
         const overflowMinutes = startMinutes + totalDurationMinutes - 1440;
         if (overflowMinutes <= 0) return null;
         return {
