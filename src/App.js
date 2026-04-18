@@ -533,13 +533,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     const day = String(nowDate.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   });
-  const [taskMoodInput, setTaskMoodInput] = useState("neutral");
-  const [isTaskMoodTouched, setIsTaskMoodTouched] = useState(false);
   const [taskTypeInput, setTaskTypeInput] = useState("normal");
   const [taskIntentInput, setTaskIntentInput] = useState("productive");
-  const [taskOutcomeInput, setTaskOutcomeInput] = useState("");
   const [taskEstimatedDurationInput, setTaskEstimatedDurationInput] = useState("");
-  const [taskTimeTakenInput, setTaskTimeTakenInput] = useState("");
   const [availableCategories, setAvailableCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [customCategoryNames, setCustomCategoryNames] = useState([]);
@@ -1148,13 +1144,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTitleInput("");
     setTaskDescriptionInput("");
     setTaskScheduledInput("");
-    setTaskMoodInput("neutral");
-    setIsTaskMoodTouched(false);
     setTaskTypeInput("normal");
     setTaskIntentInput("productive");
-    setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
-    setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
@@ -1171,15 +1163,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTitleInput(card.title);
     setTaskDescriptionInput(card.description || "");
     setTaskScheduledInput(toDateTimeInputValue(card.scheduledFor));
-    setTaskMoodInput(card.mood || "neutral");
-    setIsTaskMoodTouched(Boolean(card.mood));
     setTaskTypeInput(card.taskType || "normal");
     setTaskIntentInput(card.intent || "productive");
-    setTaskOutcomeInput(card.outcome || "");
     setTaskEstimatedDurationInput(
       card.estimatedDurationMinutes ? String(card.estimatedDurationMinutes) : ""
     );
-    setTaskTimeTakenInput(card.timeTakenMinutes ? String(card.timeTakenMinutes) : "");
     setSelectedCategoryIds((card.categories || []).map((category) => category.id));
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
@@ -1196,13 +1184,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTitleInput("");
     setTaskDescriptionInput("");
     setTaskScheduledInput("");
-    setTaskMoodInput("neutral");
-    setIsTaskMoodTouched(false);
     setTaskTypeInput("normal");
     setTaskIntentInput("productive");
-    setTaskOutcomeInput("");
     setTaskEstimatedDurationInput("");
-    setTaskTimeTakenInput("");
     setSelectedCategoryIds([]);
     setCustomCategoryNames([]);
     setIsCustomCategoryModalOpen(false);
@@ -1395,9 +1379,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setTaskTypeInput(nextTaskType);
     if (nextTaskType !== "normal") {
       setTaskEstimatedDurationInput("");
-      setTaskTimeTakenInput("");
-      setTaskMoodInput("neutral");
-      setIsTaskMoodTouched(false);
     }
   };
 
@@ -1423,11 +1404,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     const estimatedDurationValue = taskEstimatedDurationInput
       ? Number(taskEstimatedDurationInput)
       : null;
-    const timeTakenValue = taskTimeTakenInput ? Number(taskTimeTakenInput) : null;
     const isActivityMetaLocked = taskTypeInput !== "normal";
-    const moodValue = isActivityMetaLocked ? null : isTaskMoodTouched ? taskMoodInput : null;
     const normalizedEstimatedDuration = isActivityMetaLocked ? null : estimatedDurationValue;
-    const normalizedTimeTaken = isActivityMetaLocked ? null : timeTakenValue;
 
     if (!trimmedTitle) return;
 
@@ -1445,19 +1423,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             title: trimmedTitle,
             description: trimmedDescription || null,
             status: "todo",
-            mood: moodValue,
             intent: taskIntentInput,
             taskType: taskTypeInput,
             task_type: taskTypeInput,
-            outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
             customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
             estimatedDurationMinutes: normalizedEstimatedDuration,
             estimated_duration_minutes: normalizedEstimatedDuration,
-            timeTakenMinutes: normalizedTimeTaken,
-            time_taken_minutes: normalizedTimeTaken,
           }),
         });
         const data = await parseApiResponse(response);
@@ -1477,12 +1451,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           description: createdTask?.description || "",
           scheduledFor: createdTask?.scheduled_for || scheduledForValue,
           taskType: createdTask?.task_type || taskTypeInput,
-          mood: createdTask?.mood || moodValue,
+          mood: createdTask?.mood || null,
           intent: createdTask?.intent || taskIntentInput,
-          outcome: createdTask?.outcome || taskOutcomeInput || null,
+          outcome: createdTask?.outcome || null,
           estimatedDurationMinutes:
             createdTask?.estimated_duration_minutes || normalizedEstimatedDuration || null,
-          timeTakenMinutes: createdTask?.time_taken_minutes || normalizedTimeTaken || null,
+          timeTakenMinutes: createdTask?.time_taken_minutes || null,
           categories: dedupeCategories(createdTask?.categories || []),
           done: (createdTask?.status || "todo") === "done",
         };
@@ -1496,19 +1470,15 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
           body: JSON.stringify({
             title: trimmedTitle,
             description: trimmedDescription,
-            mood: moodValue,
             intent: taskIntentInput,
             taskType: taskTypeInput,
             task_type: taskTypeInput,
-            outcome: taskOutcomeInput || null,
             categoryIds: selectedCategoryIds,
             customCategories: customNames,
             scheduledFor: scheduledForValue,
             scheduled_for: scheduledForValue,
             estimatedDurationMinutes: normalizedEstimatedDuration,
             estimated_duration_minutes: normalizedEstimatedDuration,
-            timeTakenMinutes: normalizedTimeTaken,
-            time_taken_minutes: normalizedTimeTaken,
           }),
         });
         const data = await parseApiResponse(response);
@@ -1528,12 +1498,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   description: updatedTask?.description || "",
                   scheduledFor: updatedTask?.scheduled_for || scheduledForValue,
                   taskType: updatedTask?.task_type || taskTypeInput,
-                  mood: updatedTask?.mood || moodValue,
+                  mood: updatedTask?.mood || card.mood || null,
                   intent: updatedTask?.intent || taskIntentInput,
-                  outcome: updatedTask?.outcome || taskOutcomeInput || null,
+                  outcome: updatedTask?.outcome || card.outcome || null,
                   estimatedDurationMinutes:
                     updatedTask?.estimated_duration_minutes || normalizedEstimatedDuration || null,
-                  timeTakenMinutes: updatedTask?.time_taken_minutes || normalizedTimeTaken || null,
+                  timeTakenMinutes: updatedTask?.time_taken_minutes || card.timeTakenMinutes || null,
                   categories: dedupeCategories(updatedTask?.categories || card.categories || []),
                   done: (updatedTask?.status || "todo") === "done",
                 }
@@ -1797,9 +1767,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   }, [visibleCards, previousDayCards, statusFilter, categoryFilter]);
 
   const firstName = (user?.full_name || "").trim().split(/\s+/)[0] || "there";
-  const selectedMoodIndex = Math.max(
+  const selectedCompletionMoodIndex = Math.max(
     0,
-    MOOD_OPTIONS.findIndex((option) => option.value === taskMoodInput)
+    MOOD_OPTIONS.findIndex((option) => option.value === completionMoodInput)
   );
   const localHour = new Date(now).getHours();
   const localMinute = new Date(now).getMinutes();
@@ -2562,83 +2532,6 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   </label>
                 </div>
               </section>
-              <section className="task-form-section section-mood">
-                <h4>Mood During Activity</h4>
-                <fieldset className="task-mood-fieldset">
-                  <legend>Mood</legend>
-                  <div className="mood-simple-slider">
-                    <input
-                      type="range"
-                      min="0"
-                      max={MOOD_OPTIONS.length - 1}
-                      step="1"
-                      value={selectedMoodIndex}
-                      disabled={isActivityMetaLocked}
-                      onChange={(event) => {
-                        const moodIndex = Number(event.target.value);
-                        setTaskMoodInput(MOOD_OPTIONS[moodIndex]?.value || "neutral");
-                        setIsTaskMoodTouched(true);
-                      }}
-                      aria-label="Mood"
-                    />
-                    <div className="mood-simple-labels" aria-hidden="true">
-                      {MOOD_OPTIONS.map((option) => (
-                        <span
-                          key={option.value}
-                          className={
-                            taskMoodInput === option.value
-                              ? "mood-simple-label is-selected"
-                              : "mood-simple-label"
-                          }
-                        >
-                          <span className="mood-icon">{option.icon}</span>
-                          <span>{option.label}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </fieldset>
-              </section>
-              <section className="task-form-section">
-                <h4>Completion</h4>
-                <div className="task-attributes-row task-attributes-row-completion">
-                  <label>
-                    Time taken to complete (minutes)
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={taskTimeTakenInput}
-                      disabled={isActivityMetaLocked}
-                      onChange={(event) => setTaskTimeTakenInput(event.target.value)}
-                      placeholder="e.g. 120"
-                    />
-                  </label>
-                  <label>
-                    Outcome
-                    <div className="outcome-options">
-                      {OUTCOME_OPTIONS.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          className={
-                            taskOutcomeInput === option.value
-                              ? "outcome-option is-selected"
-                              : "outcome-option"
-                          }
-                          onClick={() =>
-                            setTaskOutcomeInput((currentValue) =>
-                              currentValue === option.value ? "" : option.value
-                            )
-                          }
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </label>
-                </div>
-              </section>
               <div className="task-modal-actions">
                 <button type="button" onClick={closeTaskModal}>
                   Cancel
@@ -2753,20 +2646,38 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                   <p className="replicate-source-title">{completionTask?.title}</p>
                   {!["eventful", "continuous"].includes(completionTask?.taskType || "normal") ? (
                     <>
-                      <label>
-                        Mood during activity
-                        <select
-                          value={completionMoodInput}
-                          onChange={(event) => setCompletionMoodInput(event.target.value)}
-                          required
-                        >
-                          {MOOD_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <fieldset className="task-mood-fieldset">
+                        <legend>Mood during activity</legend>
+                        <div className="mood-simple-slider">
+                          <input
+                            type="range"
+                            min="0"
+                            max={MOOD_OPTIONS.length - 1}
+                            step="1"
+                            value={selectedCompletionMoodIndex}
+                            onChange={(event) => {
+                              const moodIndex = Number(event.target.value);
+                              setCompletionMoodInput(MOOD_OPTIONS[moodIndex]?.value || "neutral");
+                            }}
+                            aria-label="Mood during activity"
+                          />
+                          <div className="mood-simple-labels" aria-hidden="true">
+                            {MOOD_OPTIONS.map((option) => (
+                              <span
+                                key={option.value}
+                                className={
+                                  completionMoodInput === option.value
+                                    ? "mood-simple-label is-selected"
+                                    : "mood-simple-label"
+                                }
+                              >
+                                <span className="mood-icon">{option.icon}</span>
+                                <span>{option.label}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </fieldset>
                       <label>
                         Time taken to complete (minutes)
                         <input
