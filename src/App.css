@@ -1758,6 +1758,7 @@ body:not(.theme-light) .calendar-utility-input::-webkit-calendar-picker-indicato
 
 .timeline-task-block {
   position: absolute;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.34);
   border-left: 4px solid;
   border-radius: 10px;

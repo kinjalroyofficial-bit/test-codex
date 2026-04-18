@@ -2318,7 +2318,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     }}
                     style={{
                       top: `${task.startMinutes}px`,
-                      minHeight: `${task.durationMinutes}px`,
+                      height: `${task.durationMinutes}px`,
                       left: `calc(8px + ${task.leftPercent}%)`,
                       width: `calc(${task.widthPercent}% - 10px)`,
                       borderColor: getCardStyle(task).borderColor,
