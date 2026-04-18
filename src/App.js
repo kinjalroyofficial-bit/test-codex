@@ -1969,7 +1969,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     onClick={() => moveSelectedDateByDays(-1)}
                     disabled={isLoadingTasks}
                   >
-                    Previous day
+                    ← Previous day
                   </button>
                   <div className="board-date-display">
                     <button
@@ -1997,7 +1997,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     onClick={() => moveSelectedDateByDays(1)}
                     disabled={isLoadingTasks}
                   >
-                    Next day
+                    Next day →
                   </button>
                   {isLoadingTasks ? (
                     <div className="board-date-loading" role="status" aria-live="polite">
