@@ -1860,7 +1860,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
             <h1>
               {greeting}, {firstName}.
             </h1>
-            <p>Plan your day and be more productive. Analyse your working pattern.</p>
+            <p>Build focused days with clear priorities and actionable work insights.</p>
           </div>
           <div className="user-panel">
             <div className="header-menu" role="navigation" aria-label="Header actions">
