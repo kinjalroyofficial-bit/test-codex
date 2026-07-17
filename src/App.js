@@ -2929,6 +2929,9 @@ function OperationsDashboard() {
 
       try {
         const payload = await fetchOperationsSummary(password);
+        if (!payload?.generatedAt || !Object.prototype.hasOwnProperty.call(payload?.summary || {}, "total_users")) {
+          throw new Error("Operations API is still serving the old backend. Please restart the updated API process.");
+        }
 
         sessionStorage.setItem("operationsPassword", password);
         setData(payload);
