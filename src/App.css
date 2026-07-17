@@ -1059,7 +1059,7 @@ body.theme-light .board-spinner {
 .task-modal-content {
   margin-top: 8px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-items: start;
 }
@@ -1160,6 +1160,13 @@ body.theme-light .board-spinner {
   overflow: hidden;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.24);
   pointer-events: none;
+}
+
+.task-modal-timeline-task.is-overlapping {
+  outline: 2px solid rgba(255, 255, 255, 0.86);
+  outline-offset: -2px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.32),
+    0 0 0 1px rgba(15, 23, 42, 0.32);
 }
 
 .task-modal-timeline-task strong {
@@ -1887,6 +1894,13 @@ body:not(.theme-light) .calendar-utility-input::-webkit-calendar-picker-indicato
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
   overflow: hidden;
   cursor: pointer;
+}
+
+.timeline-task-block.is-overlapping {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: -2px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.42),
+    0 0 0 1px rgba(15, 23, 42, 0.34);
 }
 
 .timeline-task-block:focus-visible {

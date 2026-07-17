@@ -88,11 +88,13 @@ const TASK_TYPE_OPTIONS = [
 const MODAL_TIMELINE_START_HOUR = 8;
 const MODAL_TIMELINE_END_HOUR = 20;
 const MODAL_TIMELINE_PIXELS_PER_MINUTE = 0.72;
+const VOICE_SILENCE_TIMEOUT_MS = 5000;
 
 const CATEGORY_COLORS = {
   entertainment: "#2563eb",
   "financial enrichment": "#d97706",
   "mental enrichment": "#dc2626",
+  office: "#0891b2",
   operational: "#7c3aed",
   "self development": "#14b8a6",
   "self-development": "#14b8a6",
@@ -571,10 +573,12 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   const speechRecognitionRef = useRef(null);
   const speechBaseDescriptionRef = useRef("");
   const speechCommittedTranscriptRef = useRef("");
+  const speechSilenceTimerRef = useRef(null);
   const shouldKeepListeningRef = useRef(false);
   const titleSpeechRecognitionRef = useRef(null);
   const titleSpeechBaseRef = useRef("");
   const titleSpeechCommittedRef = useRef("");
+  const titleSpeechSilenceTimerRef = useRef(null);
   const titleShouldKeepListeningRef = useRef(false);
 
   useEffect(() => {
@@ -955,6 +959,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
   const stopDescriptionVoiceInput = () => {
     shouldKeepListeningRef.current = false;
+    if (speechSilenceTimerRef.current) {
+      clearTimeout(speechSilenceTimerRef.current);
+      speechSilenceTimerRef.current = null;
+    }
     if (speechRecognitionRef.current) {
       speechRecognitionRef.current.stop();
       speechRecognitionRef.current = null;
@@ -964,6 +972,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
   const stopTitleVoiceInput = () => {
     titleShouldKeepListeningRef.current = false;
+    if (titleSpeechSilenceTimerRef.current) {
+      clearTimeout(titleSpeechSilenceTimerRef.current);
+      titleSpeechSilenceTimerRef.current = null;
+    }
     if (titleSpeechRecognitionRef.current) {
       titleSpeechRecognitionRef.current.stop();
       titleSpeechRecognitionRef.current = null;
@@ -1012,6 +1024,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       speechCommittedTranscriptRef.current = committedTranscript;
       const baseText = speechBaseDescriptionRef.current;
       const fullTranscript = `${committedTranscript}${interimTranscript}`.trim();
+      if (fullTranscript && speechSilenceTimerRef.current) {
+        clearTimeout(speechSilenceTimerRef.current);
+        speechSilenceTimerRef.current = null;
+      }
       const spacer = baseText && fullTranscript ? " " : "";
       setTaskDescriptionInput(`${baseText}${spacer}${fullTranscript}`.trim());
     };
@@ -1019,6 +1035,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     recognition.onerror = (event) => {
       if (event?.error === "not-allowed" || event?.error === "service-not-allowed") {
         setBoardError("Microphone permission is blocked. Please allow microphone access.");
+      } else if (event?.error === "no-speech" && !speechCommittedTranscriptRef.current.trim()) {
+        return;
       } else if (event?.error === "no-speech") {
         setBoardError("No speech detected. Please try again.");
       } else {
@@ -1045,6 +1063,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setBoardError("");
     setIsDescriptionVoiceActive(true);
     descriptionTextareaRef.current?.focus();
+    speechSilenceTimerRef.current = setTimeout(() => {
+      if (!speechCommittedTranscriptRef.current.trim()) {
+        stopDescriptionVoiceInput();
+      }
+    }, VOICE_SILENCE_TIMEOUT_MS);
     try {
       recognition.start();
     } catch (error) {
@@ -1094,6 +1117,10 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       titleSpeechCommittedRef.current = committedTranscript;
       const baseText = titleSpeechBaseRef.current;
       const fullTranscript = `${committedTranscript}${interimTranscript}`.trim();
+      if (fullTranscript && titleSpeechSilenceTimerRef.current) {
+        clearTimeout(titleSpeechSilenceTimerRef.current);
+        titleSpeechSilenceTimerRef.current = null;
+      }
       const spacer = baseText && fullTranscript ? " " : "";
       setTaskTitleInput(`${baseText}${spacer}${fullTranscript}`.trim());
     };
@@ -1101,6 +1128,8 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     recognition.onerror = (event) => {
       if (event?.error === "not-allowed" || event?.error === "service-not-allowed") {
         setBoardError("Microphone permission is blocked. Please allow microphone access.");
+      } else if (event?.error === "no-speech" && !titleSpeechCommittedRef.current.trim()) {
+        return;
       } else if (event?.error === "no-speech") {
         setBoardError("No speech detected. Please try again.");
       } else {
@@ -1127,6 +1156,11 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
     setBoardError("");
     setIsTitleVoiceActive(true);
     titleInputRef.current?.focus();
+    titleSpeechSilenceTimerRef.current = setTimeout(() => {
+      if (!titleSpeechCommittedRef.current.trim()) {
+        stopTitleVoiceInput();
+      }
+    }, VOICE_SILENCE_TIMEOUT_MS);
     try {
       recognition.start();
     } catch (error) {
@@ -2322,7 +2356,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 {timelineTasks.map((task) => (
                   <article
                     key={`timeline-${task.id}`}
-                    className="timeline-task-block"
+                    className={`timeline-task-block ${
+                      task.widthPercent < 100 ? "is-overlapping" : ""
+                    }`}
                     role="button"
                     tabIndex={0}
                     onClick={() => {
@@ -2609,7 +2645,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     {modalTimelineTasks.map((task) => (
                       <article
                         key={`modal-timeline-${task.id}`}
-                        className="task-modal-timeline-task"
+                        className={`task-modal-timeline-task ${
+                          task.widthPercent < 100 ? "is-overlapping" : ""
+                        }`}
                         style={{
                           top: `${task.snapshotTop}px`,
                           height: `${task.snapshotHeight}px`,
