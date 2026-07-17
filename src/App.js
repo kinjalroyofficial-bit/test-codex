@@ -2869,6 +2869,15 @@ const formatOperationsDate = (value) => {
   }).format(new Date(value));
 };
 
+const readOperationsResponse = async (response) => {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("Operations API is unavailable. Please redeploy or restart the API service.");
+  }
+
+  return response.json();
+};
+
 function OperationsDashboard() {
   const [passwordInput, setPasswordInput] = useState(
     () => sessionStorage.getItem("operationsPassword") || ""
@@ -2883,7 +2892,7 @@ function OperationsDashboard() {
       setError("");
 
       try {
-        const response = await fetch(buildApiUrl("/api/operations/summary"), {
+        const response = await fetch(buildApiUrl("/api/analytics?mode=operations"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -2891,7 +2900,7 @@ function OperationsDashboard() {
           credentials: "include",
           body: JSON.stringify({ password }),
         });
-        const payload = await response.json();
+        const payload = await readOperationsResponse(response);
 
         if (!response.ok) {
           throw new Error(payload?.error || "Unable to load operations data");

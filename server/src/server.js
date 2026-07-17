@@ -454,7 +454,7 @@ app.post('/api/auth/logout', authRequired, (req, res) => {
   });
 });
 
-app.post('/api/operations/summary', loginLimiter, async (req, res) => {
+async function handleOperationsSummary(req, res) {
   const password = `${req.body?.password || ''}`;
   if (password !== OPERATIONS_PASSWORD) {
     return res.status(401).json({ error: 'Invalid operations password' });
@@ -566,7 +566,10 @@ app.post('/api/operations/summary', loginLimiter, async (req, res) => {
     trend: trendResult.rows,
     users: userResult.rows,
   });
-});
+}
+
+app.post('/api/operations/summary', loginLimiter, handleOperationsSummary);
+app.post('/api/analytics', loginLimiter, handleOperationsSummary);
 
 app.get('/api/auth/me', authRequired, async (req, res) => {
   let result;
