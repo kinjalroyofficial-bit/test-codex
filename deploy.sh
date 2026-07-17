@@ -20,8 +20,11 @@ restart_api() {
 
   if command -v pm2 >/dev/null 2>&1; then
     if [ -f ecosystem.config.js ]; then
-      pm2 startOrReload ecosystem.config.js --only react-app-api >> deploy.log 2>&1
-      log "API restarted via PM2 ecosystem"
+      pm2 delete react-app-api >> deploy.log 2>&1 || true
+      pkill -f "node server/src/server.js" >> deploy.log 2>&1 || true
+      pm2 start ecosystem.config.js --only react-app-api --update-env >> deploy.log 2>&1
+      pm2 save >> deploy.log 2>&1 || true
+      log "API restarted via fresh PM2 ecosystem start"
       return
     fi
 

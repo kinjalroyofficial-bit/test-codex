@@ -455,7 +455,7 @@ app.post('/api/auth/logout', authRequired, (req, res) => {
 });
 
 async function handleOperationsSummary(req, res) {
-  const password = `${req.body?.password || ''}`;
+  const password = `${req.body?.password || req.get('x-operations-password') || req.query?.password || ''}`;
   if (password !== OPERATIONS_PASSWORD) {
     return res.status(401).json({ error: 'Invalid operations password' });
   }
@@ -732,7 +732,16 @@ app.post('/api/categories', authRequired, async (req, res) => {
   return res.status(201).json({ category: result.rows[0] });
 });
 
-app.get('/api/analytics', authRequired, async (req, res) => {
+app.get(
+  '/api/analytics',
+  (req, res, next) => {
+    if (req.query?.mode === 'operations') {
+      return loginLimiter(req, res, () => handleOperationsSummary(req, res));
+    }
+
+    return authRequired(req, res, next);
+  },
+  async (req, res) => {
   try {
     const range = ['today', '7d', '30d', 'all'].includes(req.query.range) ? req.query.range : '30d';
     const userId = req.session.userId;

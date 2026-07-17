@@ -2872,10 +2872,46 @@ const formatOperationsDate = (value) => {
 const readOperationsResponse = async (response) => {
   const contentType = response.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) {
-    throw new Error("Operations API is unavailable. Please redeploy or restart the API service.");
+    const error = new Error("Operations API is unavailable. Please redeploy or restart the API service.");
+    error.shouldFallback = true;
+    throw error;
   }
 
-  return response.json();
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error || "Unable to load operations data");
+  }
+
+  return payload;
+};
+
+const fetchOperationsSummary = async (password) => {
+  const response = await fetch(buildApiUrl("/api/analytics?mode=operations"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ password }),
+  });
+
+  try {
+    return await readOperationsResponse(response);
+  } catch (error) {
+    if (!error.shouldFallback) {
+      throw error;
+    }
+
+    const fallbackResponse = await fetch(buildApiUrl("/api/analytics?mode=operations"), {
+      method: "GET",
+      headers: {
+        "x-operations-password": password,
+      },
+      credentials: "include",
+    });
+
+    return readOperationsResponse(fallbackResponse);
+  }
 };
 
 function OperationsDashboard() {
@@ -2892,19 +2928,7 @@ function OperationsDashboard() {
       setError("");
 
       try {
-        const response = await fetch(buildApiUrl("/api/analytics?mode=operations"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ password }),
-        });
-        const payload = await readOperationsResponse(response);
-
-        if (!response.ok) {
-          throw new Error(payload?.error || "Unable to load operations data");
-        }
+        const payload = await fetchOperationsSummary(password);
 
         sessionStorage.setItem("operationsPassword", password);
         setData(payload);
