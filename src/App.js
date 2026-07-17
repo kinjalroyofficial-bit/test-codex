@@ -1841,6 +1841,9 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
       };
     })
     .filter(Boolean);
+  const getEditableTimelineTask = (task) =>
+    cards.find((item) => item.id === task.sourceTaskId) ||
+    previousDayCards.find((item) => item.id === task.sourceTaskId);
   const modalTimelineNowTop =
     (currentMinuteMarker - modalTimelineStartMinutes) * MODAL_TIMELINE_PIXELS_PER_MINUTE;
   const scrollCategoryFilters = (direction) => {
@@ -2362,9 +2365,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     role="button"
                     tabIndex={0}
                     onClick={() => {
-                      const editableTask =
-                        cards.find((item) => item.id === task.sourceTaskId) ||
-                        previousDayCards.find((item) => item.id === task.sourceTaskId);
+                      const editableTask = getEditableTimelineTask(task);
                       if (editableTask) {
                         openEditTaskModal(editableTask);
                       }
@@ -2372,9 +2373,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        const editableTask =
-                          cards.find((item) => item.id === task.sourceTaskId) ||
-                          previousDayCards.find((item) => item.id === task.sourceTaskId);
+                        const editableTask = getEditableTimelineTask(task);
                         if (editableTask) {
                           openEditTaskModal(editableTask);
                         }
@@ -2648,6 +2647,25 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                         className={`task-modal-timeline-task ${
                           task.widthPercent < 100 ? "is-overlapping" : ""
                         }`}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Edit ${task.title}`}
+                        title="Double-click to edit"
+                        onDoubleClick={() => {
+                          const editableTask = getEditableTimelineTask(task);
+                          if (editableTask) {
+                            openEditTaskModal(editableTask);
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            const editableTask = getEditableTimelineTask(task);
+                            if (editableTask) {
+                              openEditTaskModal(editableTask);
+                            }
+                          }
+                        }}
                         style={{
                           top: `${task.snapshotTop}px`,
                           height: `${task.snapshotHeight}px`,

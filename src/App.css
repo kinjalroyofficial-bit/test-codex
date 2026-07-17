@@ -1159,7 +1159,16 @@ body.theme-light .board-spinner {
   padding: 6px 8px;
   overflow: hidden;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.24);
-  pointer-events: none;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.task-modal-timeline-task:hover,
+.task-modal-timeline-task:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.88);
+  outline-offset: -2px;
+  transform: translateY(-1px);
 }
 
 .task-modal-timeline-task.is-overlapping {
