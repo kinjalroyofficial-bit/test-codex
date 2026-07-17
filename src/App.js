@@ -2856,11 +2856,264 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   );
 }
 
+const formatOperationsNumber = (value) => Number(value || 0).toLocaleString();
+
+const formatOperationsDate = (value) => {
+  if (!value) return "Never";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+};
+
+function OperationsDashboard() {
+  const [passwordInput, setPasswordInput] = useState(
+    () => sessionStorage.getItem("operationsPassword") || ""
+  );
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadOperationsSummary = useCallback(
+    async (password = passwordInput) => {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(buildApiUrl("/api/operations/summary"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ password }),
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Unable to load operations data");
+        }
+
+        sessionStorage.setItem("operationsPassword", password);
+        setData(payload);
+      } catch (fetchError) {
+        sessionStorage.removeItem("operationsPassword");
+        setData(null);
+        setError(fetchError.message || "Unable to load operations data");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [passwordInput]
+  );
+
+  useEffect(() => {
+    const savedPassword = sessionStorage.getItem("operationsPassword");
+    if (savedPassword) {
+      loadOperationsSummary(savedPassword);
+    }
+  }, [loadOperationsSummary]);
+
+  const summary = data?.summary || {};
+  const trend = data?.trend || [];
+  const maxTrendValue = useMemo(
+    () =>
+      Math.max(
+        1,
+        ...trend.map((day) =>
+          Math.max(Number(day.new_users || 0), Number(day.active_users || 0), Number(day.tasks_created || 0))
+        )
+      ),
+    [trend]
+  );
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    loadOperationsSummary(passwordInput);
+  };
+
+  if (!data) {
+    return (
+      <main className="operations-page">
+        <section className="operations-login-card">
+          <p className="operations-eyebrow">Operations</p>
+          <h1>Admin Panel</h1>
+          <p>Enter the operations password to view user activity and usage metrics.</p>
+          <form onSubmit={handleSubmit} className="operations-login-form">
+            <label>
+              Password
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(event) => setPasswordInput(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            {error ? <span className="operations-error">{error}</span> : null}
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? "Checking..." : "Open panel"}
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="operations-page operations-page-dashboard">
+      <section className="operations-shell">
+        <header className="operations-header">
+          <div>
+            <p className="operations-eyebrow">Operations</p>
+            <h1>Admin Panel</h1>
+            <span>Last refreshed {formatOperationsDate(data.generatedAt)}</span>
+          </div>
+          <div className="operations-header-actions">
+            <button type="button" onClick={() => loadOperationsSummary()} disabled={isLoading}>
+              {isLoading ? "Refreshing..." : "Refresh"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem("operationsPassword");
+                setData(null);
+                setPasswordInput("");
+              }}
+            >
+              Lock
+            </button>
+          </div>
+        </header>
+
+        <section className="operations-kpis" aria-label="Operations metrics">
+          <article>
+            <span>Total users</span>
+            <strong>{formatOperationsNumber(summary.total_users)}</strong>
+            <small>{formatOperationsNumber(summary.verified_users)} verified</small>
+          </article>
+          <article>
+            <span>Active now</span>
+            <strong>{formatOperationsNumber(summary.active_sessions)}</strong>
+            <small>users with live sessions</small>
+          </article>
+          <article>
+            <span>Active last 24h</span>
+            <strong>{formatOperationsNumber(summary.active_users_last_24h)}</strong>
+            <small>{formatOperationsNumber(summary.tasks_last_24h)} tasks created</small>
+          </article>
+          <article>
+            <span>Active last 7d</span>
+            <strong>{formatOperationsNumber(summary.active_users_last_7d)}</strong>
+            <small>{formatOperationsNumber(summary.tasks_last_7d)} tasks created</small>
+          </article>
+          <article>
+            <span>New users</span>
+            <strong>{formatOperationsNumber(summary.users_last_7d)}</strong>
+            <small>{formatOperationsNumber(summary.users_last_24h)} in 24h</small>
+          </article>
+          <article>
+            <span>Task completion</span>
+            <strong>
+              {summary.total_tasks
+                ? `${Math.round((Number(summary.completed_tasks || 0) / Number(summary.total_tasks)) * 100)}%`
+                : "0%"}
+            </strong>
+            <small>
+              {formatOperationsNumber(summary.completed_tasks)} of{" "}
+              {formatOperationsNumber(summary.total_tasks)}
+            </small>
+          </article>
+        </section>
+
+        <section className="operations-grid">
+          <article className="operations-panel">
+            <header>
+              <h2>14-day activity</h2>
+            </header>
+            <div className="operations-trend">
+              {trend.map((day) => (
+                <div className="operations-trend-row" key={day.day}>
+                  <span>{new Date(day.day).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                  <div>
+                    <i
+                      style={{ width: `${(Number(day.active_users || 0) / maxTrendValue) * 100}%` }}
+                      title={`${day.active_users} active users`}
+                    />
+                    <b
+                      style={{ width: `${(Number(day.tasks_created || 0) / maxTrendValue) * 100}%` }}
+                      title={`${day.tasks_created} tasks created`}
+                    />
+                  </div>
+                  <small>{formatOperationsNumber(day.active_users)} active</small>
+                </div>
+              ))}
+            </div>
+            <footer className="operations-legend">
+              <span><i /> Active users</span>
+              <span><b /> Tasks created</span>
+            </footer>
+          </article>
+
+          <article className="operations-panel operations-users-panel">
+            <header>
+              <h2>Recent users</h2>
+            </header>
+            <div className="operations-table-wrap">
+              <table className="operations-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Tasks</th>
+                    <th>Last activity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(data.users || []).map((userRow) => (
+                    <tr key={userRow.id}>
+                      <td>
+                        <strong>{userRow.full_name || "Unnamed user"}</strong>
+                        <span>{userRow.email}</span>
+                      </td>
+                      <td>
+                        <span
+                          className={
+                            userRow.has_active_session
+                              ? "operations-status is-live"
+                              : "operations-status"
+                          }
+                        >
+                          {userRow.has_active_session ? "Live" : "Idle"}
+                        </span>
+                      </td>
+                      <td>
+                        {formatOperationsNumber(userRow.total_tasks)} total
+                        <span>{formatOperationsNumber(userRow.tasks_last_7d)} last 7d</span>
+                      </td>
+                      <td>{formatOperationsDate(userRow.last_task_at || userRow.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem("taskTheme") || "dark");
   const [currentHour, setCurrentHour] = useState(() => new Date().getHours());
+  const isOperationsPath =
+    typeof window !== "undefined" && window.location.pathname === "/operations";
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentHour(new Date().getHours()), 60000);
@@ -2886,6 +3139,11 @@ function App() {
   }, [currentHour]);
 
   useEffect(() => {
+    if (isOperationsPath) {
+      setIsCheckingAuth(false);
+      return undefined;
+    }
+
     const loadSession = async () => {
       try {
         const response = await fetch(buildApiUrl("/api/auth/me"), {
@@ -2907,7 +3165,7 @@ function App() {
     };
 
     loadSession();
-  }, []);
+  }, [isOperationsPath]);
 
   const handleLogout = async () => {
     try {
@@ -2919,6 +3177,10 @@ function App() {
       setUser(null);
     }
   };
+
+  if (isOperationsPath) {
+    return <OperationsDashboard />;
+  }
 
   if (isCheckingAuth) {
     return (

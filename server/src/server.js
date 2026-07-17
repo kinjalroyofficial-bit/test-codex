@@ -13,6 +13,7 @@ const { pool } = require('./db');
 
 const app = express();
 const PORT = process.env.API_PORT || 4000;
+const OPERATIONS_PASSWORD = process.env.OPERATIONS_PASSWORD || 'CHANGE_ME';
 const GOOGLE_CLIENT_IDS = Array.from(
   new Set(
     [
@@ -450,6 +451,120 @@ app.post('/api/auth/logout', authRequired, (req, res) => {
     }
 
     return res.clearCookie('connect.sid').json({ message: 'Logged out' });
+  });
+});
+
+app.post('/api/operations/summary', loginLimiter, async (req, res) => {
+  const password = `${req.body?.password || ''}`;
+  if (password !== OPERATIONS_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid operations password' });
+  }
+
+  const [summaryResult, trendResult, userResult] = await Promise.all([
+    pool.query(
+      `WITH active_sessions AS (
+         SELECT DISTINCT sess->>'userId' AS user_id
+         FROM "session"
+         WHERE expire > NOW()
+           AND sess->>'userId' IS NOT NULL
+       ),
+       task_rollup AS (
+         SELECT
+           user_id,
+           COUNT(*)::int AS total_tasks,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL)::int AS active_tasks,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL AND status = 'done')::int AS completed_tasks,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '24 hours')::int AS tasks_last_24h,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days')::int AS tasks_last_7d,
+           MAX(updated_at) FILTER (WHERE deleted_at IS NULL) AS last_task_at
+         FROM tasks
+         GROUP BY user_id
+       )
+       SELECT
+         COUNT(u.id)::int AS total_users,
+         COUNT(u.id) FILTER (WHERE u.email_verified)::int AS verified_users,
+         COUNT(u.id) FILTER (WHERE u.created_at >= NOW() - INTERVAL '24 hours')::int AS users_last_24h,
+         COUNT(u.id) FILTER (WHERE u.created_at >= NOW() - INTERVAL '7 days')::int AS users_last_7d,
+         COUNT(u.id) FILTER (WHERE active_sessions.user_id IS NOT NULL)::int AS active_sessions,
+         COUNT(u.id) FILTER (WHERE task_rollup.tasks_last_24h > 0)::int AS active_users_last_24h,
+         COUNT(u.id) FILTER (WHERE task_rollup.tasks_last_7d > 0)::int AS active_users_last_7d,
+         COALESCE(SUM(task_rollup.active_tasks), 0)::int AS total_tasks,
+         COALESCE(SUM(task_rollup.completed_tasks), 0)::int AS completed_tasks,
+         COALESCE(SUM(task_rollup.tasks_last_24h), 0)::int AS tasks_last_24h,
+         COALESCE(SUM(task_rollup.tasks_last_7d), 0)::int AS tasks_last_7d
+       FROM users u
+       LEFT JOIN active_sessions ON active_sessions.user_id = u.id::text
+       LEFT JOIN task_rollup ON task_rollup.user_id = u.id
+       WHERE u.deleted_at IS NULL`
+    ),
+    pool.query(
+      `WITH days AS (
+         SELECT generate_series(
+           DATE(NOW() - INTERVAL '13 days'),
+           DATE(NOW()),
+           INTERVAL '1 day'
+         )::date AS day
+       )
+       SELECT
+         days.day::text AS day,
+         COUNT(DISTINCT u.id)::int AS new_users,
+         COUNT(t.id)::int AS tasks_created,
+         COUNT(DISTINCT t.user_id)::int AS active_users
+       FROM days
+       LEFT JOIN users u
+         ON DATE(u.created_at) = days.day
+        AND u.deleted_at IS NULL
+       LEFT JOIN tasks t
+         ON DATE(t.created_at) = days.day
+        AND t.deleted_at IS NULL
+       GROUP BY days.day
+       ORDER BY days.day ASC`
+    ),
+    pool.query(
+      `WITH active_sessions AS (
+         SELECT DISTINCT sess->>'userId' AS user_id
+         FROM "session"
+         WHERE expire > NOW()
+           AND sess->>'userId' IS NOT NULL
+       ),
+       task_rollup AS (
+         SELECT
+           user_id,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL)::int AS total_tasks,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL AND status = 'done')::int AS completed_tasks,
+           COUNT(*) FILTER (WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days')::int AS tasks_last_7d,
+           MAX(updated_at) FILTER (WHERE deleted_at IS NULL) AS last_task_at
+         FROM tasks
+         GROUP BY user_id
+       )
+       SELECT
+         u.id,
+         u.full_name,
+         u.email,
+         u.email_verified,
+         u.created_at,
+         task_rollup.total_tasks,
+         task_rollup.completed_tasks,
+         task_rollup.tasks_last_7d,
+         task_rollup.last_task_at,
+         (active_sessions.user_id IS NOT NULL) AS has_active_session
+       FROM users u
+       LEFT JOIN task_rollup ON task_rollup.user_id = u.id
+       LEFT JOIN active_sessions ON active_sessions.user_id = u.id::text
+       WHERE u.deleted_at IS NULL
+       ORDER BY
+         active_sessions.user_id IS NOT NULL DESC,
+         task_rollup.last_task_at DESC NULLS LAST,
+         u.created_at DESC
+       LIMIT 30`
+    ),
+  ]);
+
+  return res.json({
+    generatedAt: new Date().toISOString(),
+    summary: summaryResult.rows[0] || {},
+    trend: trendResult.rows,
+    users: userResult.rows,
   });
 });
 
