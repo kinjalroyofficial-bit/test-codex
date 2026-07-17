@@ -1429,7 +1429,7 @@ app.delete('/api/tasks/:taskId', authRequired, async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true });
+  res.json({ ok: true, operationsPanel: true });
 });
 
 app.listen(PORT, () => {
