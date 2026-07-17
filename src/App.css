@@ -1029,6 +1029,10 @@ body.theme-light .board-spinner {
   overflow-x: clip;
 }
 
+.task-modal-create {
+  max-width: min(1120px, calc(100vw - 32px));
+}
+
 .task-modal-close {
   position: absolute;
   top: 10px;
@@ -1052,12 +1056,130 @@ body.theme-light .board-spinner {
   font-size: 1rem;
 }
 
-.task-modal-form {
+.task-modal-content {
   margin-top: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.task-modal-form {
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
   min-width: 0;
+}
+
+.task-modal-timeline {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.task-modal-timeline-header {
+  display: grid;
+  gap: 2px;
+}
+
+.task-modal-timeline-header span {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.task-modal-timeline-header strong {
+  font-size: 0.72rem;
+  color: #475569;
+}
+
+.task-modal-timeline-board {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.task-modal-timeline-hours {
+  border-right: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.task-modal-timeline-hour {
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  color: #475569;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.task-modal-timeline-canvas {
+  position: relative;
+  min-height: 1px;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.1) 1px,
+    transparent 1px
+  );
+  background-size: 100% 43.2px;
+}
+
+.task-modal-timeline-empty {
+  margin: 12px;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.task-modal-timeline-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px solid rgba(79, 70, 229, 0.9);
+  z-index: 2;
+}
+
+.task-modal-timeline-now::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #4f46e5;
+}
+
+.task-modal-timeline-task {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-left: 4px solid;
+  border-radius: 8px;
+  padding: 6px 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.24);
+  pointer-events: none;
+}
+
+.task-modal-timeline-task strong {
+  display: block;
+  font-size: 0.74rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-modal-timeline-task small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.66rem;
+  line-height: 1.1;
+  opacity: 0.88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-form-section.section-basic,
@@ -2233,6 +2355,37 @@ body:not(.theme-light) .task-form-section h4::after {
   background: #334155;
 }
 
+body:not(.theme-light) .task-modal-timeline-header span {
+  color: #93c5fd;
+}
+
+body:not(.theme-light) .task-modal-timeline-header strong,
+body:not(.theme-light) .task-modal-timeline-hour,
+body:not(.theme-light) .task-modal-timeline-empty {
+  color: #cbd5e1;
+}
+
+body:not(.theme-light) .task-modal-timeline-board {
+  background: rgba(15, 23, 42, 0.54);
+  border-color: #475569;
+}
+
+body:not(.theme-light) .task-modal-timeline-hours {
+  border-right-color: rgba(255, 255, 255, 0.14);
+}
+
+body:not(.theme-light) .task-modal-timeline-hour {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body:not(.theme-light) .task-modal-timeline-canvas {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.11) 1px,
+    transparent 1px
+  );
+}
+
 body:not(.theme-light) .task-modal h3,
 body:not(.theme-light) .task-modal-form label,
 body:not(.theme-light) .replicate-form label,
@@ -2366,6 +2519,14 @@ body:not(.theme-light) .theme-slider {
 
   .task-modal-form {
     grid-template-columns: 1fr;
+  }
+
+  .task-modal-content {
+    grid-template-columns: 1fr;
+  }
+
+  .task-modal-create {
+    max-width: 450px;
   }
 
   .task-attributes-row {

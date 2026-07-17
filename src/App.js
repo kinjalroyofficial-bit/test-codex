@@ -85,6 +85,10 @@ const TASK_TYPE_OPTIONS = [
   { value: "continuous", label: "Continuous" },
 ];
 
+const MODAL_TIMELINE_START_HOUR = 8;
+const MODAL_TIMELINE_END_HOUR = 20;
+const MODAL_TIMELINE_PIXELS_PER_MINUTE = 0.72;
+
 const CATEGORY_COLORS = {
   entertainment: "#2563eb",
   "financial enrichment": "#d97706",
@@ -1783,6 +1787,28 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
   )}-${String(todayDate.getDate()).padStart(2, "0")}`;
   const isSelectedDateToday = selectedDate === todayKey;
   const currentMinuteMarker = localHour * 60 + localMinute;
+  const modalTimelineStartMinutes = MODAL_TIMELINE_START_HOUR * 60;
+  const modalTimelineEndMinutes = MODAL_TIMELINE_END_HOUR * 60;
+  const modalTimelineHeight =
+    (modalTimelineEndMinutes - modalTimelineStartMinutes) * MODAL_TIMELINE_PIXELS_PER_MINUTE;
+  const modalTimelineTasks = timelineTasks
+    .map((task) => {
+      const clippedStartMinutes = Math.max(task.startMinutes, modalTimelineStartMinutes);
+      const clippedEndMinutes = Math.min(task.endMinutes, modalTimelineEndMinutes);
+      if (clippedEndMinutes <= clippedStartMinutes) return null;
+      return {
+        ...task,
+        snapshotTop:
+          (clippedStartMinutes - modalTimelineStartMinutes) * MODAL_TIMELINE_PIXELS_PER_MINUTE,
+        snapshotHeight: Math.max(
+          24,
+          (clippedEndMinutes - clippedStartMinutes) * MODAL_TIMELINE_PIXELS_PER_MINUTE
+        ),
+      };
+    })
+    .filter(Boolean);
+  const modalTimelineNowTop =
+    (currentMinuteMarker - modalTimelineStartMinutes) * MODAL_TIMELINE_PIXELS_PER_MINUTE;
   const scrollCategoryFilters = (direction) => {
     const scrollContainer = categoryFilterScrollRef.current;
     if (!scrollContainer) return;
@@ -2351,7 +2377,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
 
           {isTaskModalOpen ? (
             <div className="task-modal-overlay" role="dialog" aria-modal="true">
-          <div className="task-modal">
+          <div className="task-modal task-modal-create">
             <button
               type="button"
               className="task-modal-close"
@@ -2361,186 +2387,249 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
               ×
             </button>
             <h3>{taskModalMode === "create" ? "Create task" : "Edit task"}</h3>
-            <form onSubmit={handleTaskModalSubmit} className="task-modal-form">
-              <section className="task-form-section section-basic">
-                <h4>Basic Details</h4>
-                <label>
-                  Task title
-                  <div className="task-voice-input-wrap">
-                    <input
-                      ref={titleInputRef}
-                      type="text"
-                      value={taskTitleInput}
-                      onChange={(event) => setTaskTitleInput(event.target.value)}
-                      placeholder="Enter task title"
-                      required
-                    />
-                    {!isMobileViewport ? (
+            <div className="task-modal-content">
+              <form onSubmit={handleTaskModalSubmit} className="task-modal-form">
+                <section className="task-form-section section-basic">
+                  <h4>Basic Details</h4>
+                  <label>
+                    Task title
+                    <div className="task-voice-input-wrap">
+                      <input
+                        ref={titleInputRef}
+                        type="text"
+                        value={taskTitleInput}
+                        onChange={(event) => setTaskTitleInput(event.target.value)}
+                        placeholder="Enter task title"
+                        required
+                      />
+                      {!isMobileViewport ? (
+                        <button
+                          type="button"
+                          className={`description-voice-btn description-voice-btn--title ${
+                            isTitleVoiceActive ? "is-active" : ""
+                          }`}
+                          onClick={handleTitleVoiceInput}
+                          aria-label={
+                            isTitleVoiceActive
+                              ? "Stop voice input for title"
+                              : "Start voice input for title"
+                          }
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              d="M14.5 3.75a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.28.53l-4.72-4.78H5.5a1.75 1.75 0 0 1-1.75-1.75v-3.5A1.75 1.75 0 0 1 5.5 8.25h3.75l4.72-4.78a.75.75 0 0 1 .53-.22ZM17.78 8.45a.75.75 0 0 1 1.05.11 5.5 5.5 0 0 1 0 6.88.75.75 0 0 1-1.16-.95 4 4 0 0 0 0-4.98.75.75 0 0 1 .11-1.06Zm2.77-2.93a.75.75 0 0 1 1.05.11 10 10 0 0 1 0 12.74.75.75 0 1 1-1.16-.95 8.5 8.5 0 0 0 0-10.84.75.75 0 0 1 .11-1.06Z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </button>
+                      ) : null}
+                    </div>
+                  </label>
+                  <label>
+                    Task description
+                    <div className="task-description-input-wrap task-voice-input-wrap">
+                      <textarea
+                        ref={descriptionTextareaRef}
+                        value={taskDescriptionInput}
+                        onChange={(event) => setTaskDescriptionInput(event.target.value)}
+                        placeholder="Optional description"
+                        rows={3}
+                      />
+                      {!isMobileViewport ? (
+                        <button
+                          type="button"
+                          className={`description-voice-btn description-voice-btn--description ${
+                            isDescriptionVoiceActive ? "is-active" : ""
+                          }`}
+                          onClick={handleDescriptionVoiceInput}
+                          aria-label={
+                            isDescriptionVoiceActive
+                              ? "Stop voice input for description"
+                              : "Start voice input for description"
+                          }
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              d="M14.5 3.75a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.28.53l-4.72-4.78H5.5a1.75 1.75 0 0 1-1.75-1.75v-3.5A1.75 1.75 0 0 1 5.5 8.25h3.75l4.72-4.78a.75.75 0 0 1 .53-.22ZM17.78 8.45a.75.75 0 0 1 1.05.11 5.5 5.5 0 0 1 0 6.88.75.75 0 0 1-1.16-.95 4 4 0 0 0 0-4.98.75.75 0 0 1 .11-1.06Zm2.77-2.93a.75.75 0 0 1 1.05.11 10 10 0 0 1 0 12.74.75.75 0 1 1-1.16-.95 8.5 8.5 0 0 0 0-10.84.75.75 0 0 1 .11-1.06Z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </button>
+                      ) : null}
+                    </div>
+                  </label>
+                </section>
+                <section className="task-form-section">
+                  <h4>Value Addition</h4>
+                  <label>
+                    Categories
+                    <div className="category-chip-picker">
+                      {availableCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          className={
+                            selectedCategoryIds.includes(category.id)
+                              ? "category-chip is-selected"
+                              : "category-chip"
+                          }
+                          onClick={() => toggleCategorySelection(category.id)}
+                        >
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="category-chip-picker">
+                      {customCategoryNames.map((name) => (
+                        <button
+                          key={`custom-${name}`}
+                          type="button"
+                          className="category-chip is-selected"
+                          onClick={() => removeCustomCategory(name)}
+                          title="Tap to remove custom category"
+                        >
+                          {name}
+                        </button>
+                      ))}
                       <button
                         type="button"
-                        className={`description-voice-btn description-voice-btn--title ${
-                          isTitleVoiceActive ? "is-active" : ""
-                        }`}
-                        onClick={handleTitleVoiceInput}
-                        aria-label={
-                          isTitleVoiceActive
-                            ? "Stop voice input for title"
-                            : "Start voice input for title"
-                        }
+                        className="category-chip category-chip-custom"
+                        onClick={openCustomCategoryModal}
                       >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path
-                            d="M14.5 3.75a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.28.53l-4.72-4.78H5.5a1.75 1.75 0 0 1-1.75-1.75v-3.5A1.75 1.75 0 0 1 5.5 8.25h3.75l4.72-4.78a.75.75 0 0 1 .53-.22ZM17.78 8.45a.75.75 0 0 1 1.05.11 5.5 5.5 0 0 1 0 6.88.75.75 0 0 1-1.16-.95 4 4 0 0 0 0-4.98.75.75 0 0 1 .11-1.06Zm2.77-2.93a.75.75 0 0 1 1.05.11 10 10 0 0 1 0 12.74.75.75 0 1 1-1.16-.95 8.5 8.5 0 0 0 0-10.84.75.75 0 0 1 .11-1.06Z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        + Custom
                       </button>
-                    ) : null}
-                  </div>
-                </label>
-                <label>
-                  Task description
-                  <div className="task-description-input-wrap task-voice-input-wrap">
-                    <textarea
-                      ref={descriptionTextareaRef}
-                      value={taskDescriptionInput}
-                      onChange={(event) => setTaskDescriptionInput(event.target.value)}
-                      placeholder="Optional description"
-                      rows={3}
-                    />
-                    {!isMobileViewport ? (
-                      <button
-                        type="button"
-                        className={`description-voice-btn description-voice-btn--description ${
-                          isDescriptionVoiceActive ? "is-active" : ""
-                        }`}
-                        onClick={handleDescriptionVoiceInput}
-                        aria-label={
-                          isDescriptionVoiceActive
-                            ? "Stop voice input for description"
-                            : "Start voice input for description"
-                        }
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path
-                            d="M14.5 3.75a.75.75 0 0 1 .75.75v15a.75.75 0 0 1-1.28.53l-4.72-4.78H5.5a1.75 1.75 0 0 1-1.75-1.75v-3.5A1.75 1.75 0 0 1 5.5 8.25h3.75l4.72-4.78a.75.75 0 0 1 .53-.22ZM17.78 8.45a.75.75 0 0 1 1.05.11 5.5 5.5 0 0 1 0 6.88.75.75 0 0 1-1.16-.95 4 4 0 0 0 0-4.98.75.75 0 0 1 .11-1.06Zm2.77-2.93a.75.75 0 0 1 1.05.11 10 10 0 0 1 0 12.74.75.75 0 1 1-1.16-.95 8.5 8.5 0 0 0 0-10.84.75.75 0 0 1 .11-1.06Z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </button>
-                    ) : null}
-                  </div>
-                </label>
-              </section>
-              <section className="task-form-section">
-                <h4>Value Addition</h4>
-                <label>
-                  Categories
-                  <div className="category-chip-picker">
-                    {availableCategories.map((category) => (
-                      <button
-                        key={category.id}
-                        type="button"
-                        className={
-                          selectedCategoryIds.includes(category.id)
-                            ? "category-chip is-selected"
-                            : "category-chip"
-                        }
-                        onClick={() => toggleCategorySelection(category.id)}
-                      >
-                        {category.name}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="category-chip-picker">
-                    {customCategoryNames.map((name) => (
-                      <button
-                        key={`custom-${name}`}
-                        type="button"
-                        className="category-chip is-selected"
-                        onClick={() => removeCustomCategory(name)}
-                        title="Tap to remove custom category"
-                      >
-                        {name}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="category-chip category-chip-custom"
-                      onClick={openCustomCategoryModal}
+                    </div>
+                  </label>
+                  <label>
+                    Intent
+                    <select
+                      value={taskIntentInput}
+                      onChange={(event) => setTaskIntentInput(event.target.value)}
                     >
-                      + Custom
-                    </button>
-                  </div>
-                </label>
-                <label>
-                  Intent
-                  <select
-                    value={taskIntentInput}
-                    onChange={(event) => setTaskIntentInput(event.target.value)}
-                  >
-                    {INTENT_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Task type
-                  <div className="outcome-options" role="radiogroup" aria-label="Task type">
-                    {TASK_TYPE_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={taskTypeInput === option.value}
-                        className={
-                          taskTypeInput === option.value
-                            ? "outcome-option is-selected"
-                            : "outcome-option"
-                        }
-                        onClick={() => handleTaskTypeChange(option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </label>
-              </section>
-              <section className="task-form-section">
-                <h4>Timelines</h4>
-                <div className="task-attributes-row task-attributes-row-timelines">
-                  <label>
-                    Scheduled
-                    <input
-                      className="calendar-utility-input"
-                      type="datetime-local"
-                      value={taskScheduledInput}
-                      onChange={(event) => setTaskScheduledInput(event.target.value)}
-                    />
+                      {INTENT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
-                    Estimated duration (minutes)
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={taskEstimatedDurationInput}
-                      disabled={isActivityMetaLocked}
-                      onChange={(event) => setTaskEstimatedDurationInput(event.target.value)}
-                      placeholder="e.g. 90"
-                    />
+                    Task type
+                    <div className="outcome-options" role="radiogroup" aria-label="Task type">
+                      {TASK_TYPE_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={taskTypeInput === option.value}
+                          className={
+                            taskTypeInput === option.value
+                              ? "outcome-option is-selected"
+                              : "outcome-option"
+                          }
+                          onClick={() => handleTaskTypeChange(option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </label>
+                </section>
+                <section className="task-form-section">
+                  <h4>Timelines</h4>
+                  <div className="task-attributes-row task-attributes-row-timelines">
+                    <label>
+                      Scheduled
+                      <input
+                        className="calendar-utility-input"
+                        type="datetime-local"
+                        value={taskScheduledInput}
+                        onChange={(event) => setTaskScheduledInput(event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Estimated duration (minutes)
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={taskEstimatedDurationInput}
+                        disabled={isActivityMetaLocked}
+                        onChange={(event) => setTaskEstimatedDurationInput(event.target.value)}
+                        placeholder="e.g. 90"
+                      />
+                    </label>
+                  </div>
+                </section>
+                <div className="task-modal-actions">
+                  <button type="button" onClick={closeTaskModal}>
+                    Cancel
+                  </button>
+                  <button type="submit">Submit</button>
                 </div>
-              </section>
-              <div className="task-modal-actions">
-                <button type="button" onClick={closeTaskModal}>
-                  Cancel
-                </button>
-                <button type="submit">Submit</button>
-              </div>
-            </form>
+              </form>
+              <aside className="task-modal-timeline" aria-label="Schedule snapshot">
+                <div className="task-modal-timeline-header">
+                  <span>Timeline snapshot</span>
+                  <strong>{formatSelectedDate(selectedDate)}</strong>
+                </div>
+                <div className="task-modal-timeline-board">
+                  <div className="task-modal-timeline-hours">
+                    {Array.from({
+                      length: MODAL_TIMELINE_END_HOUR - MODAL_TIMELINE_START_HOUR,
+                    }).map((_, index) => {
+                      const hour = MODAL_TIMELINE_START_HOUR + index;
+                      return (
+                        <div
+                          className="task-modal-timeline-hour"
+                          key={`modal-hour-${hour}`}
+                          style={{ height: `${60 * MODAL_TIMELINE_PIXELS_PER_MINUTE}px` }}
+                        >
+                          <span>{String(hour).padStart(2, "0")}:00</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div
+                    className="task-modal-timeline-canvas"
+                    style={{ height: `${modalTimelineHeight}px` }}
+                  >
+                    {!modalTimelineTasks.length ? (
+                      <p className="task-modal-timeline-empty">No scheduled tasks in this window.</p>
+                    ) : null}
+                    {isSelectedDateToday &&
+                    currentMinuteMarker >= modalTimelineStartMinutes &&
+                    currentMinuteMarker <= modalTimelineEndMinutes ? (
+                      <div
+                        className="task-modal-timeline-now"
+                        style={{ top: `${modalTimelineNowTop}px` }}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    {modalTimelineTasks.map((task) => (
+                      <article
+                        key={`modal-timeline-${task.id}`}
+                        className="task-modal-timeline-task"
+                        style={{
+                          top: `${task.snapshotTop}px`,
+                          height: `${task.snapshotHeight}px`,
+                          left: `calc(6px + ${task.leftPercent}%)`,
+                          width: `calc(${task.widthPercent}% - 8px)`,
+                          borderColor: getCardStyle(task).borderColor,
+                          background: getCardStyle(task).background,
+                          opacity: task.done ? 1 : 0.72,
+                        }}
+                      >
+                        <strong>{task.title}</strong>
+                        <small>
+                          {task.startTimeLabel} - {formatMinutesLabel(task.durationMinutes)}
+                        </small>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              </aside>
+            </div>
             {isCustomCategoryModalOpen ? (
               <div className="inline-modal-backdrop" role="dialog" aria-modal="true">
                 <div className="inline-modal">
