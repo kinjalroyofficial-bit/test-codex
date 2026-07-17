@@ -1093,6 +1093,13 @@ body.theme-light .board-spinner {
   color: #475569;
 }
 
+.task-modal-timeline-header small {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .task-modal-timeline-board {
   display: grid;
   grid-template-columns: 54px 1fr;

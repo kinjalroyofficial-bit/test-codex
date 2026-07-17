@@ -2607,6 +2607,7 @@ function BoardScreen({ user, onLogout, theme, onToggleTheme }) {
                 <div className="task-modal-timeline-header">
                   <span>Timeline snapshot</span>
                   <strong>{formatSelectedDate(selectedDate)}</strong>
+                  <small>Double-click a timeline task to edit it and save changes.</small>
                 </div>
                 <div className="task-modal-timeline-board">
                   <div className="task-modal-timeline-hours">
