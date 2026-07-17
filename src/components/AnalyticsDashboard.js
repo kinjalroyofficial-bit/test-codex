@@ -524,68 +524,70 @@ export default function AnalyticsDashboard({ onBack }) {
                   tone="neutral"
                 />
               </div>
-              <div className="analytics-grid two-col">
-                <ChartCard title="Estimated vs Actual Time">
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={data.time.estimatedVsActualPerDay}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="day" />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip formatter={(value) => minutesLabel(value)} />
-                      <Legend />
-                      <Line type="monotone" dataKey="estimated" name="Estimated Minutes" stroke={COLORS.warning} strokeWidth={2.5} />
-                      <Line type="monotone" dataKey="actual" name="Actual Minutes" stroke={COLORS.accent} strokeWidth={2.5} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-                <ChartCard title="Category Time Investment">
-                  <RankedBars
-                    items={data.category.timeSpentPerCategory}
-                    labelKey="category"
-                    valueKey="minutes"
-                    valueFormatter={minutesLabel}
-                  />
-                </ChartCard>
-                <ChartCard title="Intent Mix">
-                  <RankedBars items={data.intent.distribution} labelKey="intent" valueKey="count" />
-                </ChartCard>
-                <ChartCard title="Mood Completion Rate">
-                  <RankedBars
-                    items={data.mood.completionRateByMood}
-                    labelKey="mood"
-                    valueKey="completionRate"
-                    valueFormatter={pct}
-                  />
-                </ChartCard>
-                <ChartCard title="Outcome Distribution">
-                  <RankedBars items={data.outcome.distribution} labelKey="outcome" valueKey="count" />
-                </ChartCard>
-                <ChartCard title="Best Time of Day">
-                  <RankedBars
-                    items={data.scheduling.productivityByTimeOfDay}
-                    labelKey="timeOfDay"
-                    valueKey="completed"
-                  />
-                  <p className="analytics-inline-insight">
-                    Procrastination signal: {pct(data.scheduling.procrastinationScore)}
-                  </p>
-                </ChartCard>
-              </div>
-              <div className="analytics-grid two-col">
-                <ChartCard title="Mood x Outcome Map">
-                  <div className="analytics-heatmap">
-                    {data.mood.heatmap.slice(0, 10).map((row) => (
-                      <div className="analytics-heatmap-row" key={`${row.mood}-${row.outcome}`}>
-                        <span>{titleCase(row.mood)}</span>
-                        <span>{titleCase(row.outcome)}</span>
-                        <strong>{row.count}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </ChartCard>
-                <ChartCard title="Useful Observations">
-                  <InsightList items={data.insights} />
-                </ChartCard>
+              <div className="analytics-deep-dive">
+                <div className="analytics-deep-dive-main">
+                  <ChartCard title="Estimated vs Actual Time">
+                    <ResponsiveContainer width="100%" height={260}>
+                      <LineChart data={data.time.estimatedVsActualPerDay}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="day" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip formatter={(value) => minutesLabel(value)} />
+                        <Legend />
+                        <Line type="monotone" dataKey="estimated" name="Estimated Minutes" stroke={COLORS.warning} strokeWidth={2.5} />
+                        <Line type="monotone" dataKey="actual" name="Actual Minutes" stroke={COLORS.accent} strokeWidth={2.5} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                  <ChartCard title="Useful Observations">
+                    <InsightList items={data.insights} />
+                  </ChartCard>
+                </div>
+                <div className="analytics-deep-dive-grid">
+                  <ChartCard title="Category Time Investment">
+                    <RankedBars
+                      items={data.category.timeSpentPerCategory}
+                      labelKey="category"
+                      valueKey="minutes"
+                      valueFormatter={minutesLabel}
+                    />
+                  </ChartCard>
+                  <ChartCard title="Intent Mix">
+                    <RankedBars items={data.intent.distribution} labelKey="intent" valueKey="count" />
+                  </ChartCard>
+                  <ChartCard title="Mood Completion Rate">
+                    <RankedBars
+                      items={data.mood.completionRateByMood}
+                      labelKey="mood"
+                      valueKey="completionRate"
+                      valueFormatter={pct}
+                    />
+                  </ChartCard>
+                  <ChartCard title="Outcome Distribution">
+                    <RankedBars items={data.outcome.distribution} labelKey="outcome" valueKey="count" />
+                  </ChartCard>
+                  <ChartCard title="Best Time of Day">
+                    <RankedBars
+                      items={data.scheduling.productivityByTimeOfDay}
+                      labelKey="timeOfDay"
+                      valueKey="completed"
+                    />
+                    <p className="analytics-inline-insight">
+                      Procrastination signal: {pct(data.scheduling.procrastinationScore)}
+                    </p>
+                  </ChartCard>
+                  <ChartCard title="Mood x Outcome Map">
+                    <div className="analytics-heatmap">
+                      {data.mood.heatmap.slice(0, 10).map((row) => (
+                        <div className="analytics-heatmap-row" key={`${row.mood}-${row.outcome}`}>
+                          <span>{titleCase(row.mood)}</span>
+                          <span>{titleCase(row.outcome)}</span>
+                          <strong>{row.count}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </ChartCard>
+                </div>
               </div>
               <StoredDataAudit />
             </>

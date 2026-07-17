@@ -3022,6 +3022,29 @@ body:not(.theme-light) .theme-slider {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.analytics-deep-dive {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(340px, 0.95fr) minmax(0, 1.55fr);
+  align-items: stretch;
+}
+
+.analytics-deep-dive-main {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.analytics-deep-dive-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.analytics-deep-dive-grid .analytics-card {
+  min-height: 0;
+}
+
 .analytics-card {
   padding: 14px;
 }
@@ -3223,7 +3246,9 @@ body.theme-light .task-type-segment-bar {
 }
 
 @media (max-width: 900px) {
-  .analytics-grid.two-col {
+  .analytics-grid.two-col,
+  .analytics-deep-dive,
+  .analytics-deep-dive-grid {
     grid-template-columns: 1fr;
   }
 
